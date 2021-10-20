@@ -13,3 +13,6 @@
 
 # IPython checkpoints
 *.ipynb_checkpoints
+
+# (TEMPORARY) IPython Notebooks
+*.ipynb
