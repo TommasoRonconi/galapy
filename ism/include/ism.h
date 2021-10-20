@@ -17,8 +17,8 @@
 
 // internal includes
 #include <utilities.h>
-// #include <interpolation.h>
-// #include <pah.h>
+#include <interpolation.h>
+#include <pah.h>
 
 namespace sed {
 
@@ -108,7 +108,7 @@ namespace sed {
   private :
 
     double _Labs = 0.;
-    // const utl::interpolator< utl::gsl_lin_interp > _fpah { pah::lpah, pah::fpah, "linear" };
+    const utl::interpolator< utl::lin_interp > _fpah { pah::lpah, pah::fpah, "linear" };
     
   protected :
 

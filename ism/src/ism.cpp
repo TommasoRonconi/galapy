@@ -98,9 +98,8 @@ double sed::diffuse::_fact_greybody ( const double * const param ) const noexcep
 double sed::diffuse::emission ( const double lambda ) const noexcept {
 
   return sed::cnst::solL *
-    this->_emission( lambda, _Temp, _current_params[ 1 ] );
-    // ( this->_emission( lambda, _Temp, _current_params[ 1 ] ) +
-    //   _current_params[ 2 ] * _Labs ) * _fpah( lambda ) );
+    ( this->_emission( lambda, _Temp, _current_params[ 1 ] ) + // dust contribute
+      _current_params[ 2 ] * _Labs * _fpah( lambda ) );        // PAH contribute
 
 }
 

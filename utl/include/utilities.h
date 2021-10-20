@@ -20,6 +20,7 @@
 // STL includes
 #include <vector>
 #include <cmath>
+#include <string>
 
 namespace sed {
 
@@ -99,6 +100,38 @@ namespace sed {
   } // endnamespace cnst
   
 } //endnamespace sed
+
+namespace utl_err {
+
+  struct size_invalid {
+
+    std::string message;
+    size_invalid ( const std::string & s ) : message{ s } {}
+      
+  };
+
+  struct out_of_bounds {
+
+    std::string message;
+    out_of_bounds ( const std::string & s ) : message{ s } {}
+      
+  };
+
+  struct type_invalid {
+
+    std::string message;
+    type_invalid ( const std::string & s ) : message{ s } {}
+
+  };
+  
+  struct not_sorted {
+    
+    std::string message;
+    not_sorted( const std::string & s ) : message{ s } {}
+    
+  };
+  
+} //endnamespace utl_err
 
 namespace utl {
 
