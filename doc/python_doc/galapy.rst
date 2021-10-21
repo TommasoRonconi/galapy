@@ -3,6 +3,9 @@ Python Documentation
 
 .. automodule:: galapy
 
+.. autodata:: SSP_LIB
+   :annotation:
+
 .. toctree::
    :maxdepth: 3
 
