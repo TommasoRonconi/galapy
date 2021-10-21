@@ -14,5 +14,11 @@ SSP_LIB = {
     'bc03.stelib.chab.extrap' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
                                               GP_GBL.bc03_stelib_chab_extrap ),
     }
-""" Dictionary providing SSP-available li
+""" Dictionary providing available SSP-libraries.
+
+Available SSP formats:
+----------------------
+* bc03.basel.chab.extend :
+* bc03.stelib.chab.(extend/extrap) :
 """
+
