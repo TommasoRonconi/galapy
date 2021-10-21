@@ -1,8 +1,8 @@
 SOURCEDIR=./
 
-OUTPUTDIR=../
+OUTPUTDIR=/tmp/galapy_doc/
 
-FILEDIR=../galapy
+FILEDIR=/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy
 
 all: docs
 

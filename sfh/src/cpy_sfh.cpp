@@ -39,6 +39,22 @@ extern "C" {
   // ========================================================================================
 
   // initialize CPySFH Object
+  static const char DocString_SFHinit[] =
+    "Class defining the model of Star Formation History.\n\n"
+    "The possible models to choose are\n\n"
+    "#. 'insitu'\n"
+    "#. 'constant'\n"
+    "#. 'delayedexp'\n"
+    "#. 'lognormal'\n"
+    "#. 'burst'\n"
+    "\nParameters"
+    "\n----------"
+    "\ntau_quench : float\n"
+    "\tEventual abrupt quenching time for star formation.\n"
+    "\tShould be expressed in years. Refers to the age of the galaxy.\n"
+    "\nmodel : string\n"
+    "\tOne among ('insitu', 'constant', 'delayedexp', 'lognormal', 'burst').\n"
+    "\tDefault is 'insitu'.\n";
   static int CPySFH_init ( CPySFH *self, PyObject *args, PyObject *kwds ) {
     
     double tau_quench;
@@ -145,7 +161,7 @@ extern "C" {
   static const char DocString_Mstar[] =
     "Function computing the galaxy stellar mass at given time.\n"
     "It approximates the integral:\n"
-    "\n.. math:\n\tM_\\ast(\\tau') = \\int_0^{\\tau'}\\text{d}\\tau "
+    "\n.. math::\n\n\tM_\\ast(\\tau') = \\int_0^{\\tau'}\\text{d}\\tau "
     "\\bigl[1 - \\mathcal{R}_\\text{IMF}(\\tau)\\bigr]\\psi(\\tau)\n"
     "\nParameters"
     "\n----------"
@@ -402,7 +418,7 @@ extern "C" {
     CPySFH_t.tp_basicsize = sizeof( CPySFH );
     CPySFH_t.tp_dealloc   = (destructor) CPySFH_dealloc;
     CPySFH_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPySFH_t.tp_doc       = "SFH objects";
+    CPySFH_t.tp_doc       = DocString_SFHinit;
     CPySFH_t.tp_call      = (ternaryfunc) CPySFH_call;
     CPySFH_t.tp_methods   = CPySFH_Methods;
     //~ CPySFH_t.tp_members=Noddy_members;
