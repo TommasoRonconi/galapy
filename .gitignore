@@ -17,5 +17,7 @@
 # (TEMPORARY) IPython Notebooks
 *.ipynb
 
-# Sphinx-generated tutorials
+# Sphinx-generated files
 /doc/tutorials/*
+/doc/python_doc/_generated/*
+

@@ -1,10 +1,8 @@
 Star Formation History module (SFH)
 -----------------------------------
 
-.. automodule:: galapy.internal.CPySFH
-   :members:
-   :undoc-members:
+.. autosummary::
+   :toctree: _generated
 
-.. autoclass:: galapy.internal.CPySFH.CSFH
-   :members:
-   :undoc-members:
+   galapy.internal.CPySFH
+   galapy.internal.CPySFH.CSFH
