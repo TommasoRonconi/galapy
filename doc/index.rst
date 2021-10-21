@@ -5,8 +5,16 @@
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   
+   python_doc/galapy
 
-   python_doc
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials
+	     
+   tutorials/SFH_tutorial
+   tutorials/CSP_tutorial
+   tutorials/ISM_tutorial
 
 Indices and tables
 ==================

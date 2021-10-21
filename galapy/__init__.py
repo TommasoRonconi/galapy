@@ -1,3 +1,6 @@
+""" This package simulates galactic spectra
+"""
+
 __all__ = [ 'StarFormationHistory' ]
 
 import galapy.internal.globs as GP_GBL
