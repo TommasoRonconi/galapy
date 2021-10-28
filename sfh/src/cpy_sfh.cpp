@@ -39,8 +39,10 @@ extern "C" {
   // ========================================================================================
 
   // initialize CPySFH Object
-  static const char DocString_SFHinit[] =
-    "Class defining the model of Star Formation History.\n\n"
+  static const char DocString_CSFHinit[] =
+    "CSFH( self, tau_quench, model = 'insitu')\n"
+    "--\n\n"
+    "Class defining the model of Star Formation History (SFH).\n\n"
     "The possible models to choose are\n\n"
     "#. 'insitu'\n"
     "#. 'constant'\n"
@@ -129,10 +131,19 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_set_params[] =
+    "set_params( self, params )\n"
+    "--\n\n"
     "Function for setting the parameters of the model.\n"
     "\nParameters"
     "\n----------"
-    "\nparams : array-like\n"
+    "\nparams : 1d-array\n"
+    "\tarray containing the list of parameters of the model. "
+    "Parameters have to be passed in the correct order:\n\n"
+    "\t#. :code:`'insitu': [psi_max, tau_star]`\n"
+    "\t#. :code:`'constant': [psi]`\n"
+    "\t#. :code:`'delayedexp': [psi_norm, k_shape, tau_star]`\n"
+    "\t#. :code:`'lognormal': [psi_norm, sigma_star, tau_star]`\n"
+    "\t#. :code:`'burst': [...]`\n"
     "\nReturns"
     "\n-------"
     "\n: None"; 
@@ -159,20 +170,23 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_Mstar[] =
-    "Function computing the galaxy stellar mass at given time.\n"
+    "Mstar( self, tau, npoints = 100 )\n"
+    "--\n\n"
+    "computes the stellar mass at a given age of the galaxy.\n"
     "It approximates the integral:\n"
-    "\n.. math::\n\n\tM_\\ast(\\tau') = \\int_0^{\\tau'}\\text{d}\\tau "
+    "\n.. math::\n"
+    "\n\tM_\\ast(\\tau') = \\int_0^{\\tau'}\\text{d}\\tau "
     "\\bigl[1 - \\mathcal{R}_\\text{IMF}(\\tau)\\bigr]\\psi(\\tau)\n"
     "\nParameters"
     "\n----------"
     "\ntau : float\n"
-    "\tgalactic age\n"
+    "\tgalaxy age in years.\n"
     "\nnpoints : int\n"
-    "\tthinness for approximated integral computation\n"
+    "\tthinness for approximated integral computation (default is 100)\n"
     "\nReturns"
     "\n-------"
-    "\nM* : float\n"
-    "\tthe stellar mass of the galaxy at time `tau`\n"; 
+    "\n: float\n"
+    "\tthe stellar mass of the galaxy at time :math:`\\tau`\n"; 
   static PyObject * CPySFH_Mstar ( CPySFH * self, PyObject * args, PyObject * kwds ) {
 
     double tau;
@@ -197,15 +211,23 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_Mdust[] =
-    "Function ..\n"
+    "Mdust( self, tau )\n"
+    "--\n\n"
+    "Returns the dust mass at a given age of the galaxy.\n"
+    "For empirical models of star formation (i.e. :code:`const`, "
+    ":code:`delayedexp`, :code:`lognorm`) this is a free parameter.\n"
+    "For the :code:`insitu` model, the dust mass is given by "
+    ":math:`M_\\text{gas}(\\tau)D(\\tau)` where :math:`M_\\text{gas}=\\psi(\\tau)\\tau_\\ast` "
+    "and where :math:`D(\\tau)` is the gas mass ratio "
+    "(for an analytic expression of this quantity see Pantoni et al. 2019 and Lapi et al. 2020).\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
-    "\t\n"
+    "\ntau : float\n"
+    "\tage of the galaxy in years.\n"
     "\nReturns"
     "\n-------"
-    "\n : \n"
-    "\t\n"; 
+    "\n: float \n"
+    "\tDust content in solar masses (:math:`M_\\odot`) at give time :math:`\\tau`.\n"; 
   static PyObject * CPySFH_Mdust ( CPySFH * self, PyObject * args ) {
 
     double tau;
@@ -223,15 +245,23 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_Mgas[] =
-    "Function ..\n"
+    "Mgas( self, tau )\n"
+    "--\n\n"
+    "Returns the gas mass at a given age of the galaxy.\n"
+    "For empirical models of star formation (i.e. :code:`const`, "
+    ":code:`delayedexp`, :code:`lognorm`) this is given by :math:`M_\\text{gas} = M_\\text{dust}/D` "
+    "where :math:`D \\sim 0.01 (Z_\\text{gas}/Z_\\odot)^{-0.85}` is the "
+    "dust-to-gas mass ratio, derived from observations."
+    "For the :code:`insitu` model, the gas mass is given by"
+    " :math:`M_\\text{gas}=\\psi(\\tau)\\tau_\\ast`\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
-    "\t\n"
+    "\ntau : float\n"
+    "\tage of the galaxy in years.\n"
     "\nReturns"
     "\n-------"
-    "\n : \n"
-    "\t\n"; 
+    "\n: float \n"
+    "\tGas content in solar masses (:math:`M_\\odot`) at give time :math:`\\tau`.\n";
   static PyObject * CPySFH_Mgas ( CPySFH * self, PyObject * args ) {
 
     double tau;
@@ -249,15 +279,26 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_Zgas[] =
-    "Function ..\n"
+    "Zgas( self, tau )\n"
+    "--\n\n"
+    "Returns the gas metallicity at a given age of the galaxy.\n"
+    "For empirical models of star formation (i.e. :code:`const`, "
+    ":code:`delayedexp`, :code:`lognorm`) this is a free parameter with "
+    ":math:`Z_\\text{gas} = Z_\\ast`.\n"
+    "For the :code:`insitu` model, it is instead given by\n"
+    "\n.. math::\n"
+    "\n\tZ_\\text{gas}=\\dfrac{s y_Z}{s\\gamma-1}"
+    "\\biggl[1 - \\dfrac{(s\\gamma-1)x}{e^{(s\\gamma-1)x}-1}\\biggr]\n"
+    "\nwhere :math:`x\\equiv\\tau/s\\tau_\\ast` and :math:`y_Z\\approx0.04` "
+    "is the metal production yield (including recycling) for a Chabrier IMF.\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
-    "\t\n"
+    "\ntau : float\n"
+    "\tage of the galaxy in years.\n"
     "\nReturns"
     "\n-------"
-    "\n : \n"
-    "\t\n"; 
+    "\n: float \n"
+    "\tGas absolute metallicity at give time :math:`\\tau`.\n";
   static PyObject * CPySFH_Zgas ( CPySFH * self, PyObject * args ) {
 
     double tau;
@@ -275,15 +316,28 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_Zstar[] =
-    "Function ..\n"
+    "Zstar( self, tau )\n"
+    "--\n\n"
+    "Returns the stellar metallicity at a given age of the galaxy.\n"
+    "For empirical models of star formation (i.e. :code:`const`, "
+    ":code:`delayedexp`, :code:`lognorm`) this is a free parameter with "
+    ":math:`Z_\\ast = Z_\\text{gas}`.\n"
+    "For the :code:`insitu` model, it is instead given by\n"
+    "\n.. math::\n"
+    "\n\tZ_\\ast=\\dfrac{y_Z}{\\gamma-1}"
+    "\\biggl[1 - \\dfrac{s\\gamma}{(s\\gamma-1}"
+    "\\dfrac{e^{-x}-e^{-s\\gamma x}[1 + (s\\gamma -1)x]}"
+    "{s\\gamma -1 + e^{-s\\gamma x}- s\\gamma e^{-x}}\\biggr]\n"
+    "\nwhere :math:`x\\equiv\\tau/s\\tau_\\ast` and :math:`y_Z\\approx0.04` "
+    "is the metal production yield (including recycling) for a Chabrier IMF.\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
-    "\t\n"
+    "\ntau : float\n"
+    "\tage of the galaxy in years.\n"
     "\nReturns"
     "\n-------"
-    "\n : \n"
-    "\t\n"; 
+    "\n: float \n"
+    "\tStellar absolute metallicity at give time :math:`\\tau`.\n";
   static PyObject * CPySFH_Zstar ( CPySFH * self, PyObject * args ) {
 
     double tau;
@@ -393,8 +447,8 @@ extern "C" {
 					  "CPySFH",
 					  "Python wrap of c++ SFH component implementation.\n"
 					  "Build an object of type sfh as:\n"
-					  ">>> import galapy.internal.CPySFH as csfh\n"
-					  ">>> sfh = csfh.CSFH()",
+					  "\t>>> import galapy.internal.CPySFH as csfh\n"
+					  "\t>>> sfh = csfh.CSFH()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef sfh_module */
@@ -418,7 +472,7 @@ extern "C" {
     CPySFH_t.tp_basicsize = sizeof( CPySFH );
     CPySFH_t.tp_dealloc   = (destructor) CPySFH_dealloc;
     CPySFH_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPySFH_t.tp_doc       = DocString_SFHinit;
+    CPySFH_t.tp_doc       = DocString_CSFHinit;
     CPySFH_t.tp_call      = (ternaryfunc) CPySFH_call;
     CPySFH_t.tp_methods   = CPySFH_Methods;
     //~ CPySFH_t.tp_members=Noddy_members;

@@ -17,10 +17,14 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_loadSSP[] =
+    "loadSSP( file_name )\n"
+    "--\n\n"
     "Function for ...\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
+    "\nfile_name : string\n"
+    "\tposition in the file-system of the binary file "
+    "storing the SSP table."
     "\nReturns"
     "\n-------"
     "\n : "; 
@@ -108,7 +112,16 @@ extern "C" {
 
   // ========================================================================================
 
-  // initialize CPyCSP Object
+  static const char DocString_CCSPinit[] =
+    "CCSP( self, lambda, tau, Z, SSPtable )\n"
+    "--\n\n"
+    "Composite Stellar Population (CSP) object.\n"
+    "\nParameters"
+    "\n----------"
+    "\nlambda   : array-like\n"
+    "\ntau      : array-like\n"
+    "\nZ        : array-like\n"
+    "\nSSPtable : array-like\n"; 
   static int CPyCSP_init ( CPyCSP *self, PyObject *args, PyObject *kwds ) {
 
     PyArrayObject * Lbuf = NULL, * Tbuf = NULL, * Zbuf = NULL, * SSPbuf = NULL;
@@ -148,12 +161,15 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_set_params[] =
+    "set_params( self, psi, Zstar, iZl, itl )\n"
+    "--\n\n"
     "Function for setting the parameters of the model.\n"
     "\nParameters"
     "\n----------"
     "\npsi   : array-like\n"
     "\nZstar : array-like\n"
-    "\nizl   : array-like\n"
+    "\niZl   : array-like\n"
+    "\nitl   : integer\n"
     "\nReturns"
     "\n-------"
     "\n: None"; 
@@ -188,10 +204,14 @@ extern "C" {
   // ========================================================================================
   
   static const char DocString_getitem[] =
+    "SSP(self, il, it, iz)\n"
+    "--\n\n"
     "Function for ...\n"
     "\nParameters"
     "\n----------"
-    "\n : \n"
+    "\nil : uint\n"
+    "\nit : uint\n"
+    "\niz : uint\n"
     "\nReturns"
     "\n-------"
     "\n : "; 
@@ -212,10 +232,13 @@ extern "C" {
   // ========================================================================================
 
   static const char DocString_emission[] =
+    "emission( self, il, Ftau = 1. )\n"
+    "--\n\n"
     "Computes the CSP emission at given index in the wavelenght-grid.\n"
     "It approximates the integral:\n"
-    "\n.. math:\n\tL_\\lambda^\\text{CSP,unatt}(\\tau') = "
-    "\\int_0^{\\tau'}\\text{d}\\tau F(\\tau)\\cdot"
+    "\n.. math::\n"
+    "\n\tL_\\lambda^\\text{CSP,unatt}(\\tau') = "
+    "\\int_0^{\\tau'}\\text{d}\\tau F(\\tau)\\cdot "
     "L_\\lambda^\\text{SSP}\\bigl[\\tau, Z_\\ast(\\tau'-\\tau)\\bigr]\\psi(\\tau'-\\tau)\n"
     "\nParameters"
     "\n----------"
@@ -325,8 +348,8 @@ extern "C" {
 					  "CPyCSP",
 					  "Python wrap of c++ CSP component implementation.\n"
 					  "Build an object of type csp as:\n"
-					  ">>> import galapy.internal.CPyCSP as ccsp\n"
-					  ">>> csp = ccsp.CCSP()",
+					  "\t>>> import galapy.internal.CPyCSP as ccsp\n"
+					  "\t>>> csp = ccsp.CCSP()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef csp_module */
@@ -350,7 +373,7 @@ extern "C" {
     CPyCSP_t.tp_basicsize = sizeof( CPyCSP );
     CPyCSP_t.tp_dealloc   = (destructor) CPyCSP_dealloc;
     CPyCSP_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPyCSP_t.tp_doc       = "CSP objects";
+    CPyCSP_t.tp_doc       = DocString_CCSPinit; //"CSP objects";
     // CPyCSP_t.tp_call      = (ternaryfunc) CPyCSP_call;
     CPyCSP_t.tp_methods   = CPyCSP_Methods;
     //~ CPyCSP_t.tp_members=Noddy_members;
