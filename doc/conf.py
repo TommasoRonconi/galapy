@@ -102,3 +102,18 @@ html_static_path = []
 
 # Define position of the logo
 # html_logo = '../images/SAD.png'
+
+# -- Options for LaTeX output ---------------------------------------------
+
+latex_engine = 'pdflatex'
+latex_elements = {}
+
+# latex_logo = '_static/logo.jpg'
+
+# Grouping the document tree into LaTeX files. List of tuples
+# (source start file, target name, title,
+#  author, documentclass [howto, manual, or own class]).
+latex_documents = [
+    (master_doc, 'main.tex', 'GaLapy Documentation',
+     'Tommaso Ronconi', 'manual')
+]

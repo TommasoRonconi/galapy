@@ -1,6 +1,8 @@
 SOURCEDIR=./
 
-OUTPUTDIR=/tmp/galapy_doc/
+LOC=/tmp
+
+OUTPUTDIR=$(LOC)/galapy_doc/
 
 FILEDIR=/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy
 
@@ -8,7 +10,7 @@ all: docs_html docs_latex
 
 
 docs_html: conf.py index.rst python_doc/*
-	sphinx-build -b html $(SOURCEDIR) $(OUTPUTDIR)
+	sphinx-build -b html $(SOURCEDIR) $(OUTPUTDIR)/html/
 
 docs_latex: conf.py index.rst python_doc/*
-	sphinx-build -b latex $(SOURCEDIR) $(OUTPUTDIR)
+	sphinx-build -b latex $(SOURCEDIR) $(OUTPUTDIR)/latex/
