@@ -4,7 +4,6 @@ import sysconfig
 import numpy as np
 
 from setuptools import setup, find_packages, Extension
-from setuptools.command.build_ext import build_ext
     
 extra_compile_args = []
 extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
@@ -18,18 +17,6 @@ extra_link_args += [ el
                      for el
                      in sysconfig.get_config_var('LDFLAGS').split() ]
 extra_link_args += [ '-Wl,--no-undefined' ]
-
-class custom_build_ext(build_ext):
-    def build_extensions(self):
-        # Override the compiler executables. Importantly, this
-        # removes the "default" compiler flags that would
-        # otherwise get passed on to to the compiler, i.e.,
-        # distutils.sysconfig.get_var("CFLAGS").
-        self.compiler.set_executable("compiler", " ".join([ "g++" ] + extra_compile_args ) )
-        #self.compiler.set_executable("compiler_so", " ".join([ "g++" ] + extra_compile_args ) )
-        #self.compiler.set_executable("compiler_cxx", " ".join([ "g++" ] + extra_compile_args ) )
-        self.compiler.set_executable("linker_so", "g++")
-        build_ext.build_extensions(self)
 
 def main():
 
@@ -45,7 +32,7 @@ def main():
     #############################################################################
     # C++ implementation of SFH functions and types
     
-    ext_sfh = Extension( "galapy.internal.CPySFH",
+    ext_sfh = Extension( "galapy.SFH_core",
                          [ os.path.join( 'sfh', 'src', 'cpy_sfh.cpp' ),
                            os.path.join( 'sfh', 'src', 'sfh_base.cpp' ),
                            os.path.join( 'sfh', 'src', 'sfh_insitu.cpp')
@@ -63,7 +50,7 @@ def main():
     #############################################################################
     # C++ implementation of CSP functions and types
     
-    ext_csp = Extension( "galapy.internal.CPyCSP",
+    ext_csp = Extension( "galapy.CSP_core",
                          [ os.path.join( 'csp', 'src', 'cpy_csp.cpp' ),
                            os.path.join( 'csp', 'src', 'csp.cpp' ),
                          ],
@@ -79,7 +66,7 @@ def main():
     #############################################################################
     # C++ implementation of ISM functions and types
     
-    ext_ism = Extension( "galapy.internal.CPyISM",
+    ext_ism = Extension( "galapy.ISM_core",
                          [ os.path.join( 'ism', 'src', 'cpy_ism.cpp' ),
                            os.path.join( 'ism', 'src', 'ism.cpp' ),
                          ],

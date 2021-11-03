@@ -435,7 +435,7 @@ extern "C" {
     };
 
   static PyTypeObject CPySFH_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "CPySFH.CSFH"   /* tp_name */
+				   "SFH_core.SFH"   /* tp_name */
   };
   
   // ========================================================================================
@@ -444,17 +444,17 @@ extern "C" {
 
   static struct PyModuleDef sfh_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "CPySFH",
+					  "SFH_core",
 					  "Python wrap of c++ SFH component implementation.\n"
 					  "Build an object of type sfh as:\n"
-					  "\t>>> import galapy.internal.CPySFH as csfh\n"
-					  "\t>>> sfh = csfh.CSFH()",
+					  "\t>>> import galapy.SFH_core as csfh\n"
+					  "\t>>> sfh = SFH_core.SFH()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef sfh_module */
 
   /* Create the module */
-  PyMODINIT_FUNC PyInit_CPySFH( void ) {
+  PyMODINIT_FUNC PyInit_SFH_core( void ) {
 
     /* -------------------- */
     /* Create CPySFH module */
@@ -481,7 +481,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPySFH_t );
     // Add CSFH object to the module
-    PyModule_AddObject( m, "CSFH", (PyObject *)&CPySFH_t );
+    PyModule_AddObject( m, "SFH", (PyObject *)&CPySFH_t );
 
     /* -------------------------------- */
     /* Initialize NumPy Array interface */

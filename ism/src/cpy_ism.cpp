@@ -308,7 +308,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyDD_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				  "CPyISM.CDD"   /* tp_name */
+				  "ISM_core.DD"   /* tp_name */
   };
   
   // ========================================================================================
@@ -405,7 +405,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyMC_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-  				  "CPyISM.CMC"   /* tp_name */
+  				  "ISM_core.MC"   /* tp_name */
   };
   
   // ========================================================================================
@@ -503,18 +503,18 @@ extern "C" {
 
   static struct PyModuleDef ism_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "CPyISM",
+					  "ISM_core",
 					  "Python wrap of c++ ISM component implementation.\n"
 					  "Build an object of type ism as:\n"
-					  ">>> import galapy.internal.CPyISM as cism\n"
-					  ">>> dd = cism.CDD()"
-					  ">>> mc = cism.CMC()",
+					  ">>> import galapy.ISM_core as cism\n"
+					  ">>> dd = cism.DD()"
+					  ">>> mc = cism.MC()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef ism_module */
 
   /* Create the module */
-  PyMODINIT_FUNC PyInit_CPyISM( void ) {
+  PyMODINIT_FUNC PyInit_ISM_core( void ) {
 
     /* -------------------- */
     /* Create CPyISM module */
@@ -540,7 +540,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPyDD_t );
     // Add CDD object to the module
-    PyModule_AddObject( m, "CDD", (PyObject *)&CPyDD_t );
+    PyModule_AddObject( m, "DD", (PyObject *)&CPyDD_t );
 
     /* -------------------------------------- */
     /* Adding new object CMC to CPyISM module */
@@ -558,7 +558,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPyMC_t );
     // Add CMC object to the module
-    PyModule_AddObject( m, "CMC", (PyObject *)&CPyMC_t );
+    PyModule_AddObject( m, "MC", (PyObject *)&CPyMC_t );
 
     /* ---------------------------------------- */
     /* Adding Non-Type methods to CPyISM module */
