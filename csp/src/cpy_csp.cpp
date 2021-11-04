@@ -336,7 +336,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyCSP_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "CSP_core.CSP"   /* tp_name */
+				   "CSP_core.CCSP"   /* tp_name */
   };
   
   // ========================================================================================
@@ -349,7 +349,7 @@ extern "C" {
 					  "Python wrap of c++ CSP component implementation.\n"
 					  "Build an object of type csp as:\n"
 					  "\t>>> import galapy.CSP_core as ccsp\n"
-					  "\t>>> csp = ccsp.CSP()",
+					  "\t>>> csp = ccsp.CCSP()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef csp_module */
@@ -382,7 +382,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPyCSP_t );
     // Add CCSP object to the module
-    PyModule_AddObject( m, "CSP", (PyObject *)&CPyCSP_t );
+    PyModule_AddObject( m, "CCSP", (PyObject *)&CPyCSP_t );
 
     /* ---------------------------------------- */
     /* Adding Non-Type methods to CPyCSP module */

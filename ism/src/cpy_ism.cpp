@@ -308,7 +308,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyDD_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				  "ISM_core.DD"   /* tp_name */
+				  "ISM_core.CDD"   /* tp_name */
   };
   
   // ========================================================================================
@@ -405,7 +405,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyMC_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-  				  "ISM_core.MC"   /* tp_name */
+  				  "ISM_core.CMC"   /* tp_name */
   };
   
   // ========================================================================================
@@ -507,8 +507,8 @@ extern "C" {
 					  "Python wrap of c++ ISM component implementation.\n"
 					  "Build an object of type ism as:\n"
 					  ">>> import galapy.ISM_core as cism\n"
-					  ">>> dd = cism.DD()"
-					  ">>> mc = cism.MC()",
+					  ">>> dd = cism.CDD()"
+					  ">>> mc = cism.CMC()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef ism_module */
@@ -540,7 +540,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPyDD_t );
     // Add CDD object to the module
-    PyModule_AddObject( m, "DD", (PyObject *)&CPyDD_t );
+    PyModule_AddObject( m, "CDD", (PyObject *)&CPyDD_t );
 
     /* -------------------------------------- */
     /* Adding new object CMC to CPyISM module */
@@ -550,7 +550,7 @@ extern "C" {
     CPyMC_t.tp_basicsize = sizeof( CPyMC );
     CPyMC_t.tp_dealloc   = (destructor) CPyISM_dealloc;
     CPyMC_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPyMC_t.tp_doc       = "Diffuse-Dust objects";
+    CPyMC_t.tp_doc       = "Molecular-Cloud objects";
     // CPyMC_t.tp_call      = (ternaryfunc) CPyISM_call;
     CPyMC_t.tp_methods   = CPyMC_Methods;
     CPyMC_t.tp_init      = (initproc) CPyMC_init;
@@ -558,7 +558,7 @@ extern "C" {
       return NULL;
     Py_INCREF( &CPyMC_t );
     // Add CMC object to the module
-    PyModule_AddObject( m, "MC", (PyObject *)&CPyMC_t );
+    PyModule_AddObject( m, "CMC", (PyObject *)&CPyMC_t );
 
     /* ---------------------------------------- */
     /* Adding Non-Type methods to CPyISM module */
