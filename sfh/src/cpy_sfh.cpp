@@ -169,6 +169,36 @@ extern "C" {
 
   // ========================================================================================
   
+  static const char DocString_set_tau_quench[] =
+    "set_tau_quench( self, tau_quench )\n"
+    "--\n\n"
+    "Function for setting the :math:`\\tau_\\text{quench}` parameter.\n"
+    "\nParameters"
+    "\n----------"
+    "\ntau_quench : float (optional)\n"
+    "\tnew value of the `tau_quench` parameter, it regulates the age (expressed in years) "
+    "at which the star formation is stopped by an abrupt quenching event. "
+    "If no value is passed, it is resetted to the default value (:math:`\\tau_\\text{quench}=20\\ \\text{Gyr}`)\n"
+    "\nReturns"
+    "\n-------"
+    "\n: None"; 
+  static PyObject * CPySFH_set_tau_quench ( CPySFH * self, PyObject * args ) {
+
+    double tau_quench = 2.e+10;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "|d", &tau_quench ) ) return NULL;
+
+    /* Call C++ member function */
+    self->ptrObj->set_tau_quench( tau_quench );
+
+    // equivalent to return None
+    Py_RETURN_NONE;
+
+  }
+
+  // ========================================================================================
+  
   static const char DocString_Mstar[] =
     "Mstar( self, tau, npoints = 100 )\n"
     "--\n\n"
@@ -407,6 +437,10 @@ extern "C" {
        (PyCFunction) CPySFH_set_params,
        METH_VARARGS,
        DocString_set_params },
+     { "set_tau_quench",
+       (PyCFunction) CPySFH_set_tau_quench,
+       METH_VARARGS,
+       DocString_set_tau_quench },
      { "Mstar",
        (PyCFunction) CPySFH_Mstar,
        METH_VARARGS | METH_KEYWORDS,

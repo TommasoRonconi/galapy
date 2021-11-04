@@ -2,40 +2,103 @@
 import numpy
 
 # Internal imports
-from .internal.CPySFH import *
+from .SFH_core import CSFH
 #from .internal.utils import gxyComp
 
-class SFH () :
-    """ Class defining the model of Star Formation History.
-    The possible models to choose are
+sfh_tunables = {
+    # In-Situ SF model
+    'insitu' : [ 'psi_max', 'tau_star' ],
     
+    # Constant SF model
+    'constant' : [ 'psi' ],
+    
+    # Delayed-Exponential model
+    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star' ],
+    
+    # Log-Normal model
+    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star' ]
+}
+    
+def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
+
+    _models = {
+        # In-Situ SF model
+        'insitu' : {
+            'psi_max' :  100.,
+            'tau_star' : 3.e+8,
+        },
+        # Constant SF model
+        'constant' : {
+            'psi' : 1.,
+        },
+        # Delayed-Exponential model
+        'delayedexp' : {
+            'psi_norm' : 1.,
+            'k_shape' :  0.2,
+            'tau_star' : 1.e+8,
+        },
+        # Log-Normal model
+        'lognormal' : {
+            'psi_norm' :   100.,
+            'sigma_star' : 2.,
+            'tau_star' :   3.e+8,
+        }
+    }
+    out = { 'tau_quench' : tau_quench, 'model' : model }
+    out.update( _models[ model ] )
+    temp = set(out.keys())
+    for k in set(out.keys()).intersection(kwargs.keys()) :
+        out[k] = kwargs[k]
+
+    return out
+        
+
+class SFH () :
+    """ Class wrapping the C-core implementation of the Star Formation History type.    
 
     Parameters
     ----------
     tau_quench : float
       Eventual abrupt quenching time for star formation. 
-      Should be expressed in years. Refers to the age of the galaxy.
+      Should be expressed in years and is expressed in terms 
+      of the time passed from the formation of the galaxy.
 
     model : string
       One among ( 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst' ).
       Default is 'insitu'.
+
+    Note
+    ----
+    Not for SED fitting, use the galaxy class
     """
 
-    def __init__ ( self, *args, **kwargs ) :
-        self.csfh = CSFH( *args, **kwargs )
-        self.__call__.__func__.__doc__ = self.csfh.__call__.__doc__
-        self.Mstar.__func__.__doc__    = self.csfh.Mstar.__doc__
-        self.Mdust.__func__.__doc__    = self.csfh.Mdust.__doc__
-        self.Mgas.__func__.__doc__     = self.csfh.Mgas.__doc__
-        self.Zgas.__func__.__doc__     = self.csfh.Zgas.__doc__
-        self.Zstar.__func__.__doc__    = self.csfh.Zstar.__doc__
+    def __init__ ( self, tau_quench = 2.e+20, model = 'insitu', **kwargs ) :
+        
+        self.core = CSFH( tau_quench, model )
+        self.params = gen_params_dict( tau_quench, model, **kwargs )
+        self.tunable = set( self.params.keys() )
+        self.tunable.remove('model')
+
+        # steal docstrings from C-core:
+        self.__call__.__func__.__doc__ = self.core.__call__.__doc__
+        self.Mstar.__func__.__doc__    = self.core.Mstar.__doc__
+        self.Mdust.__func__.__doc__    = self.core.Mdust.__doc__
+        self.Mgas.__func__.__doc__     = self.core.Mgas.__doc__
+        self.Zgas.__func__.__doc__     = self.core.Zgas.__doc__
+        self.Zstar.__func__.__doc__    = self.core.Zstar.__doc__
         
 
     def __call__ ( self, tau ) :
-        return numpy.asarray( self.csfh( tau ) )
+        return self.core( tau )
 
-    def set_parameters ( self, params ) :
-        self.csfh.set_params( numpy.asarray( params, dtype = float ) )
+    def set_parameters ( self, tau_quench = None, **kwargs ) :
+        if tau_quench :
+            self.core.set_tau_quench( tau_quench )
+        self.params.update( kwargs )
+        self.core.set_params( numpy.asarray( [
+            self.params[k]
+            for k in sfh_tunables[self.params['model']]
+        ], dtype=float) )
         return;
 
     def Mstar ( self, tau, npoints = 100 ) :
@@ -46,26 +109,67 @@ class SFH () :
         tau : array-like or float
         
         """
-        if hasattr( tau, "__len__") :
-            return numpy.array( [ self.csfh.Mstar( _t, npoints )
-                                  for _t in tau ] )
-        return self.csfh.Mstar( tau, npoints )
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( [ self.core.Mstar( _t, npoints )
+                               for _t in tau ],
+                             dtype=numpy.float64 )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
 
     def Mdust ( self, tau ) :
-        pass
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( [ self.core.Mdust( _t )
+                               for _t in tau ],
+                             dtype=numpy.float64 )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
 
     def Mgas ( self, tau ) :
-        pass
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( [ self.core.Mgas( _t )
+                               for _t in tau ],
+                             dtype=numpy.float64 )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
 
     def Zgas ( self, tau ) :
-        pass
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( [ self.core.Zgas( _t )
+                               for _t in tau ],
+                             dtype=numpy.float64 )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
 
     def Zstar ( self, tau ) :
-        pass
-
-
-        
-
-    
-    
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( [ self.core.Zstar( _t )
+                               for _t in tau ],
+                             dtype=numpy.float64 )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
     

@@ -54,6 +54,8 @@ namespace sed {
     virtual ~sfh_base () = default;
 
     virtual void set_params ( const double * const param ) noexcept = 0;
+    void set_tau_quench ( const double tau_q ) { _tau_quench = tau_q; };
+    
     std::vector< double > get_params () { return _paramsrc; }
     
     double operator() ( const double xx ) const noexcept;
