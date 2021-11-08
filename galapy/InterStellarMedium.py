@@ -108,4 +108,12 @@ class ISM () :
     def __init__ ( self ) :
         self.mc = MC()
         self.dd = DD()
+
+    def set_parameters ( self ) :
+        pass
+
+    def total_attenuation ( self ) :
+        pass
+
+
         
