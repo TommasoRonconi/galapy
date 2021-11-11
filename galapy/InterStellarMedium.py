@@ -1,6 +1,6 @@
 # External Imports
 import numpy
-from abc import ABC, abstractmethod
+# from abc import ABC, abstractmethod
 
 # Internal imports
 from .ISM_core import CMC, CDD, total_attenuation
