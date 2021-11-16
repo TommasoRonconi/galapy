@@ -78,6 +78,7 @@ class SFH () :
         self.params = gen_params_dict( tau_quench, model, **kwargs )
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
+        self.set_parameters()
 
         # steal docstrings from C-core:
         self.__call__.__func__.__doc__ = self.core.__call__.__doc__
@@ -89,7 +90,15 @@ class SFH () :
         
 
     def __call__ ( self, tau ) :
-        return self.core( tau )
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( self.core( tau ) )
+        if scalar_input :
+            return numpy.squeeze( ret )
+        return ret
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
         if tau_quench :
