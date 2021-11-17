@@ -47,6 +47,7 @@ class ismPhase ():
         self.params = gen_params_dict( self.phase, **kwargs )
         self.core   = builder()
         self.set_parameters( **kwargs )
+        self.T = None
         if T :
             self.set_temperature( T )
                 
@@ -98,6 +99,10 @@ class MC ( ismPhase ) :
     def eta ( self, tt ) :
         return self.core.eta( tt )
 
+    def time_attenuation ( self, ll, tt ) :
+            return 1 - ( 1 - self.attenuation( ll ) )[:,numpy.newaxis] * self.eta( tt )[numpy.newaxis,:]
+        
+
 class DD ( ismPhase ) :
 
     def __init__ ( self, T = None, **kwargs ) :
@@ -112,8 +117,9 @@ class ISM () :
     def set_parameters ( self ) :
         pass
 
-    def total_attenuation ( self ) :
-        pass
+    def total_attenuation ( self, ll, tt ) :
+        attMC = self.mc.time_attenuation( ll, tt )
+        return attMC, attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
 
 
         

@@ -10,13 +10,13 @@ sfh_tunables = {
     'insitu' : [ 'psi_max', 'tau_star' ],
     
     # Constant SF model
-    'constant' : [ 'psi' ],
+    'constant' : [ 'psi', 'Mdust', 'Zgs' ],
     
     # Delayed-Exponential model
-    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star' ],
+    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star', 'Mdust', 'Zgs' ],
     
     # Log-Normal model
-    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star' ]
+    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgs' ]
 }
     
 def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
@@ -29,19 +29,25 @@ def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
         },
         # Constant SF model
         'constant' : {
-            'psi' : 1.,
+            'psi'   : 1.,
+            'Mdust' : 1.e+8,
+            'Zgs'   : 0.1,
         },
         # Delayed-Exponential model
         'delayedexp' : {
             'psi_norm' : 1.,
-            'k_shape' :  0.2,
+            'k_shape'  :  0.2,
             'tau_star' : 1.e+8,
+            'Mdust'    : 1.e+8,
+            'Zgs'      : 0.1,
         },
         # Log-Normal model
         'lognormal' : {
-            'psi_norm' :   100.,
+            'psi_norm'   :   100.,
             'sigma_star' : 2.,
-            'tau_star' :   3.e+8,
+            'tau_star'   :   3.e+8,
+            'Mdust'      : 1.e+8,
+            'Zgs'        : 0.1,
         }
     }
     out = { 'tau_quench' : tau_quench, 'model' : model }

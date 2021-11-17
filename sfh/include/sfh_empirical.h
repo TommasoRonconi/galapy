@@ -22,10 +22,6 @@ namespace sed {
   class sfh_empirical : public sfh_base {
 
   private :
-
-    // tunable parameters
-    double _Mdust = 1.e+8; // [ Msol ]
-    double _Zgs = 0.01;    // [ percent / 100 ]
     
     // private functions of the class
     virtual double _gas_to_dust ( const double tau ) const noexcept {
@@ -33,6 +29,12 @@ namespace sed {
       return 100 * std::pow( get_Zgas( tau ) * sed::cnst::solZ, 0.85 );
 
     }
+
+  protected :
+
+    // tunable parameters
+    double _Mdust = 1.e+8; // [ Msol ]
+    double _Zgs = 0.01;    // [ percent / 100 ]
 
   public :
 
@@ -86,8 +88,16 @@ namespace sed {
     
     void set_params ( const double * const param = nullptr ) noexcept override {
 
-      if ( param ) this->set_Psi( *param );
-      else this->set_Psi( _Psi );
+      if ( param ) {
+	this->set_Psi( param[ 0 ] );
+	this->set_Mdust( param[ 1 ] );
+	this->set_Zgs( param[ 2 ] );
+      }
+      else {
+	this->set_Psi( _Psi );
+	this->set_Mdust( _Mdust );
+	this->set_Zgs( _Zgs );
+      }
       return;
       
     }
@@ -146,11 +156,15 @@ namespace sed {
 	this->set_Psi_norm( param[ 0 ] );
 	this->set_k_shape( param[ 1 ] );
 	this->set_tau_star( param[ 2 ] );
+	this->set_Mdust( param[ 3 ] );
+	this->set_Zgs( param[ 4 ] );
       }
       else {
 	this->set_Psi_norm( _Psi_norm );
 	this->set_k_shape( _k_shape );
 	this->set_tau_star( _tau_star );
+	this->set_Mdust( _Mdust );
+	this->set_Zgs( _Zgs );
       }
       return;
       
@@ -224,11 +238,15 @@ namespace sed {
 	this->set_Psi_norm( param[ 0 ] );
 	this->set_sigma_star( param[ 1 ] );
 	this->set_tau_star( param[ 2 ] );
+	this->set_Mdust( param[ 3 ] );
+	this->set_Zgs( param[ 4 ] );
       }
       else {
 	this->set_Psi_norm( _Psi_norm );
 	this->set_sigma_star( _sigma_star );
 	this->set_tau_star( _tau_star );
+	this->set_Mdust( _Mdust );
+	this->set_Zgs( _Zgs );
       }
       return;
       
