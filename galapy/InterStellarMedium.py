@@ -121,10 +121,6 @@ class ISM () :
                       **{ k : v
                           for k, v in kwargs.items()
                           if k in ism_tunables[ 'dd' ] } )
-        self.params = {
-            'mc' : self.mc.params,
-            'dd' : self.dd.params,
-            }
 
     def set_parameters ( self, **kwargs ) :
         self.mc.set_parameters( **{ k : v
