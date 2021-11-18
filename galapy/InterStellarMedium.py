@@ -100,9 +100,11 @@ class MC ( ismPhase ) :
         return self.core.eta( tt )
 
     def time_attenuation ( self, ll, tt ) :
-            return 1 - ( 1 - self.attenuation( ll ) )[:,numpy.newaxis] * self.eta( tt )[numpy.newaxis,:]
+        return (
+            1 - ( 1 - self.attenuation( ll ) )[:,numpy.newaxis]
+            * self.eta( tt )[numpy.newaxis,:]
+        )
         
-
 class DD ( ismPhase ) :
 
     def __init__ ( self, T = None, **kwargs ) :
@@ -110,16 +112,30 @@ class DD ( ismPhase ) :
 
 class ISM () :
 
-    def __init__ ( self ) :
-        self.mc = MC()
-        self.dd = DD()
+    def __init__ ( self, TMC = None, TDD = None, **kwargs ) :
+        self.mc = MC( TMC,
+                      **{ k : v
+                          for k, v in kwargs.items()
+                          if k in ism_tunables[ 'mc' ] } )
+        self.dd = DD( TDD,
+                      **{ k : v
+                          for k, v in kwargs.items()
+                          if k in ism_tunables[ 'dd' ] } )
+        self.params = {
+            'mc' : self.mc.params,
+            'dd' : self.dd.params,
+            }
 
-    def set_parameters ( self ) :
-        pass
+    def set_parameters ( self, **kwargs ) :
+        self.mc.set_parameters( **{ k : v
+                                    for k, v in kwargs.items()
+                                    if k in ism_tunables[ 'mc' ] } )
+        self.dd.set_parameters( **{ k : v
+                                    for k, v in kwargs.items()
+                                    if k in ism_tunables[ 'dd' ] } )
+        return;
 
     def total_attenuation ( self, ll, tt ) :
         attMC = self.mc.time_attenuation( ll, tt )
         return attMC, attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
 
-
-        
