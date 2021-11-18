@@ -103,7 +103,7 @@ class SFH () :
             scalar_input = True
         ret = numpy.asarray( self.core( tau ) )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
@@ -133,7 +133,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Mdust ( self, tau ) :
@@ -146,7 +146,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Mgas ( self, tau ) :
@@ -159,7 +159,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Zgas ( self, tau ) :
@@ -172,7 +172,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Zstar ( self, tau ) :
@@ -185,6 +185,6 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
     
