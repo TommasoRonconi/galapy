@@ -48,17 +48,17 @@ from galapy import StarFormationHistory as CSFH
 
 tau_quench=8.e+8
 
-#------------------------------------------------------------------------------#
 
-def test_init_models () :
+
+
+def test_sfh_init_models () :
     
     """
     Only models indicate above are valid choices for initialize the class SFH .
  
     """
     
-    with pytest.raises( TypeError, match = "SFH model not valid. Valid models \
-are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst'" ):
+    with pytest.raises( TypeError, match = "SFH model not valid. Valid models are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst'" ):
         sfh = CSFH.SFH( model = '' )
         
 #------------------------------------------------------------------------------#
@@ -83,7 +83,7 @@ are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst'" ):
 """
 
 
-def test_insitu_init () :
+def test_sfh_insitu_init () :
     
     """
     Test initialization of the class SFH .
@@ -91,11 +91,11 @@ def test_insitu_init () :
     """
     
     sfh_insitu = CSFH.SFH( model = 'insitu' )
-    assert isinstance( sfh_insitu,galapy.StarFormationHistory.SFH )
+    assert isinstance( sfh_insitu, galapy.StarFormationHistory.SFH )
 
 #------------------------------------------------------------------------------#
 
-def test_insitu_parameters () :
+def test_sfh_insitu_parameters () :
 
     """
     Test default parameters for 'insitu' model .
@@ -108,7 +108,7 @@ def test_insitu_parameters () :
 
 #------------------------------------------------------------------------------#
 
-def test_insitu_call () :
+def test_sfh_insitu_call () :
     
     """ 
     Test calling the class at specific time ( array-like or float type ) .
@@ -122,7 +122,7 @@ def test_insitu_call () :
                                                          48.25602023, 0. ] ) )
 #------------------------------------------------------------------------------#
 
-def test_insitu_psimax () :
+def test_sfh_insitu_psimax () :
     
     """ 
     Normalization factor equal to zero will return a null sfh . 
@@ -137,7 +137,7 @@ def test_insitu_psimax () :
 
 #------------------------------------------------------------------------------#
 
-def test_insitu_quench () :
+def test_sfh_insitu_quench () :
     
     """
     After tau_quench, sfh must be equal to 0 .
@@ -151,7 +151,7 @@ def test_insitu_quench () :
     
 #------------------------------------------------------------------------------#
 
-def test_insitu_Mstar () :
+def test_sfh_insitu_Mstar () :
     
     """
     Check the value of the stellar mass at quench time and at present time .
@@ -164,7 +164,7 @@ def test_insitu_Mstar () :
 
 #------------------------------------------------------------------------------#
 
-def test_insitu_Mdust () :
+def test_sfh_insitu_Mdust () :
     
     """
     Check the value of the total dust content at quench and at present time .
@@ -176,7 +176,7 @@ def test_insitu_Mdust () :
     
 #------------------------------------------------------------------------------#
 
-def test_insitu_Mgas () :
+def test_sfh_insitu_Mgas () :
     
     """
     Check the value of total gas content at quench and at present time .
@@ -189,7 +189,7 @@ def test_insitu_Mgas () :
     
 #------------------------------------------------------------------------------#
 
-def test_insitu_Zstar () :
+def test_sfh_insitu_Zstar () :
     
     """
     Check the value of the stellar metallicity at present time ( ~0.02 ) .
@@ -200,7 +200,7 @@ def test_insitu_Zstar () :
     
 #------------------------------------------------------------------------------#
 
-def test_insitu_Zgas () :
+def test_sfh_insitu_Zgas () :
     
     """
     Check the value of the gas metallicity at present time ( ~0.034 ) .
@@ -229,18 +229,18 @@ zz = 0.02
 
 """
 
-def test_const_init () :
+def test_sfh_const_init () :
     
     """
     Test initialization of the class SFH.
  
     """
     sfh_const = CSFH.SFH( model ='constant' )
-    assert isinstance( sfh_const,galapy.StarFormationHistory.SFH )
+    assert isinstance( sfh_const, galapy.StarFormationHistory.SFH )
 
 #------------------------------------------------------------------------------#
 
-def test_const_parameters( ):
+def test_sfh_const_parameters( ):
 
     """
     Test default parameters for 'constant' model .
@@ -253,7 +253,7 @@ def test_const_parameters( ):
 
 #------------------------------------------------------------------------------#
 
-def test_const_call () :
+def test_sfh_const_call () :
     
     """ 
     Test calling the class at specific time ( array-like or float type ) .
@@ -268,7 +268,7 @@ def test_const_call () :
 
 #------------------------------------------------------------------------------#
 
-def test_const_quench () :
+def test_sfh_const_quench () :
     
     """
     After tau_quench, sfh must be equal to 0 .
@@ -283,7 +283,7 @@ def test_const_quench () :
     
 #------------------------------------------------------------------------------#
 
-def test_const_Mstar () :
+def test_sfh_const_Mstar () :
     
     """
     Check the value of the stellar mass at quench and at present time .
@@ -297,7 +297,7 @@ def test_const_Mstar () :
 
 #------------------------------------------------------------------------------#
 
-def test_const_Mdust () :
+def test_sfh_const_Mdust () :
     
     """
     Check the value of total dust content at quench and at present time
@@ -311,7 +311,7 @@ def test_const_Mdust () :
     
 #------------------------------------------------------------------------------#
 
-def test_const_Mgas () :
+def test_sfh_const_Mgas () :
     
     """
     Check the value of total gas content at present time .
@@ -324,7 +324,7 @@ def test_const_Mgas () :
     
 #------------------------------------------------------------------------------#
 
-def test_const_Zstar () :
+def test_sfh_const_Zstar () :
     
     """
     Check the value of the stellar metallicity at present time 
@@ -337,7 +337,7 @@ def test_const_Zstar () :
     
 #------------------------------------------------------------------------------#
 
-def test_const_Zgas () :
+def test_sfh_const_Zgas () :
     
     """
     Check the value of the Gas Metallicity at present time 
@@ -368,18 +368,18 @@ def test_const_Zgas () :
 
 """
 
-def test_dexp_init () :
+def test_sfh_dexp_init () :
     
     """
     Test initialization of the class SFH .
  
     """
     sfh_dexp = CSFH.SFH( model ='delayedexp' )
-    assert isinstance( sfh_dexp,galapy.StarFormationHistory.SFH )
+    assert isinstance( sfh_dexp, galapy.StarFormationHistory.SFH )
 
 #------------------------------------------------------------------------------#
 
-def test_dexp_parameters( ):
+def test_sfh_dexp_parameters () :
 
     """
     Test default parameters for 'delayedexp' model .
@@ -394,7 +394,7 @@ def test_dexp_parameters( ):
 
 #------------------------------------------------------------------------------#
 
-def test_dexp_call () :
+def test_sfh_dexp_call () :
     
     """ 
     Test calling the class at specific time ( array-like or float type ) .
@@ -410,7 +410,7 @@ def test_dexp_call () :
 
 #------------------------------------------------------------------------------#
 
-def test_dexp_quench () :
+def test_sfh_dexp_quench () :
     
     """
     After tau_quench, sfh must be equal to 0 .
@@ -425,7 +425,7 @@ def test_dexp_quench () :
     
 #------------------------------------------------------------------------------#
 
-def test_dexp_Mstar () :
+def test_sfh_dexp_Mstar () :
     
     """
     Check the value of the stellar mass at quench time and at present time .
@@ -439,7 +439,7 @@ def test_dexp_Mstar () :
 
 #------------------------------------------------------------------------------#
 
-def test_dexp_Mdust () :
+def test_sfh_dexp_Mdust () :
     
     """
     Check the value of total dust content at quench and at present time .
@@ -453,7 +453,7 @@ def test_dexp_Mdust () :
     
 #------------------------------------------------------------------------------#
 
-def test_dexp_Mgas () :
+def test_sfh_dexp_Mgas () :
     
     """
     Check the value of total gas content at present time .
@@ -466,7 +466,7 @@ def test_dexp_Mgas () :
     
 #------------------------------------------------------------------------------#
 
-def test_dexp_Zstar () :
+def test_sfh_dexp_Zstar () :
     
     """
     Check the value of the stellar metallicity at present time 
@@ -479,7 +479,7 @@ def test_dexp_Zstar () :
     
 #------------------------------------------------------------------------------#
 
-def test_dexp_Zgas () :
+def test_sfh_dexp_Zgas () :
     
     """
     Check the value of the gas metallicity at present time 
@@ -511,18 +511,18 @@ def test_dexp_Zgas () :
 
 """
 
-def test_lnorm_init () :
+def test_sfh_lnorm_init () :
     
     """
     Test initialization of the class SFH .
  
     """
     sfh_lnorm = CSFH.SFH( model ='lognormal' )
-    assert isinstance( sfh_lnorm,galapy.StarFormationHistory.SFH )
+    assert isinstance( sfh_lnorm, galapy.StarFormationHistory.SFH )
 
 #------------------------------------------------------------------------------#
 
-def test_lnorm_parameters( ):
+def test_sfh_lnorm_parameters () :
 
     """
     Test default parameters for 'lognormal' model .
@@ -539,7 +539,7 @@ def test_lnorm_parameters( ):
 
 #------------------------------------------------------------------------------#
 
-def test_lnorm_call () :
+def test_sfh_lnorm_call () :
     
     """ 
     Test calling the class at specific time ( array-like or float type ) .
@@ -555,7 +555,7 @@ def test_lnorm_call () :
 
 #------------------------------------------------------------------------------#
 
-def test_lnorm_quench () :
+def test_sfh_lnorm_quench () :
     
     """
     After tau_quench, sfh must be equal to 0 .
@@ -570,7 +570,7 @@ def test_lnorm_quench () :
     
 #------------------------------------------------------------------------------#
 
-def test_lnorm_Mstar () :
+def test_sfh_lnorm_Mstar () :
     
     """
     Check the value of the stellar mass at quench and at present time .
@@ -584,7 +584,7 @@ def test_lnorm_Mstar () :
 
 #------------------------------------------------------------------------------#
 
-def test_lnorm_Mdust () :
+def test_sfh_lnorm_Mdust () :
     
     """
     Check the value of total dust content at quench time and at present time 
@@ -598,7 +598,7 @@ def test_lnorm_Mdust () :
     
 #------------------------------------------------------------------------------#
 
-def test_lnorm_Mgas () :
+def test_sfh_lnorm_Mgas () :
     
     """
     Check the value of total gas content at present time .
@@ -611,7 +611,7 @@ def test_lnorm_Mgas () :
     
 #------------------------------------------------------------------------------#
 
-def test_lnorm_Zstar () :
+def test_sfh_lnorm_Zstar () :
     
     """
     Check the value of the stellar metallicity at present time 
@@ -624,7 +624,7 @@ def test_lnorm_Zstar () :
     
 #------------------------------------------------------------------------------#
 
-def test_lnorm_Zgas () :
+def test_sfh_lnorm_Zgas () :
     
     """
     Check the value of the Gas Metallicity at present time 
