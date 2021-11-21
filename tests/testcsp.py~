@@ -1,0 +1,133 @@
+import pytest
+import sadfit
+import numpy as np
+from sadfit.StarFormationHistory import sfh_t
+from sadfit.InterStellarMedium import *
+from sadfit import CompositeStellarPopulation as csp_mod
+
+""" Testing the class which manage quantities derived from the stellar emission by
+    tabulated Simple stellar populations (SSP).
+"""
+
+#Stellar library used
+
+bc03_hr = 'hr_stelib_chab_ised_formatted.dat'
+
+def test_init_csp() :
+    """ 
+    Initialize the class csp_t 
+    
+    """
+    try :
+        csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    except :
+        return False
+    return True
+
+#######################################################
+
+def test_delete_csp():
+    """ 
+    Delete the class
+    """
+    try:
+        csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+        del(csp)
+    except :
+        return False
+    return True
+
+########################################################
+def test_len_csp ():
+    """                                                      
+    Call the class 
+    """
+    try:
+        csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+        len(csp)
+    except :
+        return False
+    return True
+#######################################################
+def test_wavelenghts_csp ():
+    """                                                    
+    Test the wavelenghts array
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    try:
+        csp.wavelenghts()
+    except :
+        return False
+    return True
+#######################################################
+
+def test_wavelenghts_SSP_csp ():
+    """                                                    
+    
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    try:
+        csp.wavelenghts_SSP()
+    except :
+        return False
+    return True
+#######################################################
+
+def test_times_csp ():
+    """                                                    
+    
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    try:
+        csp.times()
+    except :
+        return False
+    return True
+#######################################################
+
+def test_metallicities_csp ():
+    """                                                    
+    Compute metallicities of a CSP
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    try:
+        csp.metallicities()
+    except :
+        return False
+    return True
+#######################################################
+def test_Lindex_csp ():
+    """                                                    
+    
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    with pytest.raises(IndexError,match='Negative index provided'):
+        csp.Lindex(-1,-1,-1)
+    with pytest.raises(IndexError,match='Luminosity index out of range'):
+        csp.Lindex(csp.shape[0],csp.shape[1],csp.shape[2])
+#######################################################
+def test_Lssp_csp ():
+    """                                                    
+    Compute luminosity of a SSP
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    ll=csp.wavelenghts()
+    tt=csp.times()
+    zz=csp.metallicities()
+    try:
+        csp.Lssp(ll,tt,zz)
+    except :
+        return False
+    return True
+#############################################################
+
+def test_Etot_csp ():
+    """                                                    
+    Compute total energy
+    """
+    csp = csp_mod.csp_t(ssp_lib = bc03_hr)
+    try:
+        csp.Etot(1.e+9)
+    except :
+        return False
+    return True

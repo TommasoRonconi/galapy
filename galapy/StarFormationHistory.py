@@ -10,13 +10,13 @@ sfh_tunables = {
     'insitu' : [ 'psi_max', 'tau_star' ],
     
     # Constant SF model
-    'constant' : [ 'psi' ],
+    'constant' : [ 'psi', 'Mdust', 'Zgs' ],
     
     # Delayed-Exponential model
-    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star' ],
+    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star', 'Mdust', 'Zgs' ],
     
     # Log-Normal model
-    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star' ]
+    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgs' ]
 }
     
 def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
@@ -29,19 +29,25 @@ def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
         },
         # Constant SF model
         'constant' : {
-            'psi' : 1.,
+            'psi'   : 1.,
+            'Mdust' : 1.e+8,
+            'Zgs'   : 0.1,
         },
         # Delayed-Exponential model
         'delayedexp' : {
             'psi_norm' : 1.,
-            'k_shape' :  0.2,
+            'k_shape'  :  0.2,
             'tau_star' : 1.e+8,
+            'Mdust'    : 1.e+8,
+            'Zgs'      : 0.1,
         },
         # Log-Normal model
         'lognormal' : {
-            'psi_norm' :   100.,
+            'psi_norm'   :   100.,
             'sigma_star' : 2.,
-            'tau_star' :   3.e+8,
+            'tau_star'   :   3.e+8,
+            'Mdust'      : 1.e+8,
+            'Zgs'        : 0.1,
         }
     }
     out = { 'tau_quench' : tau_quench, 'model' : model }
@@ -78,6 +84,7 @@ class SFH () :
         self.params = gen_params_dict( tau_quench, model, **kwargs )
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
+        self.set_parameters()
 
         # steal docstrings from C-core:
         self.__call__.__func__.__doc__ = self.core.__call__.__doc__
@@ -89,7 +96,15 @@ class SFH () :
         
 
     def __call__ ( self, tau ) :
-        return self.core( tau )
+        tau = numpy.asarray( tau )
+        scalar_input = False
+        if tau.ndim == 0 :
+            tau = tau[None] # makes 'tau' 1D
+            scalar_input = True
+        ret = numpy.asarray( self.core( tau ) )
+        if scalar_input :
+            return ret.item()
+        return ret
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
         if tau_quench :
@@ -118,7 +133,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Mdust ( self, tau ) :
@@ -131,7 +146,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Mgas ( self, tau ) :
@@ -144,7 +159,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Zgas ( self, tau ) :
@@ -157,7 +172,7 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
 
     def Zstar ( self, tau ) :
@@ -170,6 +185,6 @@ class SFH () :
                                for _t in tau ],
                              dtype=numpy.float64 )
         if scalar_input :
-            return numpy.squeeze( ret )
+            return ret.item()
         return ret
     

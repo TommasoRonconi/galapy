@@ -72,9 +72,9 @@ class CSP () :
     def emission ( self, age, sfh, il = None, ftau = None ) :
 
         self.set_parameters( age, sfh )
-        if not il :
+        if il is None :
             il = numpy.arange( len(self.l), dtype = numpy.uint64 )
-        if ftau :
+        if ftau is not None :
             return self.core.emission( il, ftau )
             
         return self.core.emission( il )
