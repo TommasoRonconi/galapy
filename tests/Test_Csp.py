@@ -28,12 +28,6 @@ import galapy
 from galapy import StarFormationHistory as CSFH
 from galapy import CompositeStellarPopulation as CCSP
 
-#Default stellar library
-
-bc03_hr = 'bc03.basel.chab.extend'
-
-
-
 def test_csp_init () :
     
     """ 
