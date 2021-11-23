@@ -6,33 +6,38 @@ import numpy
 from .ISM_core import CMC, CDD, total_attenuation
 
 ism_tunables = {
+    # Molecular Clouds
     'mc' : [ 'f_MC', 'norm_MC', 'N_MC', 'R_MC', 'Zgas', 'tau_esc', 'Mgas' ],
+    
+    # Diffuse Dust
     'dd' : [ 'f_MC', 'norm_DD', 'Mdust', 'Rdust', 'f_PAH' ],
 }
 
-mc_dict = {
-    'f_MC'    : 0.5,
-    'norm_MC' : 1.e+02,
-    'N_MC'    : 1.e+03,
-    'R_MC'    : 10.,
-    'Zgas'    : 0.5,
-    'tau_esc' : 1.e+07,
-    'Mgas'    : 1.e+09,
-}
-
-dd_dict = {
-    'f_MC'    : 0.5,
-    'norm_DD' : 1.e+00,
-    'Mdust'   : 1.e+07,
-    'Rdust'   : 1.e+03,
-    'f_PAH'   : 0.2
-}
-
-def gen_params_dict ( phase, **kwargs ) :
+def ism_build_params ( phase, **kwargs ) :
     if phase == 'mc' :
-        return mc_dict
+        out = {
+            'f_MC'    : 0.5,
+            'norm_MC' : 1.e+02,
+            'N_MC'    : 1.e+03,
+            'R_MC'    : 10.,
+            'Zgas'    : 0.5,
+            'tau_esc' : 1.e+07,
+            'Mgas'    : 1.e+09,
+        }
+        for k in set( out.keys() ).intersection(kwargs.keys()) :
+            out[k] = kwargs[k]
+        return out
     if phase == 'dd' :
-        return dd_dict
+        return {
+            'f_MC'    : 0.5,
+            'norm_DD' : 1.e+00,
+            'Mdust'   : 1.e+07,
+            'Rdust'   : 1.e+03,
+            'f_PAH'   : 0.2
+        }
+        for k in set( out.keys() ).intersection(kwargs.keys()) :
+            out[k] = kwargs[k]
+        return out
     av_phases = ''
     for k in ism_tunables.keys() :
         av_phases += f'"{k}" '
@@ -44,7 +49,7 @@ class ismPhase ():
     def __init__ ( self, phase, builder, T = None, **kwargs ) :
         
         self.phase  = phase
-        self.params = gen_params_dict( self.phase, **kwargs )
+        self.params = ism_build_params( self.phase, **kwargs )
         self.core   = builder()
         self.set_parameters( **kwargs )
         self.T = None

@@ -19,7 +19,7 @@ sfh_tunables = {
     'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgs' ]
 }
     
-def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
+def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
 
     _models = {
         # In-Situ SF model
@@ -52,7 +52,6 @@ def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
     }
     out = { 'tau_quench' : tau_quench, 'model' : model }
     out.update( _models[ model ] )
-    temp = set(out.keys())
     for k in set(out.keys()).intersection(kwargs.keys()) :
         out[k] = kwargs[k]
 
@@ -81,7 +80,7 @@ class SFH () :
     def __init__ ( self, tau_quench = 2.e+20, model = 'insitu', **kwargs ) :
         
         self.core = CSFH( tau_quench, model )
-        self.params = gen_params_dict( tau_quench, model, **kwargs )
+        self.params = sfh_build_params( tau_quench, model, **kwargs )
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
         self.set_parameters()

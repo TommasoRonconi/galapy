@@ -4,6 +4,6 @@
 import galapy.StarFormationHistory
 import galapy.CompositeStellarPopulation
 import galapy.InterStellarMedium
+from galapy.internal.constants import *
 
-__all__ = [ 'StarFormationHistory', 'CompositeStellarPopulation', 'InterStellarMedium' ]
-
+__all__ = [ 'Galaxy', 'StarFormationHistory', 'CompositeStellarPopulation', 'InterStellarMedium' ]
