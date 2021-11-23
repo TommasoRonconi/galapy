@@ -26,7 +26,7 @@ import pytest
 # Internal imports
 import galapy
 from galapy import StarFormationHistory as CSFH
-from galapy import CompositeStellarPopulation as CCSP
+from galapy import CompositeStellarPopulation as gpcsp
 
 def test_csp_init () :
     
@@ -35,7 +35,7 @@ def test_csp_init () :
     
     """
     
-    csp = CCSP.CSP( )
+    csp = gpcsp.CSP( )
     assert isinstance( csp, galapy.CompositeStellarPopulation.CSP )
 
 #------------------------------------------------------------------------------#
@@ -52,7 +52,7 @@ def test_csp_lib () :
                         'not available; you can see the list of available '
                         'libraries by running '
                         'galapy.CompositeStellarPopulation.print_ssp_libs()' ) :
-        csp = CCSP.CSP( ssp_lib = lib )
+        csp = gpcsp.CSP( ssp_lib = lib )
     
 #------------------------------------------------------------------------------#
 
@@ -66,7 +66,7 @@ def test_csp_parameters () :
     
     age = 1.e+7
     sfh = 1.
-    csp = CCSP.CSP( )
+    csp = gpcsp.CSP( )
     with pytest.raises( ValueError, match = 'Argument sfh must be an instance '
                         'of either galapy.StarFormationHistory.SFH or '
                         'galapy.SFH_core.' ) :
@@ -83,7 +83,7 @@ def test_csp_SSP_wavelengths () :
 
     """
     
-    csp = CCSP.CSP( )
+    csp = gpcsp.CSP( )
     assert len(csp.l) == 2223
     assert csp.l[1000] == 14025.
     
@@ -97,7 +97,7 @@ def test_csp_SSP_time () :
     and one of its value .
 
     """
-    csp = CCSP.CSP( ) 
+    csp = gpcsp.CSP( ) 
     assert len(csp.t) == 221
     assert csp.t[100] == 3.7e+7
     
@@ -111,7 +111,7 @@ def test_csp_SSP_metallicity () :
 
     """
 
-    csp = CCSP.CSP( ) 
+    csp = gpcsp.CSP( ) 
     assert len(csp.Z) == 7
     assert csp.Z[3] == 0.008
     
@@ -125,7 +125,7 @@ def test_csp_SSP_luminosity () :
 
     """
     
-    csp = CCSP.CSP( )
+    csp = gpcsp.CSP( )
     iz = 3      # zz = 0.008
     it = 100    # tt = 3.e+7
     Lssp=[ csp.SSP( il, it, iz ) for il in range ( 0, len(csp.l), 500 ) ]
@@ -145,7 +145,7 @@ def test_csp_emission () :
     # ll = 14025.0 amstrong 
     ages = [ 1.e+7, 1.e+8, 1.e+9 ]
     sfh = CSFH.SFH( )
-    csp = CCSP.CSP( )
+    csp = gpcsp.CSP( )
     il = 1000               # ll wavelenght index
     Lcsp = [ csp.emission( age, sfh ) for age in ages ]
     Lcsp_ll = [ Lcsp[ i ][ il ] for i in range( 0, len ( ages ) ) ]
