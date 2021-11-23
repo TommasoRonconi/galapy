@@ -43,6 +43,7 @@ class CSP () :
                               'you can see the list of available libraries by running '
                               'galapy.CompositeStellarPopulation.print_ssp_libs()' )
         self.l, self.t, self.Z, self.L = loadSSP(SSP_LIB[self.ssp_lib])
+        self.shape = (self.l.size, self.t.size, self.Z.size)
         self.core = CCSP( self.l, self.t, self.Z, self.L )
         self._timetuple = None
 
@@ -67,6 +68,10 @@ class CSP () :
         return;
             
     def SSP ( self, il, it, iz ) :
+        if il < 0 or it < 0 or iz < 0 :
+            raise IndexError( 'Negative index provided' )
+        if il >= self.shape[ 0 ] or it >= self.shape[ 1 ] or iz >= self.shape[ 2 ] :
+            raise IndexError( 'Luminosity index out of range' )
         return self.core.SSP( il, it, iz )
 
     def emission ( self, age, sfh, il = None, ftau = None ) :
