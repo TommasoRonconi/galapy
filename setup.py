@@ -6,9 +6,10 @@ import numpy as np
 from setuptools import setup, find_packages, Extension
     
 extra_compile_args = []
-extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
-extra_compile_args += ["-std=c++14", "-fPIC", "-shared"]
-extra_compile_args.remove( "-Wstrict-prototypes" )
+# extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
+# extra_compile_args.remove( "-Wstrict-prototypes" )
+# extra_compile_args.remove( "-O2" )
+extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
 
 extra_link_args = []
 extra_link_args += [ el
@@ -27,6 +28,7 @@ def main():
                                         else el
                                         for el
                                         in sysconfig.get_config_var('BLDSHARED').split() ])
+    print( extra_compile_args )
     
 
     #############################################################################
@@ -43,7 +45,7 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
+                         language="c++14",
                          libraries = [ "m" ]
     )
 
@@ -59,7 +61,7 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
+                         language="c++14",
                          libraries = [ "m" ]
     )
 
@@ -75,7 +77,7 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
+                         language="c++14",
                          libraries = [ "m" ]
     )
 
