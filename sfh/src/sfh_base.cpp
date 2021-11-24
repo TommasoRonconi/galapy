@@ -13,9 +13,9 @@ double sed::sfh_base::operator() ( const double tt ) const noexcept {
 
 // =============================================================================
 
-void sed::sfh_base::_model ( const double * const tau,
-			     double * const psi,
-			     const std::size_t size ) const noexcept {
+void sed::sfh_base::model ( const double * const tau,
+			    double * const psi,
+			    const std::size_t size ) const noexcept {
   
   for ( size_t ii = 0; ii < size; ++ii )
     psi[ ii ] = ( *this )( tau[ ii ] );
@@ -55,7 +55,7 @@ void sed::sfh_base::eval ( const double * const tau,
 			   const double * const param ) noexcept {
   
   if ( param ) set_params( param );
-  _model( tau, psi, size );
+  model( tau, psi, size );
   return;
       
 }

@@ -96,14 +96,15 @@ class SFH () :
 
     def __call__ ( self, tau ) :
         tau = numpy.asarray( tau )
-        scalar_input = False
+        scalar = False
         if tau.ndim == 0 :
             tau = tau[None] # makes 'tau' 1D
-            scalar_input = True
-        ret = numpy.asarray( self.core( tau ) )
-        if scalar_input :
+            scalar = True
+        ret = self.core( tau )
+        if scalar :
             return ret.item()
         return ret
+        #return self.core( tau )
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
         if tau_quench :
