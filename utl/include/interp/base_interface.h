@@ -33,7 +33,7 @@ namespace utl {
 	_fv.reserve( _thinness );
 
       }
-
+    
     /// move constructor
     base_interface ( base_interface && ii )
       : _x_min{ std::move( ii._x_min ) }, _x_max{ std::move( ii._x_max ) },
@@ -70,17 +70,17 @@ namespace utl {
 
     virtual double integrate ( const double aa, const double bb ) const = 0;
 
-    virtual size_t get_thinness () { return _thinness; }
+    virtual size_t get_thinness () const { return _thinness; }
 
-    virtual double get_xmin () { return _x_min; }
+    virtual double get_xmin () const { return _x_min; }
 
-    virtual double get_xmax () { return _x_max; }
+    virtual double get_xmax () const { return _x_max; }
 
-    virtual std::vector< double > get_xv () { return _xv; }
+    virtual std::vector< double > get_xv () const { return _xv; }
 
-    virtual std::vector< double > get_fv () { return _fv; }
+    virtual std::vector< double > get_fv () const { return _fv; }
 
-    virtual size_t size () { return _thinness; }
+    virtual size_t size () const { return _thinness; }
       
   }; // endclass base_interface
 

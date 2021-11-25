@@ -94,6 +94,37 @@ namespace utl {
 
     }
 
+    
+    /// move constructor
+    lin_interp ( lin_interp && ii )
+      : base_interface{ ii }, _T{ std::move( _T ) } {}
+    
+    /// copy constructor
+    lin_interp ( const lin_interp & ii )
+      : base_interface{ ii } {
+      
+      _xv = ii.get_xv(); _fv = ii.get_fv();
+      _alloc();
+      
+    }
+
+    /// destructor
+    ~lin_interp () = default;
+
+    /// move assignment
+    lin_interp & operator= ( lin_interp && ii ) noexcept = default;
+
+
+    /// copy-assignment operator
+    lin_interp & operator= ( lin_interp other ) {
+
+      std::swap( _T, other._T );
+      other.swap( *this );
+      
+      return * this;
+	
+    }    
+
     double eval ( const double xx ) const noexcept override {
 
       return _T.find( xx )->value().eval( xx );
