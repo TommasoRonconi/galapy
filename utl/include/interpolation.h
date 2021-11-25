@@ -2,7 +2,6 @@
 #define __INTERPOLATOR__
 
 /// internal includes
-// #include <error_handling.h>
 #include <utilities.h>
 #include <interp/base_interface.h>
 //#include <interp/gsl_interface.h>
