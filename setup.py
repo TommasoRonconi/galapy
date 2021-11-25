@@ -4,11 +4,12 @@ import sysconfig
 import numpy as np
 
 from setuptools import setup, find_packages, Extension
-    
-extra_compile_args = [ el
-                       for el
-                       in sysconfig.get_config_var('CFLAGS').split()
-                       if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
+
+extra_compile_args = []
+# extra_compile_args = [ el
+#                        for el
+#                        in sysconfig.get_config_var('CFLAGS').split()
+#                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
 extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
 
 extra_link_args = []
@@ -46,7 +47,7 @@ def main():
                          ],
                          extra_compile_args=extra_compile_args,
                          language="c++14",
-                         libraries = [ "m" ]
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -62,7 +63,7 @@ def main():
                          ],
                          extra_compile_args=extra_compile_args,
                          language="c++14",
-                         libraries = [ "m" ]
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -78,7 +79,7 @@ def main():
                          ],
                          extra_compile_args=extra_compile_args,
                          language="c++14",
-                         libraries = [ "m" ]
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -92,7 +93,7 @@ def main():
                          ],
                          extra_compile_args=extra_compile_args,
                          language="c++14",
-                         libraries = [ "m" ]
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################

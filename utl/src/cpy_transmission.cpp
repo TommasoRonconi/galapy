@@ -23,7 +23,7 @@ extern "C" {
   // ========================================================================================
   
   // initialize CPyBPT Object
-  static const char DocString_CTRAinit[] =
+  static const char DocString_BPTinit[] =
     "BPT( self, tau_quench, model = 'insitu')\n"
     "--\n\n"
     "Class defining ...\n\n"
@@ -74,7 +74,7 @@ extern "C" {
     
     npy_intp size = PyArray_DIM( NPyBuf, 0 );
     double * bpt = new double [size];
-    for ( auto ii = 0; ii < size; ++ii )
+    for ( std::size_t ii = 0; ii < size; ++ii )
       bpt[ ii ] = ( *( self->ptrObj ) )
 	( *reinterpret_cast< double * >( PyArray_GETPTR1( NPyBuf, ii ) ) );
 
@@ -166,7 +166,7 @@ extern "C" {
     CPyBPT_t.tp_basicsize = sizeof( CPyBPT );
     CPyBPT_t.tp_dealloc   = (destructor) CPyBPT_dealloc;
     CPyBPT_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPyBPT_t.tp_doc       = DocString_CTRAinit;
+    CPyBPT_t.tp_doc       = DocString_BPTinit;
     CPyBPT_t.tp_call      = (ternaryfunc) CPyBPT_call;
     CPyBPT_t.tp_methods   = CPyBPT_Methods;
     //~ CPyBPT_t.tp_members=Noddy_members;
