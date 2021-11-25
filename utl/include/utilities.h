@@ -251,6 +251,25 @@ namespace utl {
     
   }
 
+  /**
+   * @brief Integrate on the whole x-domain with 
+   *        the trapezoid rule
+   *
+   * @param xx x-domain grid
+   * @param fx f(x) values
+   * 
+   * @result the integral of f(x) along the whole x-domain
+   */
+  inline double integrate_trap ( const std::vector< double > xx,
+				 const std::vector< double > fx ) noexcept {
+
+    double integral = 0.;
+    for ( std::size_t ii = 1; ii < xx.size(); ++ii ) 
+      integral += ( fx[ ii ] + fx[ ii-1 ] ) * ( xx[ ii ] - xx[ ii-1 ] );
+    return 0.5 * integral;
+    
+  }
+
 } //endnamespace utl
 
 #endif //__UTILITIES__
