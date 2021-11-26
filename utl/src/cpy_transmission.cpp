@@ -121,12 +121,96 @@ extern "C" {
 
   // ========================================================================================
   
+  // Get the bandpass flux
+  static const char DocString_get_lmin[] =
+    "get_lmin( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_lmin ( CPyBPT * self ) {
+    
+    return PyFloat_FromDouble( self->ptrObj->lmin );
+
+  }
+
+  // ========================================================================================
+  
+  // Get the bandpass flux
+  static const char DocString_get_lmax[] =
+    "get_lmax( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_lmax ( CPyBPT * self ) {
+    
+    return PyFloat_FromDouble( self->ptrObj->lmax );
+
+  }
+
+  // ========================================================================================
+  
+  // Get the bandpass flux
+  static const char DocString_get_lpiv[] =
+    "get_lpiv( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_lpiv ( CPyBPT * self ) {
+    
+    return PyFloat_FromDouble( self->ptrObj->lpiv );
+
+  }
+
+  // ========================================================================================
+  
+  // Get the bandpass flux
+  static const char DocString_get_norm[] =
+    "get_norm( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_norm ( CPyBPT * self ) {
+    
+    return PyFloat_FromDouble( self->ptrObj->norm );
+
+  }
+
+  // ========================================================================================
+  
   static PyMethodDef CPyBPT_Methods[] =
     {
      { "get_bandpass_flux",
        (PyCFunction) CPyBPT_get_bandpass_flux,
        METH_VARARGS,
        DocString_get_bandpass_flux },
+     { "get_lmin",
+       (PyCFunction) CPyBPT_get_lmin,
+       METH_NOARGS,
+       DocString_get_lmin },
+     { "get_lmax",
+       (PyCFunction) CPyBPT_get_lmax,
+       METH_NOARGS,
+       DocString_get_lmax },
+     { "get_lpiv",
+       (PyCFunction) CPyBPT_get_lpiv,
+       METH_NOARGS,
+       DocString_get_lpiv },
+     { "get_norm",
+       (PyCFunction) CPyBPT_get_norm,
+       METH_NOARGS,
+       DocString_get_norm },
      {NULL, NULL, 0, NULL}
     };
 
