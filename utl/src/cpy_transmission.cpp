@@ -39,9 +39,15 @@ extern "C" {
     PyArrayObject * NPyFL = NULL;
     std::vector< double > ll, fl;
     
-    /* Get the passed Python object */
+    /* Get the passed Python objects */
     if ( !PyArg_ParseTuple( args, "O!O!", &PyArray_Type, &NPyLL, &PyArray_Type, &NPyFL ) )
       return -1;
+    
+    if ( PyArray_DIM( NPyLL, 0 ) != PyArray_DIM( NPyFL, 0 ) ) {
+      PyErr_SetString( PyExc_ValueError,
+		       "The input arrays must have the same size." );
+      return -1;
+    }
     
     /* Convert NumPy-arrays to C++ vectors */
     if ( NPyArrayToCxxVector1D< double >( NPyLL, ll ) == -1 ) return -1;
@@ -105,16 +111,17 @@ extern "C" {
 			    &PyArray_Type, &NPyLL,
 			    &PyArray_Type, &NPyFL ) ) return NULL;
 
-    npy_intp Lsize = PyArray_DIM( NPyLL, 0 );
-    npy_intp Fsize = PyArray_DIM( NPyFL, 0 );
-
-    /* Here better raise an exception */
-    if ( Lsize != Fsize ) return NULL;
+    npy_intp size = PyArray_DIM( NPyLL, 0 );
+    if ( size != PyArray_DIM( NPyFL, 0 ) ) {
+      PyErr_SetString( PyExc_ValueError,
+		       "The input arrays must have the same size." );
+      return NULL;
+    }
     
     return PyFloat_FromDouble( self->ptrObj->get_bandpass_flux
 			      ( reinterpret_cast< double * >( PyArray_DATA( NPyLL ) ),
 				reinterpret_cast< double * >( PyArray_DATA( NPyFL ) ),
-				Lsize )
+				size )
 			      );
 
   }
