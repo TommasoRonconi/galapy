@@ -33,6 +33,20 @@ def main():
     
 
     #############################################################################
+    # C++ implementation of the interpolation class
+    
+    ext_intp = Extension( "galapy.internal.interp",
+                          [ os.path.join( 'utl', 'src', 'cpy_interpolation.cpp' )
+                          ],
+                          include_dirs = [ os.path.join( 'utl', 'include' ),
+                                           np.get_include()
+                          ],
+                          extra_compile_args=extra_compile_args,
+                          language="c++14",
+                          libraries = [ "m", "stdc++" ]
+    )
+
+    #############################################################################
     # C++ implementation of SFH functions and types
     
     ext_sfh = Extension( "galapy.SFH_core",
@@ -122,6 +136,7 @@ def main():
            },
            packages = [ 'galapy', 'galapy.internal' ],
            ext_modules = [
+               ext_intp,
                ext_sfh,
                ext_csp,
                ext_ism,
