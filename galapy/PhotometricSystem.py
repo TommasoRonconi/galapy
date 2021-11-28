@@ -100,6 +100,11 @@ class PMS () :
                     self.olims[-1] += [ext.value]
         self.olims = numpy.asarray( self.olims )
 
+        # Store array with pivot wavelenghts
+        self.lpiv = numpy.asarray( [ bpt.get_lpiv()
+                                     for bpt
+                                     in self.bpt.values() ] )
+
     def get_intervals ( self ) :
         """
         """
