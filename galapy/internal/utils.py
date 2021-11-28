@@ -1,6 +1,5 @@
 # External imports
-#from abc import ABC, abstractmethod
-# import collections.abc
+# from abc import ABC, abstractmethod
 from collections.abc import MutableMapping as MM
 import numpy
 
@@ -26,6 +25,17 @@ def trap_int ( xx, yy ) :
     b1b2 = yy[:-1] + yy[1:]
     hh = xx[1:] - xx[:-1]
     return numpy.sum( 0.5 * b1b2 * hh )
+
+###################################################################################
+
+class FlagVal () :
+    def __init__ ( self, value, flag ) :
+        self.value = value
+        self.flag  = flag
+    def __repr__ ( self ) :
+        return f'{type(self).__name__}({self.value},"{self.flag}")'
+    def __str__ ( self ) :
+        return f'{self.flag}:{self.value}'
 
 ###################################################################################
 
