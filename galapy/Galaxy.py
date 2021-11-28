@@ -1,12 +1,20 @@
 # External imports
 import numpy
+import os
+from collections.abc import MutableMapping as MM
 
 # Internal imports
 from galapy.StarFormationHistory import SFH
 from galapy.CompositeStellarPopulation import CSP
 from galapy.InterStellarMedium import ISM
+from galapy.PhotometricSystem import PMS
 from galapy.internal.utils import trap_int
-from galapy.internal.constants import Lsun
+from galapy.internal.interp import lin_interp
+from galapy.internal.constants import Lsun, clight, Mpc_to_cm
+import galapy.internal.globs as GP_GBL
+
+DL_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
+                       GP_GBL.DL_DIR )
 
 class GXY () :
     """ Wrapping everything up
@@ -16,7 +24,7 @@ class GXY () :
     * Should figure out a smart way of passing arguments to constructor
     """
     
-    def __init__ ( self, age, redshift, lstep = None, 
+    def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
                    sfh_kw = {}, csp_kw = {}, ism_kw = {} ) :
         
         self.age      = age
@@ -28,6 +36,20 @@ class GXY () :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
+
+        # Build the redshift-dependent constant for lum->flux conversion
+        if isinstance( cosmo, str ) :
+            zz, DL = numpy.loadtxt( os.path.join( DL_DIR, f'{cosmo:s}.LumDist.txt' ), unpack=True)
+        elif isinstance( cosmo, MM ) :
+            zz, DL = cosmo['redshift'], cosmo['luminosity_distance']
+        else :
+            raise ValueError( 'Argument `cosmo` should be either a string or a formatted dictionary.' )
+        zz = numpy.ascontiguousarray(zz)
+        DL = numpy.ascontiguousarray(
+            1.e+12 * (1 + zz) /
+            ( 4 * numpy.pi * clight['cm/s'] * DL**2 * Mpc_to_cm**2 )
+        )
+        self._fDL = lin_interp( zz, DL )
         
     def wl ( self ) :
         """ Wavelenght grid with mask applied
@@ -149,3 +171,46 @@ class GXY () :
         Ltot += self.ism.dd.emission( self.wl() )
 
         return Ltot
+
+    def get_SED ( self ) :
+        """ Returns the flux at given distance.
+        lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
+        """
+        return self.get_emission() * self.wl()**2 * self._fDL( self.redshift )
+
+    # def to_flux ( self ) :
+    #     """ Converts the radiated power to the flux at given distance
+    #     """
+    #     const = self._fDL( self.redshift )
+        
+    #     return 1.
+
+
+class PhotoGXY ( GXY ) :
+
+    def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18', 
+                   sfh_kw = {}, csp_kw = {}, ism_kw = {} ) :
+        super().__init__( age, redshift,
+                          lstep=lstep, cosmo=cosmo,
+                          sfh_kw=sfh_kw,
+                          csp_kw=csp_kw,
+                          ism_kw=ism_kw )
+        self.pms = None
+
+    def build_photometric_system ( self, *args, **kwargs ) :
+
+        self.pms = PMS( *args, **kwargs)
+        return;
+
+    def photoSED ( self ) :
+
+        if self.pms is None :
+            raise Exception( "Photometric system has not been set. "
+                             "Use function build_photometric_system() before." )
+        return self.pms.get_fluxes( self.wl() * (1+self.redshift), self.get_SED() )
+        
+
+
+class SpectralGXY ( GXY ) :
+    pass
+
