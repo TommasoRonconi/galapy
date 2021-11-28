@@ -31,6 +31,11 @@ bc03_stelib_chab_extrap = os.path.join(
 ################################################################
 # Photometric Filters
 
-FILT = os.path.join( DATA_DIR, 'filters' )
+FILT_DIR = os.path.join( DATA_DIR, 'filters' )
+
+################################################################
+# Luminosity Distances
+
+DL_DIR = os.path.join( DATA_DIR, 'DL' )
 
 ################################################################
