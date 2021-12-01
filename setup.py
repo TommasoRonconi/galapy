@@ -4,11 +4,13 @@ import sysconfig
 import numpy as np
 
 from setuptools import setup, find_packages, Extension
-    
+
 extra_compile_args = []
-extra_compile_args = sysconfig.get_config_var('CFLAGS').split()
-extra_compile_args += ["-std=c++14", "-fPIC", "-shared"]
-extra_compile_args.remove( "-Wstrict-prototypes" )
+# extra_compile_args = [ el
+#                        for el
+#                        in sysconfig.get_config_var('CFLAGS').split()
+#                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
+extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
 
 extra_link_args = []
 extra_link_args += [ el
@@ -27,7 +29,22 @@ def main():
                                         else el
                                         for el
                                         in sysconfig.get_config_var('BLDSHARED').split() ])
+    # print( extra_compile_args )
     
+
+    #############################################################################
+    # C++ implementation of the interpolation class
+    
+    ext_intp = Extension( "galapy.internal.interp",
+                          [ os.path.join( 'utl', 'src', 'cpy_interpolation.cpp' )
+                          ],
+                          include_dirs = [ os.path.join( 'utl', 'include' ),
+                                           np.get_include()
+                          ],
+                          extra_compile_args=extra_compile_args,
+                          language="c++14",
+                          libraries = [ "m", "stdc++" ]
+    )
 
     #############################################################################
     # C++ implementation of SFH functions and types
@@ -43,8 +60,8 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
-                         libraries = [ "m" ]
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -59,8 +76,8 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
-                         libraries = [ "m" ]
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -75,8 +92,22 @@ def main():
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
-                         language="c++",
-                         libraries = [ "m" ]
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
+    )
+
+    #############################################################################
+    # C++ implementation of BPT functions and types
+    
+    ext_bpt = Extension( "galapy.BandpassTransmission",
+                         [ os.path.join( 'utl', 'src', 'cpy_transmission.cpp' )
+                         ],
+                         include_dirs = [ os.path.join( 'utl', 'include' ),
+                                          np.get_include()
+                         ],
+                         extra_compile_args=extra_compile_args,
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
     )
 
     #############################################################################
@@ -105,9 +136,11 @@ def main():
            },
            packages = [ 'galapy', 'galapy.internal' ],
            ext_modules = [
+               ext_intp,
                ext_sfh,
                ext_csp,
-               ext_ism
+               ext_ism,
+               ext_bpt
            ],
            include_package_data = True,
     )

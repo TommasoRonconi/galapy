@@ -38,10 +38,6 @@ namespace sed {
     
     std::vector< double > _paramsrc;
 
-    void _model ( const double * const tau,
-		  double * const psi,
-		  const std::size_t size ) const noexcept;
-
     virtual double _sfr ( const double tau ) const noexcept = 0;
     
   public :
@@ -59,6 +55,10 @@ namespace sed {
     std::vector< double > get_params () { return _paramsrc; }
     
     double operator() ( const double xx ) const noexcept;
+
+    void model ( const double * const tau,
+		 double * const psi,
+		 const std::size_t size ) const noexcept;
 
     void eval ( const double * const tau,
 	        double * const psi,

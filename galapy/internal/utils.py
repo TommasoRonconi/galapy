@@ -1,6 +1,59 @@
 # External imports
 # from abc import ABC, abstractmethod
-# import collections.abc
+from collections.abc import MutableMapping as MM
+import numpy
+
+###################################################################################
+
+def trap_int ( xx, yy ) :
+    """ Trapezoid integration
+
+    Parameters
+    ----------
+    xx : array-like
+       x-domain grid
+    yy : array-like
+       y-domain grid
+    
+    Returns
+    -------
+    : float 
+       the integral along the whole x-domain
+    """
+    xx = numpy.asarray(xx)
+    yy = numpy.asarray(yy)
+    b1b2 = yy[:-1] + yy[1:]
+    hh = xx[1:] - xx[:-1]
+    return numpy.sum( 0.5 * b1b2 * hh )
+
+###################################################################################
+
+class FlagVal () :
+    def __init__ ( self, value, flag ) :
+        self.value = value
+        self.flag  = flag
+    def __repr__ ( self ) :
+        return f'{type(self).__name__}({self.value},"{self.flag}")'
+    def __str__ ( self ) :
+        return f'{self.flag}:{self.value}'
+
+###################################################################################
+
+# def recurrent_return ( dd, keylist ) :
+#     if len( keylist ) > 1 and isinstance( dd, MM ) :
+#         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
+#     return dd[ keylist.pop( 0 ) ]
+
+# def recurrent_update ( dd, **kwargs ) :
+#     for k, v in kwargs.items() :
+#         if isinstance(v,MM) :
+#             rec_update( dd[k], **v )
+#         elif k in dd.keys() :
+#             dd[k] = v
+#         else :
+#             print( f'Key {k} not valid' )
+#             continue
+#     return;
 
 ###################################################################################
 
@@ -284,3 +337,4 @@
 #             yield [ k ], v
 
 ###################################################################################
+

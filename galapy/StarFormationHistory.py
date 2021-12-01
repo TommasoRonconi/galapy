@@ -19,7 +19,7 @@ sfh_tunables = {
     'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgs' ]
 }
     
-def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
+def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
 
     _models = {
         # In-Situ SF model
@@ -52,7 +52,6 @@ def gen_params_dict ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
     }
     out = { 'tau_quench' : tau_quench, 'model' : model }
     out.update( _models[ model ] )
-    temp = set(out.keys())
     for k in set(out.keys()).intersection(kwargs.keys()) :
         out[k] = kwargs[k]
 
@@ -81,7 +80,7 @@ class SFH () :
     def __init__ ( self, tau_quench = 2.e+20, model = 'insitu', **kwargs ) :
         
         self.core = CSFH( tau_quench, model )
-        self.params = gen_params_dict( tau_quench, model, **kwargs )
+        self.params = sfh_build_params( tau_quench, model, **kwargs )
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
         self.set_parameters()
@@ -97,14 +96,15 @@ class SFH () :
 
     def __call__ ( self, tau ) :
         tau = numpy.asarray( tau )
-        scalar_input = False
+        scalar = False
         if tau.ndim == 0 :
             tau = tau[None] # makes 'tau' 1D
-            scalar_input = True
-        ret = numpy.asarray( self.core( tau ) )
-        if scalar_input :
+            scalar = True
+        ret = self.core( tau )
+        if scalar :
             return ret.item()
         return ret
+        #return self.core( tau )
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
         if tau_quench :
