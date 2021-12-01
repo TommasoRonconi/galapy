@@ -124,7 +124,20 @@ extern "C" {
 
   static PyObject * CPySFH_call ( CPySFH * self, PyObject * args ) {
 
-    return Py_call_fromScalarOrArray< CPySFH >( self, args );
+    // old:
+    // return Py_call_fromScalarOrArray< CPySFH >( self, args );
+
+    // new:
+    PyArrayObject * NPyBuf = NULL;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "O!", &PyArray_Type, &NPyBuf ) ) return NULL;
+    
+    npy_intp size = PyArray_DIM( NPyBuf, 0 );
+    double * psi = new double [size];
+    self->ptrObj->model( reinterpret_cast< double* >( PyArray_DATA( NPyBuf ) ), psi, size );
+
+    return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( psi ) );
 
   }
 
