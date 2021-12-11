@@ -79,9 +79,19 @@ class CSP () :
         self.set_parameters( age, sfh )
         if il is None :
             il = numpy.arange( len(self.l), dtype = numpy.uint64 )
-        if ftau is not None :
-            return self.core.emission( il, ftau )
-            
-        return self.core.emission( il )
+        il = numpy.asarray( il )
+        scalar_input = False
+        if il.ndim == 0 :
+            il = il[None] # makes il 1D
+        if ftau is None :
+            ftau = numpy.ones( ( self.t.size * len( il ), ),
+                               dtype = numpy.float64 )
+        ftau = numpy.ascontiguousarray( ftau.ravel() )
+
+        ret = self.core.emission( il, ftau )
+        if scalar_input :
+            return ret.item()
+        return ret
+    
         
     

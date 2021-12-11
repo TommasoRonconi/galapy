@@ -138,5 +138,8 @@ class ISM () :
 
     def total_attenuation ( self, ll, tt ) :
         attMC = self.mc.time_attenuation( ll, tt )
-        return attMC, attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
+        attDD = attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
+        return ( numpy.ascontiguousarray( attMC.ravel() ),
+                 numpy.ascontiguousarray( attDD.ravel() ) )
+        # return attMC, attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
 
