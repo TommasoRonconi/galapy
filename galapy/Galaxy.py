@@ -177,14 +177,7 @@ class GXY () :
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
         return self.get_emission() * self.wl()**2 * self._fDL( self.redshift )
-
-    # def to_flux ( self ) :
-    #     """ Converts the radiated power to the flux at given distance
-    #     """
-    #     const = self._fDL( self.redshift )
-        
-    #     return 1.
-
+    
 
 class PhotoGXY ( GXY ) :
 

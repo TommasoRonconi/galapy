@@ -29,10 +29,8 @@ namespace sed {
     // Private variables
 
     // SSP variables
-    // vect_double _lambda;
-    // std::size_t _Nlambda;
-    vect_double _lambdaSSP;
-    std::size_t _NlambdaSSP;
+    vect_double _lambda;
+    std::size_t _Nlambda;
     vect_double _tau;
     std::size_t _Ntau;
     vect_double _Z;
@@ -77,7 +75,7 @@ namespace sed {
 	  const std::vector< double > tau,
 	  const std::vector< double > Z,
 	  const std::vector< double > LltZ ) :
-      _lambdaSSP{ lambda }, _NlambdaSSP{ lambda.size() },
+      _lambda{ lambda }, _Nlambda{ lambda.size() },
       _tau{ tau }, _Ntau{ tau.size() },
       _Z{ Z }, _NZ{ Z.size() },
       _LltZ{ LltZ }, _NL{ LltZ.size() } {}
@@ -92,11 +90,11 @@ namespace sed {
 		      const std::vector< std::size_t > & _iz_low,
 		      const std::size_t _it_last ) noexcept;
 
-    std::vector< double > get_lambda () const noexcept { return _lambdaSSP; }
+    std::vector< double > get_lambda () const noexcept { return _lambda; }
     std::vector< double > get_tau    () const noexcept { return _tau; }
     std::vector< double > get_Z      () const noexcept { return _Z; }
     
-    std::size_t lambda_size () const noexcept { return _NlambdaSSP; }
+    std::size_t lambda_size () const noexcept { return _Nlambda; }
     std::size_t tau_size    () const noexcept { return _Ntau; }
     std::size_t Z_size      () const noexcept { return _NZ; }
     std::size_t size        () const noexcept { return _NL; }
