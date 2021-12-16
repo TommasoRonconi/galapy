@@ -94,9 +94,14 @@ PyObject *  _PyInterp_call ( T * self, PyObject * args ) {
 
     /* Clear heap */
     delete [] xx;
-      
-    return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-				      reinterpret_cast< void * >( outarr ) );
+    
+    // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+    // 				      reinterpret_cast< void * >( outarr ) );
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						reinterpret_cast< void * >( outarr ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
 
   }
      

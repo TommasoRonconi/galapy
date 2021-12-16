@@ -172,9 +172,14 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+
+      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+      // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -212,8 +217,13 @@ extern "C" {
       /* Clear heap */
       delete [] lambda;
       
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+      // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -251,8 +261,13 @@ extern "C" {
       /* Clear heap */
       delete [] lambda;
       
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+      // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -345,17 +360,13 @@ extern "C" {
       /* Clear heap */
       delete [] tau;
       
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      					reinterpret_cast< void * >( outarr ) );
-
-      // /* Call C++ member function */
-      // std::size_t size = PyArray_Size( buf );
-      // double * outarr = new double [ size ];
-      // for ( unsigned int ii = 0; ii < size; ++ii )
-      // 	outarr[ ii ] = self->ptrObj->eta( *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )buf, ii ) ) );
-      
       // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
       // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     } 
     
@@ -442,28 +453,18 @@ extern "C" {
 			 "wavelenght-depending arrays must have same size." );
 	return NULL;
       }
-      // std::size_t ll_size = PyArray_Size( llBuf );
-      // std::size_t tt_size = PyArray_Size( etaMCBuf );
       
-      // /* Call C++ member function */
-      // double * outarr = new double [ ll_size * tt_size ];
-      // for ( unsigned int il = 0; il < ll_size; ++il )
-      // 	for ( unsigned int it = 0; it < tt_size; ++it )
-      // 	  outarr[ il * tt_size + it ] =
-      // 	    sed::total_attenuation( *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )llBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )attDDBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )attMCBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )etaMCBuf, it ) ) );
-
-      // return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
-
+      /* Convert NPy arrays into C-style arrays */
       double * llArr, * attDDArr, * attMCArr, * etaMCArr;
       std::size_t ll_size, tt_size;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)llBuf, &llArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attDDBuf, &attDDArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attMCBuf, &attMCArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)etaMCBuf, &etaMCArr, &tt_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)llBuf,
+					 &llArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attDDBuf,
+					 &attDDArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attMCBuf,
+					 &attMCArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)etaMCBuf,
+					 &etaMCArr, &tt_size ) == -1 ) return NULL;
 
       npy_intp dims = ll_size * tt_size;
       
@@ -479,8 +480,13 @@ extern "C" {
       delete [] attMCArr;
       delete [] etaMCArr;
 
-      return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+      // return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
+      // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&dims, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
 
