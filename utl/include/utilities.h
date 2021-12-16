@@ -229,6 +229,42 @@ namespace utl {
     return indx - 1;
 
   }
+
+  /**
+   * @brief Naive (a.k.a. brute force) implementation of search within sorted C-style array of the 
+   *        lower index for interpolation/extrapolation between two values
+   *
+   * @param val value to search for
+   * @param arr sorted C-style array
+   * @param asize size of arr array
+   * @param start_indx starting point in array (default = 0, first element of arrat)
+   * 
+   * @result std::size_t index of array arr.
+   *         if val is smaller than the first element, returns the first index (0)
+   *         if val is larger than the last element, returns the index before 
+   *         the last one ( asize-2 )
+   * @warning the algorithm assumes:
+   *          - asize >= 2,
+   *          - arr is sorted in ascending order
+   *          - start_indx <= asize
+   *          no exception nor error is raised, 
+   *          if the above is not respected, behaviour is undefined
+   */  
+  inline std::size_t
+  find_low ( const double val,
+	     const  double * const & arr,
+	     const std::size_t asize,
+	     const std::size_t start_indx = 0 ) noexcept {
+    
+    std::size_t indx = start_indx;
+    while ( indx < asize - 1 ) {
+      if ( val < arr[ indx + 1 ] )
+	return indx;
+      ++indx;
+    }
+    return indx - 1;
+
+  }
   
   inline double
   line_from_2points ( const double xx,

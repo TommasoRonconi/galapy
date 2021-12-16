@@ -54,6 +54,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( lambda ), sizeof( double ) * Nl );
     Pyl = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &Nl, NPY_DOUBLE,
 							reinterpret_cast< void * >( lambda ) );
+    PyArray_ENABLEFLAGS(Pyl, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & Nt, sizeof( std::size_t ) );
@@ -61,6 +62,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( tau ), sizeof( double ) * Nt );
     Pyt = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &Nt, NPY_DOUBLE,
 							reinterpret_cast< void * >( tau ) );
+    PyArray_ENABLEFLAGS(Pyt, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & NZ, sizeof( std::size_t ) );
@@ -68,6 +70,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( Z ), sizeof( double ) * NZ );
     PyZ = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &NZ, NPY_DOUBLE,
 							reinterpret_cast< void * >( Z ) );
+    PyArray_ENABLEFLAGS(PyZ, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & NSSP, sizeof( std::size_t ) );
@@ -75,6 +78,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( SSP ), sizeof( double ) * NSSP );
     PySSP = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &NSSP, NPY_DOUBLE,
 							  reinterpret_cast< void * >( SSP ) );
+    PyArray_ENABLEFLAGS(PySSP, NPY_ARRAY_OWNDATA);
     
     // Raise RuntimeError if EoF is not reached:
     if ( !ifs ) {
@@ -295,8 +299,13 @@ extern "C" {
     delete [] Tfact_arr;
     delete [] il_arr;
 
-    return PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
-				      reinterpret_cast< void * >( outarr ) );
+    // return PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
+    // 				      reinterpret_cast< void * >( outarr ) );
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
+						reinterpret_cast< void * >( outarr ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
     
   }
   

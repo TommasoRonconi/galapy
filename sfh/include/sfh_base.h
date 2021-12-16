@@ -30,9 +30,9 @@ namespace sed {
 
     // private variables
     double _tau_quench;
-    std::vector< double > _psi_grid, _Z_grid;
-    std::vector< std::size_t > _Zidx_grid;
-    std::size_t _last_idx;
+    // std::vector< double > _psi_grid, _Z_grid;
+    // std::vector< std::size_t > _Zidx_grid;
+    // std::size_t _last_idx;
 
   protected :
     
@@ -75,15 +75,29 @@ namespace sed {
     virtual double get_Zstar ( const double tau ) const noexcept = 0;
 
     // Compute on time grid
+    // void time_grid ( const double age,
+    // 		     const std::vector< double > & tgrid,
+    // 		     const std::vector< double > & Zgrid );
+    // void time_grid ( const double age,
+    // 		     const double * const tgrid,
+    // 		     const std::size_t tgrid_size,
+    // 		     const double * const Zgrid,
+    // 		     const std::size_t Zgrid_size );
     void time_grid ( const double age,
-		     const std::vector< double > & tgrid,
-		     const std::vector< double > & Zgrid );
+		     const double * const tgrid,
+		     const std::size_t tgrid_size,
+		     const double * const Zgrid,
+		     const std::size_t Zgrid_size,
+		     double * const * const out_psigrid,
+		     double * const * const out_Zgrid,
+		     std::size_t * const * const out_Zidx,
+		     std::size_t * const out_last_idx );
 
     // Get gridded values
-    std::vector< double > get_psi_grid () { return _psi_grid; }
-    std::vector< double > get_Z_grid () { return _Z_grid; }
-    std::vector< std::size_t > get_Zidx_grid () { return _Zidx_grid; }
-    std::size_t get_last_grid_idx () { return _last_idx; }
+    // std::vector< double > get_psi_grid () { return _psi_grid; }
+    // std::vector< double > get_Z_grid () { return _Z_grid; }
+    // std::vector< std::size_t > get_Zidx_grid () { return _Zidx_grid; }
+    // std::size_t get_last_grid_idx () { return _last_idx; }
 
   }; // endclass sfh_base
   

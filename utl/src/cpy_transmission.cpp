@@ -84,7 +84,12 @@ extern "C" {
       bpt[ ii ] = ( *( self->ptrObj ) )
 	( *reinterpret_cast< double * >( PyArray_GETPTR1( NPyBuf, ii ) ) );
 
-    return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( bpt ) );
+    // return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( bpt ) );
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE,
+						reinterpret_cast< void * >( bpt ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
 
   }
 
