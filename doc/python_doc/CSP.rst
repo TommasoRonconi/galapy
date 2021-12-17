@@ -1,13 +1,13 @@
 Composite Stellar Population module (CSP)
 -----------------------------------------
 
-.. automodule:: galapy.internal.CPyCSP
+.. automodule:: galapy.CSP_core
    :members:
    :private-members:
    :undoc-members:
    :show-inheritance:
 		
-.. autoclass:: galapy.internal.CPyCSP.CCSP
+.. autoclass:: galapy.CSP_core.CCSP
    :members: set_params, SSP, emission
 	    
       

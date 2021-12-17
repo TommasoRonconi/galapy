@@ -1,13 +1,13 @@
 Inter Stellar Medium module (ISM)
 ---------------------------------
 
-.. automodule:: galapy.internal.CPyISM
+.. automodule:: galapy.ISM_core
    :members:
 
-.. autoclass:: galapy.internal.CPyISM.CDD
+.. autoclass:: galapy.ISM_core.CDD
    :members:
 
-.. autoclass:: galapy.internal.CPyISM.CMC
+.. autoclass:: galapy.ISM_core.CMC
    :members:
 	    
       

@@ -4,5 +4,5 @@ Star Formation History module (SFH)
 .. autosummary::
    :toctree: _generated
 
-   galapy.internal.CPySFH
-   galapy.internal.CPySFH.CSFH
+   galapy.SFH_core
+   galapy.SFH_core.CSFH

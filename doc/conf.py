@@ -14,14 +14,14 @@ import subprocess
 import glob
 import os
 import sys
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages' ) )
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
 import galapy
 import galapy.internal
-import galapy.internal.CPySFH
-import galapy.internal.CPyCSP
-import galapy.internal.CPyISM
+import galapy.SFH_core
+import galapy.CSP_core
+import galapy.ISM_core
 
 # -- Configuration for ReadTheDocs setup -------------------------------------
 
