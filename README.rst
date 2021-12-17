@@ -27,7 +27,7 @@ Lift-off TL;DR
      
      $ pip install galapy
 
-   for further details, please refer to the `installation guide`_.
+  for further details, please refer to the `installation guide`_.
 
 .. _installation guide: ...
 
