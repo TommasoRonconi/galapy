@@ -15,7 +15,7 @@
 *.ipynb_checkpoints
 
 # (TEMPORARY) IPython Notebooks
-*.ipynb
+# *.ipynb
 
 # Sphinx-generated files
 /doc/tutorials/*

@@ -20,6 +20,7 @@ The build system tool used is Setuptools, which is also not part of the Python s
 
 Lift-off TL;DR
 --------------
+
 * Info about SED, GFE [TBA]
 * The preferred method to install the package is through :code:`pip` as it will install the most recent stable release:
   
@@ -29,5 +30,28 @@ Lift-off TL;DR
 
   for further details, please refer to the `installation guide`_.
 
+* Build a spectroscopic galaxy object, obtain SED
+
+  .. code-block:: python
+
+     import galapy as gp
+     gxy = gp.Galaxy.GXY( age, redshift )
+     sed = gxy.SED()
+
+  Build a photometric galaxy object, obtain photo-SED
+  
+  .. code-block:: python
+
+     import galapy as gp
+     pgxy = gp.Galaxy.PhotoGXY( age, redshift )
+     pgxy.build_photometric_system( 'filter1', 'filter2', 'filter3', ... )
+     psed = pgxy.photoSED()
+
+  Link to `tutorials`_ here
+     
+* Link to `API docs`_ here 
+
 .. _installation guide: ...
+.. _tutorials: ...
+.. _API docs: ...
 

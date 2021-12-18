@@ -1,20 +1,27 @@
 .. SADFit documentation master file.
 
-.. include ../README.rst
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-   
-   python_doc/galapy
+   :caption: General
+
+   general/install_guide
+   general/physical_units
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
+   :caption: Examples 
 	     
    tutorials/SFH_tutorial
    tutorials/CSP_tutorial
    tutorials/ISM_tutorial
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Documentation
+
+   python_doc/components
 
 Indices and tables
 ==================
