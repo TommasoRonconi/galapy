@@ -1,5 +1,7 @@
-Composite Stellar Population module (CSP)
------------------------------------------
+Composite Stellar Population (CSP)
+----------------------------------
+
+.. automodule:: galapy.CompositeStellarPopulation
 
 .. automodule:: galapy.CSP_core
    :members:

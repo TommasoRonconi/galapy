@@ -27,7 +27,29 @@ Lift-off TL;DR
      
      $ pip install galapy
 
-   for further details, please refer to the `installation guide`_.
+  for further details, please refer to the `installation guide`_.
+* Build a spectroscopic galaxy object, obtain SED
+
+  .. code-block:: python
+
+     import galapy as gp
+     gxy = gp.Galaxy.GXY( age, redshift )
+     sed = gxy.SED()
+
+  Build a photometric galaxy object, obtain photo-SED
+  
+  .. code-block:: python
+
+     import galapy as gp
+     pgxy = gp.Galaxy.PhotoGXY( age, redshift )
+     pgxy.build_photometric_system( 'filter1', 'filter2', 'filter3', ... )
+     psed = pgxy.photoSED()
+
+  Link to `tutorials`_ here
+     
+* Link to `API docs`_ here 
 
 .. _installation guide: ...
+.. _tutorials: ...
+.. _API docs: ...
 

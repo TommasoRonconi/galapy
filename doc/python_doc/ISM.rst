@@ -1,5 +1,5 @@
-Inter Stellar Medium module (ISM)
----------------------------------
+Inter Stellar Medium (ISM)
+--------------------------
 
 .. automodule:: galapy.ISM_core
    :members:
