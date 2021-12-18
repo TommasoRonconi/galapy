@@ -21,9 +21,7 @@
    :maxdepth: 2
    :caption: API Documentation
 
-   python_doc/SFH
-   python_doc/CSP
-   python_doc/ISM
+   python_doc/components
 
 Indices and tables
 ==================

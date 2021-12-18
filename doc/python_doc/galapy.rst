@@ -1,12 +1,5 @@
-Python Documentation
-====================
+API Documentation
+=================
 
 .. automodule:: galapy
-
-.. toctree::
-   :maxdepth: 3
-
-   SFH
-   CSP
-   ISM
 

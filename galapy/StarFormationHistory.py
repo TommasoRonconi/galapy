@@ -85,13 +85,20 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
 
 class SFH () :
     """ Class wrapping the C-core implementation of the Star Formation History type.    
+    The possible models to choose are:
+
+    #. 'insitu'
+    #. 'constant'
+    #. 'delayedexp'
+    #. 'lognormal'
+    #. 'burst'
 
     Parameters
     ----------
     tau_quench : float
       Eventual abrupt quenching time for star formation. 
-      Should be expressed in years and is expressed in terms 
-      of the time passed from the formation of the galaxy.
+      Should be expressed in years. It refers to the age of the galaxy,
+      i.e. it has to be intended as the time passed from the formation of the galaxy.
 
     model : string
       One among ( 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst' ).
@@ -120,6 +127,18 @@ class SFH () :
         
 
     def __call__ ( self, tau ) :
+        """ Method for returning the Star Formation Rate (SFR) at given age.
+
+        Parameters
+        ----------
+        tau : float or array-like
+          The time in the galaxy SFH in which to compute the SFR
+
+        Returns
+        -------
+        SFR : float or array-like
+          SFR at given time from galaxy formation.
+        """
         tau = numpy.asarray( tau )
         scalar = False
         if tau.ndim == 0 :
@@ -129,10 +148,28 @@ class SFH () :
         if scalar :
             return ret.item()
         return ret
-        #return self.core( tau )
 
     def set_parameters ( self, tau_quench = None, **kwargs ) :
-        if tau_quench :
+        r""" Function for setting the parameters of the model.
+
+        Parameters
+        ----------
+        tau_quench : float
+          Eventual time of abrupt quenching event, stopping 
+          star formation forever.
+        \**kwargs : 
+          see below
+
+        Keyword Arguments
+        -----------------
+        All the parameters the user wants, will consider only those with
+        a valid key for the SFH model chosen.
+        
+        Returns
+        -------
+        : None
+        """
+        if tau_quench is not None :
             self.core.set_tau_quench( tau_quench )
         self.params.update( kwargs )
         self.core.set_params( numpy.asarray( [
