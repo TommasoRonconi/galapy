@@ -173,9 +173,6 @@ extern "C" {
       /* Clear heap */
       delete [] lambda;
 
-      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
-
       PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
 						  reinterpret_cast< void * >( outarr ) );
       PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
@@ -216,9 +213,6 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
 
       PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
 						  reinterpret_cast< void * >( outarr ) );
@@ -260,9 +254,6 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
 
       PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
 						  reinterpret_cast< void * >( outarr ) );
@@ -359,9 +350,6 @@ extern "C" {
 
       /* Clear heap */
       delete [] tau;
-      
-      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
 
       PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
 						  reinterpret_cast< void * >( outarr ) );
@@ -539,7 +527,6 @@ extern "C" {
     CPyDD_t.tp_dealloc   = (destructor) CPyISM_dealloc;
     CPyDD_t.tp_flags     = Py_TPFLAGS_DEFAULT;
     CPyDD_t.tp_doc       = "Diffuse-Dust objects";
-    // CPyDD_t.tp_call      = (ternaryfunc) CPyISM_call;
     CPyDD_t.tp_methods   = CPyDD_Methods;
     CPyDD_t.tp_init      = (initproc) CPyDD_init;
     if ( PyType_Ready( &CPyDD_t ) < 0 )
@@ -557,7 +544,6 @@ extern "C" {
     CPyMC_t.tp_dealloc   = (destructor) CPyISM_dealloc;
     CPyMC_t.tp_flags     = Py_TPFLAGS_DEFAULT;
     CPyMC_t.tp_doc       = "Molecular-Cloud objects";
-    // CPyMC_t.tp_call      = (ternaryfunc) CPyISM_call;
     CPyMC_t.tp_methods   = CPyMC_Methods;
     CPyMC_t.tp_init      = (initproc) CPyMC_init;
     if ( PyType_Ready( &CPyMC_t ) < 0 )
