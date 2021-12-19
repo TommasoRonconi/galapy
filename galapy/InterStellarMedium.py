@@ -3,7 +3,6 @@
 
 # External Imports
 import numpy
-# from abc import ABC, abstractmethod
 
 # Internal imports
 from .ISM_core import CMC, CDD, total_attenuation
@@ -55,7 +54,9 @@ def ism_build_params ( phase, **kwargs ) :
     raise ValueError( f'Phase "{phase}" chosen not available. '
                       f'Available phases are: {av_phases}')
     
-class ismPhase (): 
+class ismPhase ():
+    """ ISM phase base class.
+    """
 
     def __init__ ( self, phase, builder, T = None, **kwargs ) :
         
@@ -97,10 +98,10 @@ class ismPhase ():
         return;
 
     def temperature ( self, Etot ) :
-        """ Computes the temperature of the ISM at given total energy.
+        r""" Computes the temperature of the ISM at given total energy.
 
         With the assumption that the total energy density :math:`E_\text{abs}^\text{phase}`
-        absorbed by the ISM phase is re-radiated as a gray body 
+        absorbed by the ISM phase is re-radiated as a grey body 
         with luminosity :math:`L_\lambda[\tau, T]`,
         the ISM temperature is computed by solving the integral
         
@@ -122,8 +123,8 @@ class ismPhase ():
         self.T = self.core.temperature( Etot )
         return self.T
 
-    def emission ( self, ll, T = None ) :
-        """ Computes the ISM emission at given wavelenght.
+    def emission ( self, wavelenght, T = None ) :
+        r""" Computes the ISM emission at given wavelenght.
         
         We assume the ISM radiates as a gray body with emission spectrum
         
@@ -142,7 +143,7 @@ class ismPhase ():
 
         Parameters
         ----------
-        lambda : float of array-like of floats
+        wavelenght : float of array-like of floats
           wavelenght in angstroms :math:`[\mathring{A}]`
 
         Keyword Arguments
@@ -158,31 +159,33 @@ class ismPhase ():
         """
         if T :
             self.set_temperature( T )
-        return self.core.emission( ll )
+        return self.core.emission( wavelenght )
 
-    def attenuation ( self, ll ) :
+    def attenuation ( self, wavelenght ) :
         """ Computes the ISM attenuation at given wavelenght.
-        Parameters
-        ----------
-        lambda : array or scalar float
-        
-        Returns
-        -------
-         : array or scalar float
-        """
-        return self.core.attenuation( ll )
 
-    def extinction ( self, ll ) :
-        """ Computes the ISM extinction at given wavelenght.
         Parameters
         ----------
-        lambda : array or scalar float
+        wavelenght : array or scalar float
         
         Returns
         -------
          : array or scalar float
         """
-        return self.core.extinction( ll )
+        return self.core.attenuation( wavelenght )
+
+    def extinction ( self, wavelenght ) :
+        """ Computes the ISM extinction at given wavelenght.
+
+        Parameters
+        ----------
+        wavelenght : array or scalar float
+        
+        Returns
+        -------
+         : array or scalar float
+        """
+        return self.core.extinction( wavelenght )
 
     def A_V ( self ) :
         """ Returns the extinction value in the visible band-
@@ -197,9 +200,9 @@ class MC ( ismPhase ) :
     def eta ( self, tt ) :
         return self.core.eta( tt )
 
-    def time_attenuation ( self, ll, tt ) :
+    def time_attenuation ( self, wavelenght, tt ) :
         return (
-            1 - ( 1 - self.attenuation( ll ) )[:,numpy.newaxis]
+            1 - ( 1 - self.attenuation( wavelenght ) )[:,numpy.newaxis]
             * self.eta( tt )[numpy.newaxis,:]
         )
         
@@ -229,9 +232,9 @@ class ISM () :
                                     if k in ism_tunables[ 'dd' ] } )
         return;
 
-    def total_attenuation ( self, ll, tt ) :
-        attMC = self.mc.time_attenuation( ll, tt )
-        attDD = attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
+    def total_attenuation ( self, wavelenght, tt ) :
+        attMC = self.mc.time_attenuation( wavelenght, tt )
+        attDD = attMC * self.dd.attenuation( wavelenght )[:,numpy.newaxis]
         return ( numpy.ascontiguousarray( attMC.ravel() ),
                  numpy.ascontiguousarray( attDD.ravel() ) )
 
