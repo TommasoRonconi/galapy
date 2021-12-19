@@ -1,3 +1,6 @@
+""" The Inter-Stellar Medium module implements and wraps the absorbing media of the Galaxy.
+"""
+
 # External Imports
 import numpy
 # from abc import ABC, abstractmethod
@@ -12,8 +15,16 @@ ism_tunables = {
     # Diffuse Dust
     'dd' : [ 'f_MC', 'norm_DD', 'Mdust', 'Rdust', 'f_PAH' ],
 }
+""" Dictionary with the tunable parameters of the ISM phases
+
+#. :code:`mc` : **Molecular Clouds**
+#. :code:`dd` : **Diffuse Dust**
+
+"""
 
 def ism_build_params ( phase, **kwargs ) :
+    """ Builds the parameters dictionary for given phase.
+    """
     if phase == 'mc' :
         out = {
             'f_MC'    : 0.5,
@@ -74,26 +85,108 @@ class ismPhase ():
         ], dtype = float ) )
     
     def set_temperature ( self, T ) :
+        """ Manually set the temperature of the ISM phase
+        
+        Parameters
+        ----------
+        T : float
+          Temperature in Kelvin :math:`[K]`
+        """
         self.T = T
         self.core.set_temperature( self.T )
         return;
 
     def temperature ( self, Etot ) :
+        """ Computes the temperature of the ISM at given total energy.
+
+        With the assumption that the total energy density :math:`E_\text{abs}^\text{phase}`
+        absorbed by the ISM phase is re-radiated as a gray body 
+        with luminosity :math:`L_\lambda[\tau, T]`,
+        the ISM temperature is computed by solving the integral
+        
+        .. math:: 
+          
+          \int_0^\infty \text{d}\lambda L_\lambda^\text{phase}[\tau|T_\text{phase}(\tau)] =
+          E_\text{abs}^\text{phase}(\tau)
+        
+        Parameters
+        ----------
+        Etot : scalar float
+          Total energy absorbed by the ISM phase.
+
+        Returns
+        -------
+        T : scalar float
+          Temperature in Kelvin :math:`[K]` of the given ISM phase.
+        """
         self.T = self.core.temperature( Etot )
         return self.T
 
     def emission ( self, ll, T = None ) :
+        """ Computes the ISM emission at given wavelenght.
+        
+        We assume the ISM radiates as a gray body with emission spectrum
+        
+        .. math::
+        
+          L_\lambda^\text{phase}(\tau) = 
+          \mathcal{N}_\text{phase}\; \bigl[1 
+          - 10^{-0.4\,A_\lambda^\text{phase}(\tau)}\bigr]\;
+          B_\lambda(T_\text{phase})
+        
+        where :math:`\mathcal{N}_\text{phase}` is a normalization depending
+        on the model parameters, 
+        the factor :math:`1 - 10^{-0.4\,A_\lambda^\text{phase}(\tau)}` 
+        is the optical depth of the ISM phase and :math:`B_\lambda(T_\text{phase})`
+        is the temperature of the medium.          
+
+        Parameters
+        ----------
+        lambda : float of array-like of floats
+          wavelenght in angstroms :math:`[\mathring{A}]`
+
+        Keyword Arguments
+        -----------------
+        T : float
+          temperature in Kelvin :math:`[K]` of the ISM phase 
+          (optional, default = :code:`None`)
+
+        Returns
+        -------
+        L_ISM : float of array-like of floats
+          Luminosity at given wavelenght 
+        """
         if T :
             self.set_temperature( T )
         return self.core.emission( ll )
 
     def attenuation ( self, ll ) :
+        """ Computes the ISM attenuation at given wavelenght.
+        Parameters
+        ----------
+        lambda : array or scalar float
+        
+        Returns
+        -------
+         : array or scalar float
+        """
         return self.core.attenuation( ll )
 
     def extinction ( self, ll ) :
+        """ Computes the ISM extinction at given wavelenght.
+        Parameters
+        ----------
+        lambda : array or scalar float
+        
+        Returns
+        -------
+         : array or scalar float
+        """
         return self.core.extinction( ll )
 
     def A_V ( self ) :
+        """ Returns the extinction value in the visible band-
+        """
         return self.core.A_V()
 
 class MC ( ismPhase ) :
@@ -141,5 +234,4 @@ class ISM () :
         attDD = attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
         return ( numpy.ascontiguousarray( attMC.ravel() ),
                  numpy.ascontiguousarray( attDD.ravel() ) )
-        # return attMC, attMC * self.dd.attenuation( ll )[:,numpy.newaxis]
 
