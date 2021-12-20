@@ -27,8 +27,8 @@ sfh_tunables = {
 def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
     """ Builds the parameter dictionary for a given SFH model.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     tau_quench : float
        eventual time of quenching in units of year, 
        defaults to the arbitrary large value of $2 \cdot 10^9$ years
