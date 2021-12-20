@@ -29,7 +29,6 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
 
     Paramters
     ---------
-
     tau_quench : float
        eventual time of quenching in units of year, 
        defaults to the arbitrary large value of $2 \cdot 10^9$ years
@@ -37,8 +36,7 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
        SFH model
     
     Keyword Arguments
-    -----------------
-    
+    -----------------    
     The parameterization depends on the chosen model.
 
     Returns
