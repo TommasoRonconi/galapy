@@ -14,14 +14,14 @@ import subprocess
 import glob
 import os
 import sys
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages' ) )
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
-sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
+# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
 import galapy
 import galapy.internal
-import galapy.internal.CPySFH
-import galapy.internal.CPyCSP
-import galapy.internal.CPyISM
+import galapy.SFH_core
+import galapy.CSP_core
+import galapy.ISM_core
 
 # -- Configuration for ReadTheDocs setup -------------------------------------
 
@@ -98,7 +98,11 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = [ "_static" ]
+
+def setup(app):
+    # overrides for wide tables in RTD theme
+    app.add_css_file("theme_overrides.css")  # path relative to static
 
 # Define position of the logo
 # html_logo = '../images/SAD.png'

@@ -14,3 +14,20 @@ docs_html: conf.py index.rst python_doc/*
 
 docs_latex: conf.py index.rst python_doc/*
 	sphinx-build -b latex $(SOURCEDIR) $(OUTPUTDIR)/latex/
+
+clean_html:
+	rm -rf $(OUTPUTDIR)/html
+
+clean_latex:
+	rm -rf $(OUTPUTDIR)/latex
+
+clean:
+	rm -rf $(OUTPUTDIR)
+
+purge_tutorials: 
+	rm -rf $(SOURCEDIR)tutorials/*
+
+purge_python_doc:
+	rm -rf $(SOURCEDIR)python_doc/_generated/*
+
+purge_all: clean purge_tutorials purge_python_doc
