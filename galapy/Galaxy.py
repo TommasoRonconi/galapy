@@ -107,21 +107,20 @@ class GXY () :
     #     except IndexError :
     #         raise TypeError('Argument lstep should be either an integer or a boolean mask!')
     
-    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = None ) :
+    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {} ) :
         """divided in nested dictionaries or not?"""
         if age is not None :
             self.age = age
         if redshift is not None :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
-        ism_d = {}
+
         if sfh_kw is not None :
             self.sfh.set_parameters(**sfh_kw)
-            ism_d = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                      'Mgas'  : self.sfh.core.Mgas(self.age),
-                      'Mdust' : self.sfh.core.Mdust(self.age) }
-        if ism_kw is not None :
-            ism_kw.update(ism_d)
+            ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                             'Mgas'  : self.sfh.core.Mgas(self.age),
+                             'Mdust' : self.sfh.core.Mdust(self.age) } )
+        if len( ism_kw ) > 0 :
             self.ism.set_parameters(**ism_kw)
         return;
     
