@@ -16,6 +16,8 @@ import galapy.internal.globs as GP_GBL
 _SSP_LIB = {
     'bc03.basel.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
                                               GP_GBL.bc03_basel_chab_zeros ),
+    'bc03.basel.chab.refined' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
+                                              GP_GBL.bc03_basel_chab_zeros_refined ),
     'bc03.stelib.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
                                               GP_GBL.bc03_stelib_chab_zeros ),
     'bc03.stelib.chab.extrap' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
@@ -35,7 +37,9 @@ def print_ssp_libs () :
     #. **filling_schema**: all the SSPs' wavelenght domain has been extended to
        span from :math:`1\ \mathring{A}` to :math:`10^{10}\ \mathring{A}`. 
        This code provides the strategy used (:code:`extend` = filled with zeros, 
-       :code:`extrap` = extrapolated linearly in the logarithm)
+       :code:`extrap` = extrapolated linearly in the logarithm, 
+       :code:`refined` = thinner lambda grid obtained by 
+       linearly-interpolating the :code:`extend` equivalent)
     """
     list_libs = ''
     for k in _SSP_LIB.keys() :

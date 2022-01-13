@@ -18,6 +18,11 @@ bc03_basel_chab_zeros  = os.path.join(
     BC03, 'basel_chab_zero_extended.dat'
 )
 
+# BaSeL (Low Resolution) SSP + Chabrier IMF + null ext. + thinner lambda-grid
+bc03_basel_chab_zeros_refined  = os.path.join(
+    BC03, 'basel_chab_zero_refined.dat'
+)
+
 # Stelib (High Resolution) SSP + Chabrier IMF + null extension
 bc03_stelib_chab_zeros  = os.path.join(
     BC03, 'stelib_chab_zero_extended.dat'
