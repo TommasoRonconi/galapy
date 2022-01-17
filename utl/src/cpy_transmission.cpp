@@ -201,6 +201,38 @@ extern "C" {
 
   // ========================================================================================
   
+  // Get the X-Axis grid
+  static const char DocString_get_xaxis[] =
+    "get_xaxis( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_xaxis ( CPyBPT * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_FLOAT64 >( self->ptrObj->get_xaxis() );
+
+  }
+  
+  // Get the Y-Axis grid
+  static const char DocString_get_yaxis[] =
+    "get_yaxis( self, ... )\n"
+    "--\n\n"
+    "Function computing ...\n\n"
+    "\nReturns"
+    "\n-------"
+    "\n : \n"
+    "\t\n";
+  static PyObject * CPyBPT_get_yaxis ( CPyBPT * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_FLOAT64 >( self->ptrObj->get_yaxis() );
+
+  }
+
+  // ========================================================================================
+  
   static PyMethodDef CPyBPT_Methods[] =
     {
      { "get_bandpass_flux",
@@ -223,6 +255,14 @@ extern "C" {
        (PyCFunction) CPyBPT_get_norm,
        METH_NOARGS,
        DocString_get_norm },
+     { "get_xaxis",
+       (PyCFunction) CPyBPT_get_xaxis,
+       METH_NOARGS,
+       DocString_get_xaxis },
+     { "get_yaxis",
+       (PyCFunction) CPyBPT_get_yaxis,
+       METH_NOARGS,
+       DocString_get_yaxis },
      {NULL, NULL, 0, NULL}
     };
 

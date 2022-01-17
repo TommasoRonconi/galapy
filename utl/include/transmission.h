@@ -84,6 +84,9 @@ namespace utl {
 	
     }
 
+    std::vector< double > get_xaxis () { return _ftran.get_xv(); }
+    std::vector< double > get_yaxis () { return _ftran.get_fv(); }
+
   }; // endclass transmission
 
 } // endnamespace utl
