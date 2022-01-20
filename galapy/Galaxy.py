@@ -30,6 +30,9 @@ class GXY () :
         self.age      = age
         self.redshift = redshift
         self.sfh = SFH( **sfh_kw )
+        ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age)*50, 
+                         'Mgas'  : self.sfh.core.Mgas(self.age),
+                         'Mdust' : self.sfh.core.Mdust(self.age) } )
         self.csp = CSP( **csp_kw )
         self.ism = ISM( **ism_kw )
         if lstep is not None :
@@ -117,7 +120,7 @@ class GXY () :
 
         if sfh_kw is not None :
             self.sfh.set_parameters(**sfh_kw)
-            ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+            ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age)*50, 
                              'Mgas'  : self.sfh.core.Mgas(self.age),
                              'Mdust' : self.sfh.core.Mdust(self.age) } )
         if len( ism_kw ) > 0 :
@@ -156,11 +159,11 @@ class GXY () :
         Ltot   = self.csp.core.emission( self.lgrid, attTot )
         
         # set the resulting temperature of ISM
-        EDD = 0.5 * Lsun * trap_int( 
-            self.wl(), ( LattMC - Ltot ) 
+        EDD = Lsun * trap_int( 
+            self.wl(), ( LattMC - Ltot ) #* self.wl()
         ) 
-        EMC = 0.5 * Lsun * trap_int( 
-            self.wl(), ( Lunatt - LattMC ) 
+        EMC = Lsun * trap_int( 
+            self.wl(), ( Lunatt - LattMC ) #* self.wl()
         )
         _ = self.ism.dd.temperature( EDD )
         _ = self.ism.mc.temperature( EMC )
