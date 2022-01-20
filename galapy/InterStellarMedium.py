@@ -195,7 +195,7 @@ class ismPhase ():
 class MC ( ismPhase ) :
 
     def __init__ ( self, T = None, **kwargs ) :
-        super().__init__( 'mc', CMC, T )
+        super().__init__( 'mc', CMC, T=T, **kwargs )
 
     def eta ( self, tt ) :
         return self.core.eta( tt )
@@ -209,7 +209,7 @@ class MC ( ismPhase ) :
 class DD ( ismPhase ) :
 
     def __init__ ( self, T = None, **kwargs ) :
-        super().__init__( 'dd', CDD, T )
+        super().__init__( 'dd', CDD, T=T, **kwargs )
 
 class ISM () :
 
