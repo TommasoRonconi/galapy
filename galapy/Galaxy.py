@@ -39,7 +39,7 @@ class GXY () :
 
         # Build the redshift-dependent constant for lum->flux conversion
         if isinstance( cosmo, str ) :
-            zz, DL = numpy.loadtxt( os.path.join( DL_DIR, f'{cosmo:s}.LumDist.txt' ), unpack=True)
+            zz, DL = numpy.loadtxt( os.path.join( DL_DIR, f'{cosmo:s}.LumDist.txt' ), unpack = True )
         elif isinstance( cosmo, MM ) :
             zz, DL = cosmo['redshift'], cosmo['luminosity_distance']
         else :
