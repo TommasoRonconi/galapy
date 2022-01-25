@@ -1,7 +1,7 @@
 """ Definitions of physical and mathematical constants
 """
 
-# Solar luminosity
+# Solar luminosity [ erg / s ]
 Lsun = 3.828e+33
 
 # Speed of light in vacuum

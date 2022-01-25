@@ -51,8 +51,8 @@ class GXY () :
                               'or a formatted dictionary.' )
         zz = numpy.ascontiguousarray(zz)
         DL = numpy.ascontiguousarray(
-            1.e+12 * (1 + zz) /
-            ( 4 * numpy.pi * clight['cm/s'] * DL**2 * Mpc_to_cm**2 )
+            1.e+26 * (1 + zz) * Lsun /
+            ( 4 * numpy.pi * clight['A/s'] * DL**2 * Mpc_to_cm**2 )
         )
         self._fDL = lin_interp( zz, DL )
         
@@ -151,7 +151,7 @@ class GXY () :
         return Ltot
 
     def get_SED ( self ) :
-        """ Returns the flux at given distance.
+        """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
         return self.get_emission() * self.wl()**2 * self._fDL( self.redshift )
