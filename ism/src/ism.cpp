@@ -72,7 +72,7 @@ double sed::ism::temperature ( const double Etot ) noexcept {
 // =============================================================================
 
 double sed::diffuse::_A_Vband ( const double * const param ) const noexcept {
-  
+
   return 2.e-2 *                  // 2 * ( 1 / 10^8 ) * ( 10^{-3} )^-2
     ( 1 - param[ 0 ] ) *          // ( 1 - f_MC )
     param[ 1 ] *                  // N_V^diff
@@ -110,9 +110,9 @@ double sed::diffuse::emission ( const double lambda ) const noexcept {
 
 double sed::cloud::_A_Vband ( const double * const param ) const noexcept {
 
-  return 2.56e-4 *	                   // ( 16 * 16 / 10^6 )
+  return 2.56e-4 *                         // ( 16 * 16 / 10^6 )
     param[ 1 ] *	                   // N_V^MC
-    param[ 4 ] *                           // Z_gas / Z_sol
+    param[ 4 ] / 0.014 *                   // Z_gas / Z_sol
     param[ 0 ] * param[ 6 ] /              // M_MC = f_MC * M_gas
     ( param[ 2 ] + 1.e-7 ) /               //        / ( N_MC + 1.e-7 ) 
     ( param[ 3 ] * param[ 3 ] );           // ( R_MC )^{-2}
@@ -129,6 +129,7 @@ double sed::cloud::_fact_greybody ( const double * const param ) const noexcept 
     sed::cnst::pc * sed::cnst::pc *          // [ pc ] -> [ cm ]
     param[ 3 ] * param[ 3 ] *                // R_MC^2
     param[ 2 ];                              // N_MC
+    
 
 }
 
