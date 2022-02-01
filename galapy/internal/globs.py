@@ -44,3 +44,9 @@ FILT_DIR = os.path.join( DATA_DIR, 'filters' )
 DL_DIR = os.path.join( DATA_DIR, 'DL' )
 
 ################################################################
+# AGN Templates (Fritz et al., 2006)
+
+AGN_FILE = os.path.join( DATA_DIR, 'AGN_templates',
+                         'ct{0:d}al{1:.1f}be{2:.2f}ta{3:.1f}rm{4:d}ia{5:.3f}' )
+
+################################################################

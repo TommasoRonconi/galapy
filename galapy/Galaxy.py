@@ -7,6 +7,7 @@ from collections.abc import MutableMapping as MM
 from galapy.StarFormationHistory import SFH
 from galapy.CompositeStellarPopulation import CSP
 from galapy.InterStellarMedium import ISM
+from galapy.ActiveGalacticNucleus import AGN
 from galapy.PhotometricSystem import PMS
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
@@ -25,7 +26,7 @@ class GXY () :
     """
     
     def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
-                   sfh_kw = {}, csp_kw = {}, ism_kw = {} ) :
+                   sfh_kw = {}, csp_kw = {}, ism_kw = {}, agn_kw = None ) :
         
         self.age      = age
         self.redshift = redshift
@@ -35,6 +36,12 @@ class GXY () :
                          'Mdust' : self.sfh.core.Mdust(self.age) } )
         self.csp = CSP( **csp_kw )
         self.ism = ISM( **ism_kw )
+        self.agn = None
+        if agn_kw is not None :
+            self.agn = AGN( lmin = self.csp.l.min(),
+                            lmax = self.csp.l.max(),
+                            **agn_kw )
+        
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
@@ -83,7 +90,7 @@ class GXY () :
         except IndexError :
             raise TypeError('Argument lstep should be either an integer or a boolean mask!')
     
-    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {} ) :
+    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {}, agn_kw = None ) :
         """divided in nested dictionaries or not?"""
         if age is not None :
             self.age = age
@@ -100,6 +107,13 @@ class GXY () :
             self.ism.set_parameters(**ism_kw)
         # if age is not None or sfh_kw is not None :
         #     self.csp.set_parameters( self.age, self.sfh )
+
+        if agn_kw is not None :
+            try :
+                self.agn.set_parameters(**agn_kw)
+            except AttributeError :
+                raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
+                                      'without an AGN component is not allowed.' )
             
         return;
     
@@ -147,7 +161,10 @@ class GXY () :
         # emission from ISM
         Ltot += self.ism.mc.emission( self.wl() )
         Ltot += self.ism.dd.emission( self.wl() )
-
+        
+        if self.agn is not None :
+            Ltot += self.agn.emission( self.wl(), (EDD+EMC)/Lsun )
+        
         return Ltot
 
     def get_SED ( self ) :
