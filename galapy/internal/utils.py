@@ -37,6 +37,43 @@ class FlagVal () :
 
 ###################################################################################
 
+def find_nearest ( array, value ) :
+    """ Function finding the indexes of array closer to the
+    values in value.
+    
+    Parameters
+    ----------
+    array : array-like 
+    
+    value : array-like or scalar
+    
+    Return
+    ------
+    : numpy-array
+      list of indexes of elements in array closer to 
+      values in value.
+    
+    Warning
+    -------
+    Uniqueness of elements in the returned array is not guaranteed.
+    """
+    import numpy
+    
+    array = numpy.asarray( array )
+    value = numpy.asarray( value )
+    scalar_input = False
+    if value.ndim == 0 :
+        value = value[None] # makes 'value' 1D
+        scalar_input = True
+        
+    idx = [ ( numpy.abs( array - _v ) ).argmin() for _v in value ] 
+
+    if scalar_input :
+        return numpy.squeeze( idx )
+    return numpy.asarray( idx )
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
@@ -205,43 +242,6 @@ class FlagVal () :
 #         else:
 #             setattr( parent_obj, k, v )
 #     return;
-
-###################################################################################
-
-# def find_nearest ( array, value ) :
-#     """ Function finding the indexes of array closer to the
-#     values in value.
-    
-#     Parameters
-#     ----------
-#     array : array-like 
-    
-#     value : array-like or scalar
-    
-#     Return
-#     ------
-#     : numpy-array
-#       list of indexes of elements in array closer to 
-#       values in value.
-    
-#     Warning
-#     -------
-#     Uniqueness of elements in the returned array is not guaranteed.
-#     """
-#     import numpy
-    
-#     array = numpy.asarray( array )
-#     value = numpy.asarray( value )
-#     scalar_input = False
-#     if value.ndim == 0 :
-#         value = value[None] # makes 'value' 1D
-#         scalar_input = True
-        
-#     idx = [ ( numpy.abs( array - _v ) ).argmin() for _v in value ] 
-
-#     if scalar_input :
-#         return numpy.squeeze( idx )
-#     return numpy.asarray( idx )
 
 ###################################################################################
 
