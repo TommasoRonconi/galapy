@@ -47,6 +47,44 @@ def agn_build_params ( fAGN, **kwargs ) :
 #################################################################################
 
 class AGN () :
+    """ AGN component class
+    This class implements the templated emission from an Active Galactic Nucleus
+    within the galaxy.
+    We use templates from Fritz et al., 2006 to model the AGN emission normalized
+    at build time. The total emission is then rescaled to a user-provided total emission.
+    
+    The final emission can be expressed as
+    
+    .. math::
+    
+       L_\text{AGN}(\lambda) = \dfrac{f_\text{AGN}}{1-f_\text{AGN}}L_\text{AGN}^\text{norm}(\lambda)\cdot L_\text{ref}
+    
+    where 
+    :math:`f_\text{AGN}` is the fraction of the reference emission, :math:`L_\text{ref}`, 
+    radiated by the AGN and
+    :math:`L_\text{AGN}^\text{norm}` is the normalized total templated emission.
+    
+    Parameters
+    ----------
+    lmin, lmax : float
+      minimum and maximum values of the wavelenght-domain. The original templates
+      are computed within the 10-10^7 Angstrom interval. At build time this domain
+      is extended with `pad` padding values before and after the limits of the 
+      template's wavelenght domain to match the requested limits.
+    pad : integer
+      number of padding values to match the requested wavelenght domain
+    fAGN : float
+      fraction of the total reference emission
+
+    Keyword Arguments
+    -----------------
+    ct : scalar
+    al : scalar
+    be : scalar
+    ta : scalar
+    rm : scalar
+    ia : scalar   
+    """
     
     def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, **kwargs ) :
         import galapy.internal.globs as GP_GBL
@@ -66,7 +104,7 @@ class AGN () :
 
         # load template from closest file to the parameters chosen
         self.ll, self.tot, self.ther, self.scat, self.disk = \
-            numpy.array( [1.e+4,1.,1.,1.,1.] )[:,numpy.newaxis] * \
+            numpy.array( [1.e+4,1.e-4,1.e-4,1.e-4,1.e-4] )[:,numpy.newaxis] * \
             numpy.genfromtxt( self._filebase.format( *( self.params[ 'template' ][k]
                                                         for k in _template_tunables  ) ),
                               unpack=True )
@@ -103,10 +141,10 @@ class AGN () :
             self.load_template()
         return;
 
-    def emission ( self, ll, Lscale ) :
+    def emission ( self, ll, Lref ) :
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
-        return fact * Lscale * self.f_norm_tot( ll )
+        return fact * Lref * self.f_norm_tot( ll )
     
         
 
