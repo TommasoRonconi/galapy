@@ -117,7 +117,7 @@ class AGN () :
         ltmp[-self._pad-1:] = numpy.logspace( numpy.log10(self.ll.max()),
                                               numpy.log10(self.lmax),
                                               self._pad+1 )
-        self.ll  = ltmp
+        self.ll   = ltmp
         self.ther = numpy.pad(self.ther, self._pad, constant_values = 0.)
         self.scat = numpy.pad(self.scat, self._pad, constant_values = 0.)
         self.disk = numpy.pad(self.disk, self._pad, constant_values = 0.)
