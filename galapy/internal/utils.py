@@ -74,6 +74,11 @@ def find_nearest ( array, value ) :
 
 ###################################################################################
 
+def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
+    return El**(-gamma+3) * numpy.exp(-El/Ecut) 
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )

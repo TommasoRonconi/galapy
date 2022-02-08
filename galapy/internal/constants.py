@@ -13,3 +13,13 @@ clight = {
 
 # Mpc to cm
 Mpc_to_cm = 3.086e+24
+
+# Planck constant
+hP = {
+    'eV/Hz' : 4.1357e-15,
+}
+
+# Angstrom to keV
+def Ang_to_keV ( wavelenght ) :
+    return 1.e-3 * hP['eV/Hz'] * clight['A/s'] / wavelenght
+
