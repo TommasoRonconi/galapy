@@ -184,6 +184,9 @@ class GXY () :
         
         if self.agn is not None :
             Ltot += self.agn.emission( self.wl(), (EDD+EMC)/Lsun )
+
+        if self.xrb is not None :
+            Ltot += self.xrb.emission( self.wl() )
         
         return Ltot
 
@@ -200,16 +203,6 @@ class PhotoGXY ( GXY ) :
 
         super().__init__( *args, **kwargs )
         self.pms = None
-
-    # def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18', 
-    #                sfh_kw = {}, csp_kw = {}, ism_kw = {}, agn_kw = None ) :
-    #     super().__init__( age, redshift,
-    #                       lstep=lstep, cosmo=cosmo,
-    #                       sfh_kw=sfh_kw,
-    #                       csp_kw=csp_kw,
-    #                       ism_kw=ism_kw,
-    #                       agn_kw=agn_kw )
-    #     self.pms = None
 
     def build_photometric_system ( self, *args, **kwargs ) :
 
