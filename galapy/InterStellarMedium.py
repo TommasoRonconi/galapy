@@ -24,6 +24,12 @@ ism_tunables = {
 def ism_build_params ( phase, **kwargs ) :
     """ Builds the parameters dictionary for given phase.
     """
+    if phase not in ism_tunables.keys() :
+        av_phases = ''
+        for k in ism_tunables.keys() :
+            av_phases += f'"{k}" '
+        raise ValueError( f'Phase "{phase}" chosen not available. '
+                          f'Available phases are: {av_phases}')
     if phase == 'mc' :
         out = {
             'f_MC'    : 0.5,
@@ -34,25 +40,19 @@ def ism_build_params ( phase, **kwargs ) :
             'tau_esc' : 1.e+07,
             'Mgas'    : 1.e+09,
         }
-        for k in set( out.keys() ).intersection(kwargs.keys()) :
-            out[k] = kwargs[k]
-        return out
+        
     if phase == 'dd' :
-        return {
+        out = {
             'f_MC'    : 0.5,
             'norm_DD' : 1.e+00,
             'Mdust'   : 1.e+07,
             'Rdust'   : 1.e+03,
             'f_PAH'   : 0.2
         }
-        for k in set( out.keys() ).intersection(kwargs.keys()) :
-            out[k] = kwargs[k]
-        return out
-    av_phases = ''
-    for k in ism_tunables.keys() :
-        av_phases += f'"{k}" '
-    raise ValueError( f'Phase "{phase}" chosen not available. '
-                      f'Available phases are: {av_phases}')
+        
+    for k in set( out.keys() ).intersection(kwargs.keys()) :
+        out[k] = kwargs[k]
+    return out
     
 class ismPhase ():
     """ ISM phase base class.

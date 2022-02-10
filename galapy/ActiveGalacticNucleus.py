@@ -5,7 +5,8 @@
 import numpy
 
 # Internal imports
-from galapy.internal.utils import find_nearest, trap_int
+from galapy.internal.utils import find_nearest, trap_int, powerlaw_exp_cutoff
+from galapy.internal.constants import Ang_to_keV
 from galapy.internal.interp import lin_interp
 
 _template_tunables = ( 'ct', 'al', 'be', 'ta', 'rm', 'ia' )
@@ -86,19 +87,28 @@ class AGN () :
     ia : scalar   
     """
     
-    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, **kwargs ) :
+    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, Xray = True, **kwargs ) :
         import galapy.internal.globs as GP_GBL
         import os
 
+        # store the argument variables
         self.lmin, self.lmax = lmin, lmax
         self._pad = pad
+        self._Xray = Xray
         
         # common name of all template files
         self._filebase = os.path.join( os.path.dirname( GP_GBL.__file__ ),
                                        GP_GBL.AGN_FILE )
-        
+
+        # build the parameter dictionary
         self.params = agn_build_params( fAGN, **kwargs)
+
+        # load the template with physics nearest to the parameters value 
         self.load_template()
+
+        # also compute the X-ray template if requested (default=True)
+        if self._Xray :
+            self.compute_X_template()
 
     def load_template ( self ) :
 
@@ -117,7 +127,7 @@ class AGN () :
         ltmp[-self._pad-1:] = numpy.logspace( numpy.log10(self.ll.max()),
                                               numpy.log10(self.lmax),
                                               self._pad+1 )
-        self.ll  = ltmp
+        self.ll   = ltmp
         self.ther = numpy.pad(self.ther, self._pad, constant_values = 0.)
         self.scat = numpy.pad(self.scat, self._pad, constant_values = 0.)
         self.disk = numpy.pad(self.disk, self._pad, constant_values = 0.)
@@ -130,6 +140,40 @@ class AGN () :
         self.f_norm_tot = lin_interp( numpy.ascontiguousarray( self.ll ),
                                       numpy.ascontiguousarray( self.tot * self.Lnorm ) )
         return;
+
+    def compute_X_template ( self ) :
+
+        # generate wavelenght grid
+        ll = numpy.logspace( numpy.log10( self.lmin ),
+                             numpy.log10( self.lmax ),
+                             256 )
+        # convert wavelenght to energy
+        El = Ang_to_keV( ll )
+
+        # find interval for hard-X normalization
+        wE = ( 2. <= El ) & ( El <= 10. )
+
+        # compute emission law normalization
+        Lnorm = -1. / trap_int( El[wE], powerlaw_exp_cutoff( El[wE], gamma=1.8, Ecut=3.e+2 ) )
+
+        # Compute the normalized power-law:
+        # - high energy cut-off at 300 keV
+        # - spectral index fixed to 1.8
+        # - low energy cut-off at 50 Angstrom (~0.25 keV)
+        ret = numpy.zeros_like( ll )
+        wL = ( ll <= 5.e+1 ) 
+        ret[wL] = powerlaw_exp_cutoff( El[wL], gamma=1.8, Ecut=3.e+2 ) * Lnorm
+
+        # store normalized interpolator object for X-ray emission
+        self.f_norm_X = lin_interp( numpy.ascontiguousarray( ll ),
+                                    numpy.ascontiguousarray( ret ) )
+        return;
+        
+
+    def X_bolometric_correction ( self, Lref ) :
+        """ Duras et al., 2020
+        """
+        return 10.96 * ( 1. + ( numpy.log10( Lref ) / 11.93 )**17.79 )
         
     def set_parameters ( self, fAGN = None, **kwargs ) :
 
@@ -144,7 +188,11 @@ class AGN () :
     def emission ( self, ll, Lref ) :
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
-        return fact * Lref * self.f_norm_tot( ll )
+        if self._Xray :
+            return fact * Lref * ( self.f_norm_tot( ll ) +
+                                   self.f_norm_X( ll ) *
+                                   self.X_bolometric_correction( Lref ) )
+        return  fact * Lref * self.f_norm_tot( ll )
     
         
 

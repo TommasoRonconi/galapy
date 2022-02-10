@@ -74,6 +74,43 @@ def find_nearest ( array, value ) :
 
 ###################################################################################
 
+def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
+    return El**(-gamma+3) * numpy.exp(-El/Ecut) 
+
+###################################################################################
+
+def poly_N ( xx, coeff ) :
+    """ Method for computing N-order polynomia.
+    The order of the polynomium is set by the lenght of the `coeff` list.
+    
+    The method computes
+
+    .. math::
+    
+       y = \sum_0^N c_i * x^{N-i}
+    
+    Parameters
+    ----------
+    xx : scalar or array-like
+      the x-values 
+    coeff : list
+      the values of the coefficients of the polynomium. The list must be
+      ordered, with the first element corresponding to the coefficient multiplying
+      the highest power of the x-variable and the last coefficient being the 
+      scalar coefficient
+    
+    Returns
+    -------
+    : scalar or array-like
+      the y-values
+    """
+    yy = 0.
+    for _c in coeff :
+        yy = yy * xx + _c
+    return yy
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
