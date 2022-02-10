@@ -79,6 +79,14 @@ def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
 
 ###################################################################################
 
+def poly_N ( xx, coeff ) :
+    yy = 0.
+    for _c in coeff :
+        yy = yy * xx + _c
+    return yy
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
