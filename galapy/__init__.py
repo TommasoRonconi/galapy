@@ -5,6 +5,7 @@ import galapy.StarFormationHistory
 import galapy.CompositeStellarPopulation
 import galapy.InterStellarMedium
 import galapy.ActiveGalacticNucleus
+import galapy.XRayBinaries
 import galapy.PhotometricSystem
 import galapy.Galaxy
 
@@ -14,5 +15,6 @@ __all__ = [
     'CompositeStellarPopulation',
     'InterStellarMedium',
     'ActiveGalacticNucleus',
+    'XRayBinaries',
     'PhotometricSystem'
 ]
