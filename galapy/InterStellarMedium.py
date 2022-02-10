@@ -9,10 +9,10 @@ from .ISM_core import CMC, CDD, total_attenuation
 
 ism_tunables = {
     # Molecular Clouds
-    'mc' : [ 'f_MC', 'norm_MC', 'N_MC', 'R_MC', 'Zgas', 'tau_esc', 'Mgas' ],
+    'mc' : [ 'f_MC', 'norm_MC', 'N_MC', 'R_MC', 'Zgas', 'tau_esc', 'Mgas', 'dMClow', 'dMCupp' ],
     
     # Diffuse Dust
-    'dd' : [ 'f_MC', 'norm_DD', 'Mdust', 'Rdust', 'f_PAH' ],
+    'dd' : [ 'f_MC', 'norm_DD', 'Mdust', 'Rdust', 'f_PAH', 'dDDlow', 'dDDupp' ],
 }
 """ Dictionary with the tunable parameters of the ISM phases
 
@@ -39,6 +39,8 @@ def ism_build_params ( phase, **kwargs ) :
             'Zgas'    : 0.5,
             'tau_esc' : 1.e+07,
             'Mgas'    : 1.e+09,
+            'dMClow'  : 1.3,
+            'dMCupp'  : 1.6,
         }
         
     if phase == 'dd' :
@@ -47,7 +49,9 @@ def ism_build_params ( phase, **kwargs ) :
             'norm_DD' : 1.e+00,
             'Mdust'   : 1.e+07,
             'Rdust'   : 1.e+03,
-            'f_PAH'   : 0.2
+            'f_PAH'   : 0.2,
+            'dDDlow'  : 0.7,
+            'dDDupp'  : 2.0,
         }
         
     for k in set( out.keys() ).intersection(kwargs.keys()) :
@@ -95,6 +99,22 @@ class ismPhase ():
         """
         self.T = T
         self.core.set_temperature( self.T )
+        return;
+    
+    def set_slopes ( self, lower, upper ) :
+        """ Manually set the slopes of the ISM phase extinction
+        
+        Parameters
+        ----------
+        lower : float
+          slope of extinction at wavelenghts <= 100 :math:`mu`m
+        lower : float
+          slope of extinction at wavelenghts > 100 :math:`mu`m
+          
+        """
+        self.params[ism_tunables[self.phase][-2]] = lower 
+        self.params[ism_tunables[self.phase][-1]] = upper
+        self.core.set_slopes( lower, upper )
         return;
 
     def temperature ( self, Etot ) :

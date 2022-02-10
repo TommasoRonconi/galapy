@@ -67,16 +67,25 @@ namespace sed {
   public :
 
     ism () = default;
-    ism ( const double low, const double upp ) : _low{ low }, _upp{ upp } {
-
-      _ext_norm_cont = std::pow( 1.81818181818181818e+2, _upp - _low );
-
-    }
+    ism ( const double low, const double upp ) { set_slopes( low, upp ); }
+    // ism ( const double low, const double upp ) : _low{ low }, _upp{ upp } {
+    //   _ext_norm_cont = std::pow( 1.81818181818181818e+2, _upp - _low );
+    // }
       
     virtual ~ism () = default;
 
     virtual void set_params ( const double * const param ) noexcept = 0;
     void set_temperature ( const double temp ) { _Temp = temp; }
+
+    void set_slopes ( const double low, const double upp ) noexcept {
+      
+      _low = low;
+      _upp = upp;
+
+      // ( 100 micron / 5500 Angstrom ) = 1.818181[...]*10^2 Angstrom
+      _ext_norm_cont = std::pow( 1.81818181818181818e+2, _upp - _low );
+      
+    }
     
     std::vector< double > get_params () { return _current_params; }
 
@@ -133,6 +142,8 @@ namespace sed {
     // param[ 2 ] = M_dust
     // param[ 3 ] = R_dust [ pc ]
     // param[ 4 ] = f_PAH
+    // param[ 5 ] = delta_low
+    // param[ 6 ] = delta_upp
     // Out:
     // idx_0 = A_V_diff
     // idx_1 = fact_greybody
@@ -142,6 +153,7 @@ namespace sed {
       _current_params = { _A_Vband( param ),
 			  _fact_greybody( param ),
 			  param[ 4 ] };
+      set_slopes( param[ 5 ], param[ 6 ] );
       return;
       
     }
@@ -182,6 +194,8 @@ namespace sed {
     // param[ 4 ] = Z_gas / Z_sol
     // param[ 5 ] = tau_esc
     // param[ 6 ] = M_gas
+    // param[ 7 ] = delta_low
+    // param[ 8 ] = delta_upp
     // Out:
     // idx_0 = A_V_MC
     // idx_1 = fact_greybody
@@ -193,6 +207,7 @@ namespace sed {
 			  _fact_greybody( param ),
 			  param[ 5 ],
 			  1 / param[ 5 ] };
+      set_slopes( param[ 7 ], param[ 8 ] );
       return;
       
     }

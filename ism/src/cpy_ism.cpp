@@ -119,6 +119,34 @@ extern "C" {
   
   // ========================================================================================
   
+  static const char DocString_set_slopes[] =
+    "Function for setting the slopes of the ISM extinction.\n"
+    "\nParameters"
+    "\n----------"
+    "\nlower : scalar float\n"
+    "\t\n"
+    "\nupper : scalar float\n"
+    "\t\n"
+    "\nReturns"
+    "\n-------"
+    "\n: None"; 
+  static PyObject * CPyISM_set_slopes ( CPyISM * self, PyObject * args ) {
+
+    double lower, upper;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "dd", &lower, &upper ) ) return NULL;
+
+    /* Call C++ member function */
+    self->ptrObj->set_slopes( lower, upper );
+
+    // equivalent to return None
+    Py_RETURN_NONE;
+
+  }
+  
+  // ========================================================================================
+  
   static const char DocString_temperature[] =
     "Computes the temperature of the ISM assuming input total energy.\n"
     "\nParameters"
@@ -285,7 +313,11 @@ extern "C" {
 					{ "set_temperature",
 					  (PyCFunction) CPyISM_set_temperature,
 					  METH_VARARGS,
-					  DocString_set_temperature },
+					  DocString_set_temperature }, 
+					{ "set_slopes",
+					  (PyCFunction) CPyISM_set_slopes,
+					  METH_VARARGS,
+					  DocString_set_slopes },
 					{ "temperature",
 					  (PyCFunction) CPyISM_temperature,
 					  METH_VARARGS,
@@ -371,7 +403,11 @@ extern "C" {
   					{ "set_temperature",
   					  (PyCFunction) CPyISM_set_temperature,
   					  METH_VARARGS,
-  					  DocString_set_temperature },
+  					  DocString_set_temperature }, 
+					{ "set_slopes",
+					  (PyCFunction) CPyISM_set_slopes,
+					  METH_VARARGS,
+					  DocString_set_slopes },
 					{ "temperature",
 					  (PyCFunction) CPyISM_temperature,
 					  METH_VARARGS,
