@@ -12,7 +12,7 @@ from galapy.XRayBinaries import XRB
 from galapy.PhotometricSystem import PMS
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
-from galapy.internal.constants import Lsun, clight, Mpc_to_cm
+from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm
 import galapy.internal.globs as GP_GBL
 
 DL_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
@@ -183,7 +183,7 @@ class GXY () :
         Ltot += self.ism.dd.emission( self.wl() )
         
         if self.agn is not None :
-            Ltot += self.agn.emission( self.wl(), (EDD+EMC)/Lsun )
+            Ltot += self.agn.emission( self.wl(), (EDD+EMC) * sunL )
 
         if self.xrb is not None :
             Ltot += self.xrb.emission( self.wl() )
