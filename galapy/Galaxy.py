@@ -8,6 +8,7 @@ from galapy.StarFormationHistory import SFH
 from galapy.CompositeStellarPopulation import CSP
 from galapy.InterStellarMedium import ISM
 from galapy.ActiveGalacticNucleus import AGN
+from galapy.XRayBinaries import XRB
 from galapy.PhotometricSystem import PMS
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
@@ -26,7 +27,7 @@ class GXY () :
     """
     
     def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
-                   sfh_kw = {}, csp_kw = {}, ism_kw = {}, agn_kw = None ) :
+                   sfh_kw = {}, csp_kw = {}, ism_kw = {}, agn_kw = None, Xray = False ) :
         
         self.age      = age
         self.redshift = redshift
@@ -36,10 +37,21 @@ class GXY () :
                          'Mdust' : self.sfh.core.Mdust(self.age) } )
         self.csp = CSP( **csp_kw )
         self.ism = ISM( **ism_kw )
+        
+        self.xrb = None
+        if Xray :
+            self.xrb = XRB( lmin = self.csp.l.min(),
+                            lmax = self.csp.l.max(),
+                            age = self.age,
+                            psi = self.sfh( self.age ),
+                            Mstar = self.sfh.Mstar( self.age ),
+                            Zstar = self.sfh.Zstar( self.age ) )
+            
         self.agn = None
         if agn_kw is not None :
             self.agn = AGN( lmin = self.csp.l.min(),
                             lmax = self.csp.l.max(),
+                            Xray = Xray,
                             **agn_kw )
         
         if lstep is not None :
@@ -92,6 +104,7 @@ class GXY () :
     
     def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {}, agn_kw = None ) :
         """divided in nested dictionaries or not?"""
+        
         if age is not None :
             self.age = age
         if redshift is not None :
@@ -107,6 +120,13 @@ class GXY () :
             self.ism.set_parameters(**ism_kw)
         # if age is not None or sfh_kw is not None :
         #     self.csp.set_parameters( self.age, self.sfh )
+
+        # This one here should also be set only when either age or sfh changes:
+        if self.xrb is not None :
+            self.xrb.set_parameters( age = self.age,
+                                     psi = self.sfh( self.age ),
+                                     Mstar = self.sfh.Mstar( self.age ),
+                                     Zstar = self.sfh.Zstar( self.age ) )
 
         if agn_kw is not None :
             try :
