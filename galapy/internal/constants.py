@@ -3,6 +3,7 @@
 
 # Solar luminosity [ erg / s ]
 Lsun = 3.828e+33
+sunL = 1. / Lsun
 
 # Speed of light in vacuum
 clight = {
