@@ -181,10 +181,14 @@ class GXY () :
         # emission from ISM
         Ltot += self.ism.mc.emission( self.wl() )
         Ltot += self.ism.dd.emission( self.wl() )
-        
+
+        # OPTIONAL COMPONENTS:
+
+        # emission from AGN
         if self.agn is not None :
             Ltot += self.agn.emission( self.wl(), (EDD+EMC) * sunL )
 
+        # emission from X-Ray binaries
         if self.xrb is not None :
             Ltot += self.xrb.emission( self.wl() )
         
