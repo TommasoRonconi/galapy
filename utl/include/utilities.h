@@ -94,6 +94,9 @@ namespace sed {
 
     /// Used in the Black-Body law \f$h_P / k_B [ cm \cdot K ]\f$
     static const double _hPccBk = hP * cc / kB;
+
+    /// Used in the Free-Free emission law \f$h_P / k_B [ s * K ]\f$
+    static const double _hPBk = hP / kB;
   
     /// @} End of static constant
 

@@ -18,6 +18,7 @@ Mpc_to_cm = 3.086e+24
 # Planck constant
 hP = {
     'eV/Hz' : 4.1357e-15,
+    'erg*s' : 6.6262e-27,
 }
 
 # Angstrom to keV

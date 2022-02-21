@@ -71,10 +71,10 @@ namespace sed {
     
     csp () = default;
 
-    csp ( const std::vector< double > lambda,
-	  const std::vector< double > tau,
-	  const std::vector< double > Z,
-	  const std::vector< double > LltZ ) :
+    csp ( const vect_double lambda,
+	  const vect_double tau,
+	  const vect_double Z,
+	  const vect_double LltZ ) :
       _lambda{ lambda }, _Nlambda{ lambda.size() },
       _tau{ tau }, _Ntau{ tau.size() },
       _Z{ Z }, _NZ{ Z.size() },
@@ -85,14 +85,14 @@ namespace sed {
     // =============================================================================
     // Public functions
 
-    void set_params ( const std::vector< double > & psi,
-		      const std::vector< double > & Zstar,
+    void set_params ( const vect_double & psi,
+		      const vect_double & Zstar,
 		      const std::vector< std::size_t > & _iz_low,
 		      const std::size_t _it_last ) noexcept;
 
-    std::vector< double > get_lambda () const noexcept { return _lambda; }
-    std::vector< double > get_tau    () const noexcept { return _tau; }
-    std::vector< double > get_Z      () const noexcept { return _Z; }
+    vect_double get_lambda () const noexcept { return _lambda; }
+    vect_double get_tau    () const noexcept { return _tau; }
+    vect_double get_Z      () const noexcept { return _Z; }
     
     std::size_t lambda_size () const noexcept { return _Nlambda; }
     std::size_t tau_size    () const noexcept { return _Ntau; }
