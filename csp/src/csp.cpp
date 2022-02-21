@@ -2,8 +2,8 @@
 
 // =============================================================================
 
-void sed::csp::set_params ( const std::vector< double > & psi,
-			    const std::vector< double > & Zstar,
+void sed::csp::set_params ( const sed::csp::vect_double & psi,
+			    const sed::csp::vect_double & Zstar,
 			    const std::vector< std::size_t > & iz_low,
 			    const std::size_t it_last ) noexcept {
 
