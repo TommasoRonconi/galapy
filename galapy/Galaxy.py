@@ -9,10 +9,11 @@ from galapy.CompositeStellarPopulation import CSP
 from galapy.InterStellarMedium import ISM
 from galapy.ActiveGalacticNucleus import AGN
 from galapy.XRayBinaries import XRB
+from galapy.NebularFreeFree import NFF
 from galapy.PhotometricSystem import PMS
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
-from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm
+from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 
 DL_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
@@ -27,7 +28,8 @@ class GXY () :
     """
     
     def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
-                   sfh_kw = {}, csp_kw = {}, ism_kw = {}, agn_kw = None, Xray = False ) :
+                   sfh_kw = {}, csp_kw = {}, ism_kw = {},
+                   agn_kw = None, nff_kw = None, Xray = False ) :
         
         self.age      = age
         self.redshift = redshift
@@ -53,6 +55,12 @@ class GXY () :
                             lmax = self.csp.l.max(),
                             Xray = Xray,
                             **agn_kw )
+
+        self.nff = None
+        if nff_kw is not None :
+            self.nff = NFF( self.csp.l, **nff_kw )
+            self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
+            self.w912 = self.csp.l <= 912.
         
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
@@ -75,9 +83,11 @@ class GXY () :
         )
         self._fDL = lin_interp( zz, DL )
         
-    def wl ( self ) :
+    def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
         """
+        if obs :
+            return ( 1 + self.redshift ) * self.csp.l[ self.lgrid ]
         return self.csp.l[self.lgrid]
         
     def get_wavelenght_grid ( self, lstep ) :
@@ -102,7 +112,7 @@ class GXY () :
         except IndexError :
             raise TypeError('Argument lstep should be either an integer or a boolean mask!')
     
-    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {}, agn_kw = None ) :
+    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {}, agn_kw = None, nff_kw = None ) :
         """divided in nested dictionaries or not?"""
         
         if age is not None :
@@ -134,6 +144,14 @@ class GXY () :
             except AttributeError :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
+
+        if nff_kw is not None :
+            try :
+                nff_kw.update( { 'Zgas' : ism_kw[ 'Zgas' ] } )
+                self.nff.set_parameters( **nff_kw )
+            except AttributeError :
+                raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
+                                      'without an NFF component is not allowed.' )
             
         return;
     
@@ -145,7 +163,7 @@ class GXY () :
         # emission from stars (using directly the core function for performance)  
         return self.csp.core.emission( self.lgrid )
     
-    def get_emission ( self, **kwargs ) :
+    def get_emission ( self, store_attenuation = False, **kwargs ) :
         """ Temporary implementation, final should
         * the keyword arguments are the free parameters, 
           (so this should call self.set_parameters(**kwargs) ftf)
@@ -167,13 +185,18 @@ class GXY () :
         Lunatt = self.csp.core.emission( self.lgrid )
         LattMC = self.csp.core.emission( self.lgrid, attTotMC )
         Ltot   = self.csp.core.emission( self.lgrid, attTot )
+
+        if store_attenuation or self.nff is not None :
+            wn0 = Lunatt > 0.
+            self.Aavg = numpy.ones_like( self.wl() )
+            self.Aavg[wn0] = Ltot[wn0]/Lunatt[wn0]
         
         # set the resulting temperature of ISM
         EDD = Lsun * trap_int( 
-            self.wl(), ( LattMC - Ltot ) #* self.wl()
+            self.wl(), ( LattMC - Ltot )
         ) 
         EMC = Lsun * trap_int( 
-            self.wl(), ( Lunatt - LattMC ) #* self.wl()
+            self.wl(), ( Lunatt - LattMC )
         )
         _ = self.ism.dd.temperature( EDD )
         _ = self.ism.mc.temperature( EMC )
@@ -191,6 +214,13 @@ class GXY () :
         # emission from X-Ray binaries
         if self.xrb is not None :
             Ltot += self.xrb.emission( self.wl() )
+
+        # Free-free emission from Nebulae
+        if self.nff is not None :
+            Q_H = trap_int( self.wl()[ self.w912 ],
+                            Lunatt[ self.w912[ self.lgrid ] ] *
+                            self.wl()[ self.w912 ] * self.Q_H_fact )
+            Ltot += self.Aavg * self.nff.emission( Q_H, il = self.lgrid )
         
         return Ltot
 
@@ -218,7 +248,7 @@ class PhotoGXY ( GXY ) :
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
                              "Use function build_photometric_system() before." )
-        return self.pms.get_fluxes( self.wl() * (1+self.redshift), self.get_SED() )
+        return self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
         
 
 
