@@ -184,6 +184,7 @@ class CSP () :
         scalar_input = False
         if il.ndim == 0 :
             il = il[None] # makes il 1D
+            scalar_input = True
         if ftau is None :
             ftau = numpy.ones( ( self.t.size * len( il ), ),
                                dtype = numpy.float64 )
