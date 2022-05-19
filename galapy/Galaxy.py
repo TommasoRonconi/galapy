@@ -247,7 +247,7 @@ class PhotoGXY ( GXY ) :
 
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
-                             "Use function build_photometric_system() before." )
+                             "Call function build_photometric_system() before." )
         return self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
         
 
