@@ -237,7 +237,7 @@ extern "C" {
     CPyNFF_t.tp_basicsize = sizeof( CPyNFF );
     CPyNFF_t.tp_dealloc   = (destructor) CPyNFF_dealloc;
     CPyNFF_t.tp_flags     = Py_TPFLAGS_DEFAULT;
-    CPyNFF_t.tp_doc       = "Diffuse-Dust objects";
+    CPyNFF_t.tp_doc       = "Nebular Free-Free object";
     CPyNFF_t.tp_methods   = CPyNFF_Methods;
     CPyNFF_t.tp_init      = (initproc) CPyNFF_init;
     if ( PyType_Ready( &CPyNFF_t ) < 0 )
