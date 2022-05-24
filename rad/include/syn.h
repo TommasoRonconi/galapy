@@ -42,8 +42,8 @@ namespace sed {
     // vector with the running-values of the parameters
     std::vector< double > _paramsrc;
 
-    // double _alpha_syn = 0.75;       // maybe use multiplications instead
-    // double _nu_self = 2.e+8;        // [ Hz ]
+    double _alpha_syn = 0.75;     // [ adimensional ]
+    double _nu_self = 0.2;        // [ GHz ]
 
     // constant conversion factor wavelenght [ Angstroms ] -> inverse of the frequency [ 1./GHz ]
     double _Ang2GHz = 1. / 
@@ -116,13 +116,13 @@ namespace sed {
 
     }
 
-    double emission ( const std::size_t il, const double fact ) noexcept const {
+    double emission ( const std::size_t il, const double fact ) const noexcept {
 
       double l_tothe_asyn = std::pow( _1_of_nu[ il ], _paramsrc[ 0 ] );
-      double tau = _opt_dept( il, l_tothe_asyn );
+      double tau = _opt_depth( il, l_tothe_asyn );
       return fact *
 	l_tothe_asyn *
-	f_emission[ il ] *
+	_f_emission[ il ] *
 	( 1. - std::exp( tau ) ) / tau;
 
     }

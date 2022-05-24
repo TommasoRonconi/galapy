@@ -54,7 +54,7 @@ extern "C" {
   
   static const char DocString_set_params[] =
     "Function for setting the parameters of the model.\n"
-v    "\nParameters"
+    "\nParameters"
     "\n----------"
     "\nparams : array-like\n"
     "\nReturns"
@@ -158,9 +158,9 @@ v    "\nParameters"
 					   METH_VARARGS,
 					   DocString_set_params },
 					 { "opt_depth",
-					   (PyCFunction) CPySYN_gff,
+					   (PyCFunction) CPySYN_opt_depth,
 					   METH_VARARGS,
-					   DocString_gff },
+					   DocString_opt_depth },
 					 { "emission",
 					   (PyCFunction) CPySYN_emission,
 					   METH_VARARGS,

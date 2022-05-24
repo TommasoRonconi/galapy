@@ -112,6 +112,21 @@ def main():
     )
 
     #############################################################################
+    # C++ implementation of the Synchrotron emission (generic parametric)
+    
+    ext_syn = Extension( "galapy.SYN_core",
+                         [ os.path.join( 'rad', 'src', 'cpy_syn.cpp' ),
+                         ],
+                         include_dirs = [ os.path.join( 'rad', 'include' ),
+                                          os.path.join( 'utl', 'include' ),
+                                          np.get_include()
+                         ],
+                         extra_compile_args=extra_compile_args,
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
+    )
+
+    #############################################################################
     # C++ implementation of BPT functions and types
     
     ext_bpt = Extension( "galapy.BandpassTransmission",
@@ -156,6 +171,7 @@ def main():
                ext_csp,
                ext_ism,
                ext_nff,
+               ext_syn,
                ext_bpt
            ],
            include_package_data = True,
