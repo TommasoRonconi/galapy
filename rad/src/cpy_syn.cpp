@@ -34,8 +34,10 @@ extern "C" {
   
     /* Convert NumPy-array to C++ vector */
     if ( NPyArrayToCxxVector1D< double >( Lbuf, Lvec ) == -1 ) return -1;
-    
+
+    /* Call the constructor */
     self->ptrObj = new sed::syn{ Lvec };
+    
     return 0;
     
   }

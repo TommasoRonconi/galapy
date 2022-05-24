@@ -12,7 +12,7 @@
 #define __SYN_H__
 
 // STL includes
-#include <vector>
+// #include <vector>
 
 // internal includes
 #include <utilities.h>
@@ -46,17 +46,17 @@ namespace sed {
     double _nu_self = 0.2;        // [ GHz ]
 
     // constant conversion factor wavelenght [ Angstroms ] -> inverse of the frequency [ 1./GHz ]
-    double _Ang2GHz = 1. / 
-      sed::cnst::cc *  // speed of light [cm * s^-1]
-      1.e+8 *          // cm to Angstrom
-      1.e-9 ;          // s^-1 to GHz
+    double _Ang2GHz =
+      1.e-8 *          // cm to Angstrom
+      1.e+9 /          // s^-1 to GHz 
+      sed::cnst::cc;   // speed of light [cm * s^-1];
     
     // ==================================================
     // private functions of the class
 
     double _opt_depth ( const std::size_t il, const double fact ) const noexcept {
 
-      return fact * _paramsrc[ 2 ] * _f_optdepth[ il ];
+      return fact * _paramsrc[ 1 ] * _f_optdepth[ il ];
       
     }
 
@@ -75,16 +75,16 @@ namespace sed {
 
     syn ( const std::vector< double > & lambda ) noexcept {
 
-      _paramsrc = std::vector< double >( 3 );
+      _paramsrc = std::vector< double >( 2 );
       set_params();
-      _1_of_nu.resize( lambda.size() );
-      _f_emission.resize( lambda.size() );
-      _f_optdepth.resize( lambda.size() );
+      _1_of_nu    = std::vector< double >( lambda.size() );
+      _f_emission = std::vector< double >( lambda.size() );
+      _f_optdepth = std::vector< double >( lambda.size() );
       int irc = 0;
       for ( auto && _l : lambda ) {
-        _1_of_nu.emplace_back( _Ang2GHz * _l );
-	_f_emission.emplace_back( 1. / ( 1. + 1. / std::sqrt( 20. * _1_of_nu[irc] ) ) );
-	_f_optdepth.emplace_back( _1_of_nu[irc] * _1_of_nu[irc] * std::sqrt( _1_of_nu[irc] ) );
+        _1_of_nu[irc] = _Ang2GHz * _l;
+	_f_emission[irc] = 1. / ( 1. + 1. / std::sqrt( 20. * _1_of_nu[irc] ) );
+	_f_optdepth[irc] = _1_of_nu[irc] * _1_of_nu[irc] * std::sqrt( _1_of_nu[irc] );
 	++irc;
       }
 
@@ -95,8 +95,7 @@ namespace sed {
     // param[ 1 ] = nu_self
     // Out:
     // idx_0 = alpha_syn
-    // idx_1 = nu_self
-    // idx_2 = nu_self^( alpha_syn + 2.5 )
+    // idx_1 = nu_self^( alpha_syn + 2.5 )
     void set_params ( const double * const params = nullptr ) noexcept {
 
       if ( params ) {
@@ -104,8 +103,7 @@ namespace sed {
 	_nu_self   = params[ 1 ];
       }
       _paramsrc[ 0 ] = _alpha_syn;
-      _paramsrc[ 1 ] = _nu_self;
-      _paramsrc[ 2 ] = std::pow( _nu_self, _alpha_syn + 2.5 );
+      _paramsrc[ 1 ] = std::pow( _nu_self, _alpha_syn + 2.5 );
 
     }
     
@@ -123,7 +121,7 @@ namespace sed {
       return fact *
 	l_tothe_asyn *
 	_f_emission[ il ] *
-	( 1. - std::exp( tau ) ) / tau;
+	( 1. - std::exp( -tau ) ) / tau;
 
     }
 
