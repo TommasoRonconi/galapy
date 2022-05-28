@@ -147,9 +147,10 @@ def main():
            description = "GalaPy - Galactic spectral analysis tools in Python",
            package_dir = {
                'galapy' : 'galapy',
+               'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
                'galapy.internal' : os.path.join( 'galapy', 'internal' )
            },
-           packages = [ 'galapy', 'galapy.internal' ],
+           packages = [ 'galapy', 'galapy.configuration', 'galapy.internal' ],
            ext_modules = [
                ext_intp,
                ext_sfh,
