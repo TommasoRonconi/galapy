@@ -12,16 +12,13 @@ import os
 # Internal imports
 from .CSP_core import loadSSP, CCSP
 import galapy.internal.globs as GP_GBL
+from galapy.internal.data import DataFile
 
 _SSP_LIB = {
-    'bc03.basel.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_basel_chab_zeros ),
-    'bc03.basel.chab.refined' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_basel_chab_zeros_refined ),
-    'bc03.stelib.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_stelib_chab_zeros ),
-    'bc03.stelib.chab.extrap' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_stelib_chab_extrap ),
+    'bc03.basel.chab.extend'  : GP_GBL.bc03_basel_chab_zeros,
+    'bc03.basel.chab.refined' : GP_GBL.bc03_basel_chab_zeros_refined,
+    'bc03.stelib.chab.extend' : GP_GBL.bc03_stelib_chab_zeros,
+    'bc03.stelib.chab.extrap' : GP_GBL.bc03_stelib_chab_extrap,
     }
 
 def print_ssp_libs () :
@@ -75,7 +72,7 @@ class CSP () :
             raise ValueError( f'SSP library "{ssp_lib}" not available; '
                               'you can see the list of available libraries by running '
                               'galapy.CompositeStellarPopulation.print_ssp_libs()' )
-        self.l, self.t, self.Z, self.L = loadSSP(_SSP_LIB[self.ssp_lib])
+        self.l, self.t, self.Z, self.L = loadSSP( DataFile( *_SSP_LIB[self.ssp_lib] ).get_file() )
         self.shape = (self.l.size, self.t.size, self.Z.size)
         self.core = CCSP( self.l, self.t, self.Z, self.L )
         self._timetuple = None
