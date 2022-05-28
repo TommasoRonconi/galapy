@@ -5,11 +5,9 @@ from collections.abc import MutableMapping as MM
 
 # Internal imports
 import galapy.internal.globs as GP_GBL
+from galapy.internal.data import DataFile
 from galapy.internal.utils import FlagVal
 from galapy.BandpassTransmission import BPT
-
-FLT_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                        GP_GBL.FILT_DIR )
 
 class PMS () :
     """ Builds the Photometric System 
@@ -44,7 +42,9 @@ class PMS () :
         if len( args ) > 0 :
             for arg in args :
                 try :
-                    ll, fl = numpy.loadtxt( os.path.join( FLT_DIR, f'{arg:s}.dat' ), unpack=True )
+                    ll, fl = numpy.loadtxt( DataFile( f'{arg:s}.dat',
+                                                      GP_GBL.FILT_DIR ).get_file(),
+                                            unpack=True )
                 except OSError :
                     raise ValueError( f'Filter "{arg}" provided is not present in galapy database.' )
                 except :

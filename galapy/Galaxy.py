@@ -15,9 +15,7 @@ from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
-
-DL_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                       GP_GBL.DL_DIR )
+from galapy.internal.data import DataFile
 
 class GXY () :
     """ Wrapping everything up
@@ -69,7 +67,8 @@ class GXY () :
 
         # Build the redshift-dependent constant for lum->flux conversion
         if isinstance( cosmo, str ) :
-            zz, DL = numpy.loadtxt( os.path.join( DL_DIR, f'{cosmo:s}.LumDist.txt' ),
+            zz, DL = numpy.loadtxt( DataFile( f'{cosmo:s}.LumDist.txt',
+                                              GP_GBL.DL_DIR ).get_file(),
                                     unpack = True )
         elif isinstance( cosmo, MM ) :
             zz, DL = cosmo['redshift'], cosmo['luminosity_distance']

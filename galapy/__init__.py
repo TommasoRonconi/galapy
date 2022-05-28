@@ -1,6 +1,8 @@
 """ This package simulates galactic spectra
 """
 
+from galapy.configuration import rcParams
+
 import galapy.StarFormationHistory
 import galapy.CompositeStellarPopulation
 import galapy.InterStellarMedium
@@ -20,3 +22,4 @@ __all__ = [
     'XRayBinaries',
     'PhotometricSystem'
 ]
+
