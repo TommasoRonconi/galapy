@@ -12,7 +12,7 @@ Even though the library is optimized for fitting photometric datasets, its simul
 
 * **Free software**: GPLv3 license;
 * **GitHub repository**: https://github.com/TommasoRonconi/galapy
-* **Python versions**: >=3.5
+* **Python versions**: >=3.6
 
 The only external dependency required is NumPy which is summoned both from the Python interface and from the C-Wrapping layer.
 
