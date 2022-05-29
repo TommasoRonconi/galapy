@@ -19,15 +19,6 @@
 
 namespace sed {
 
-  // // [ adimensional ]
-  // static std::vector< double > ZZ = { 0.0001, 0.0005, 0.0010, 0.0040, 0.0080, 0.0200 };
-
-  // // [ Gyr^-1 Msol^-1 ]
-  // static std::vector< double > R0 = { 1.0425, 1.0692, 1.0924, 1.1820, 1.2679, 1.5141 };
-
-  // // [ adimensional ]
-  // static std::vector< double > R1 = { 0.3531, 0.3673, 0.3789, 0.4140, 0.4454, 0.5146 };
-
   class syn {
 
   private :
@@ -59,13 +50,6 @@ namespace sed {
       return fact * _paramsrc[ 1 ] * _f_optdepth[ il ];
       
     }
-
-    // CC-SN rate integrand fitting function
-    // inline double _RCCSN ( double time, double iz ) {
-
-    //   return 1.e-9 * sed::R0[ iz ] * std::pow( 1.e-6 * time, -sed::R1[ iz ] );
-
-    // }
 
   public :
 
@@ -124,9 +108,6 @@ namespace sed {
 	( 1. - std::exp( -tau ) ) / tau;
 
     }
-
-    // double RCCSN ( const double age,
-    // 		   const sed::sfh_base & sfh ) noexcept;
     
   }; // endclass syn
 
