@@ -5,31 +5,32 @@ import numpy as np
 
 from setuptools import setup, find_packages, Extension
 
-extra_compile_args = []
-# extra_compile_args = [ el
-#                        for el
-#                        in sysconfig.get_config_var('CFLAGS').split()
-#                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
-extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
+# extra_compile_args = []
+# # extra_compile_args = [ el
+# #                        for el
+# #                        in sysconfig.get_config_var('CFLAGS').split()
+# #                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
+# extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
+extra_compile_args = [ "-DNDEBUG", "-O3" ]
 
-extra_link_args = []
-extra_link_args += [ el
-                     #if el != '-Wl,--as-needed'
-                     #else '-Wl,--no-as-needed'
-                     for el
-                     in sysconfig.get_config_var('LDFLAGS').split() ]
-extra_link_args += [ '-Wl,--no-undefined' ]
+# extra_link_args = []
+# extra_link_args += [ el
+#                      #if el != '-Wl,--as-needed'
+#                      #else '-Wl,--no-as-needed'
+#                      for el
+#                      in sysconfig.get_config_var('LDFLAGS').split() ]
+# extra_link_args += [ '-Wl,--no-undefined' ]
 
 def main():
 
     os.environ["CC"] = "g++"
     os.environ["CXX"] = "g++"
-    os.environ["LDSHARED"] = ' '.join([ 'g++'
-                                        if el == 'gcc'
-                                        else el
-                                        for el
-                                        in sysconfig.get_config_var('BLDSHARED').split() ])
-    # print( extra_compile_args )
+    # os.environ["LDSHARED"] = ' '.join([ 'g++'
+    #                                     if el == 'gcc'
+    #                                     else el
+    #                                     for el
+    #                                     in sysconfig.get_config_var('BLDSHARED').split() ])
+    # # print( extra_compile_args )
     
 
     #############################################################################
