@@ -16,8 +16,18 @@
 
 // internal includes
 #include <utilities.h>
+#include <interpolation.h>
 
 namespace sed {
+
+  // [ adimensional ]
+  static std::vector< double > ZZ_CCSN = { 0.0001, 0.0005, 0.0010, 0.0040, 0.0080, 0.0200 };
+
+  // [ Gyr^-1 Msol^-1 ]
+  static std::vector< double > R0_CCSN = { 1.0425, 1.0692, 1.0924, 1.1820, 1.2679, 1.5141 };
+
+  // [ adimensional ]
+  static std::vector< double > R1_CCSN = { 0.3531, 0.3673, 0.3789, 0.4140, 0.4454, 0.5146 };
 
   class csp {
 
@@ -37,6 +47,7 @@ namespace sed {
     std::size_t _NZ;
     vect_double _LltZ;
     std::size_t _NL;
+    vect_double _RCCSNtZ;
 
     // Parameters
     vect_double _psi, _Zstar;
@@ -74,11 +85,18 @@ namespace sed {
     csp ( const vect_double lambda,
 	  const vect_double tau,
 	  const vect_double Z,
-	  const vect_double LltZ ) :
-      _lambda{ lambda }, _Nlambda{ lambda.size() },
-      _tau{ tau }, _Ntau{ tau.size() },
-      _Z{ Z }, _NZ{ Z.size() },
-      _LltZ{ LltZ }, _NL{ LltZ.size() } {}
+	  const vect_double LltZ,
+	  const int do_CCSN_rate = 0 ) noexcept;
+      
+    // csp ( const vect_double lambda,
+    // 	  const vect_double tau,
+    // 	  const vect_double Z,
+    // 	  const vect_double LltZ,
+    // 	  const bool do_CCSN_rate ) :
+    //   _lambda{ lambda }, _Nlambda{ lambda.size() },
+    //   _tau{ tau }, _Ntau{ tau.size() },
+    //   _Z{ Z }, _NZ{ Z.size() },
+    //   _LltZ{ LltZ }, _NL{ LltZ.size() } {}
 
     ~csp () = default;
     
@@ -107,6 +125,22 @@ namespace sed {
 
     double emission ( const std::size_t il,
 		      const double * const Tfact ) const noexcept;
+
+    double RCCSN () const noexcept {
+
+      double Rout = 0.;
+      for ( std::size_t it = 1; it <= _it_last; ++it )
+	Rout +=							\
+	  ( _tau[ it ] - _tau[ it - 1 ] ) *			\
+	  _psi[ it ] *						\
+	  utl::line_from_2points( _Zstar[ it ],
+				  _Z[ _iz_low[ it ] ],
+				  _RCCSNtZ[ it * _NZ + _iz_low[ it ] ],
+				  _Z[ _iz_low[ it ] + 1 ],
+				  _RCCSNtZ[ it * _NZ + _iz_low[ it ] + 1 ] );
+      return Rout;
+
+    }
     
   }; // endclass csp
 
