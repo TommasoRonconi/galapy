@@ -98,7 +98,7 @@ namespace sed {
 
     }
 
-    double emission ( const std::size_t il, const double fact ) const noexcept {
+    double energy ( const std::size_t il, const double fact ) const noexcept {
 
       double l_tothe_asyn = std::pow( _1_of_nu[ il ], _paramsrc[ 0 ] );
       double tau = _opt_depth( il, l_tothe_asyn );

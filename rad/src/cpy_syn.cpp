@@ -109,22 +109,22 @@ extern "C" {
   
   // ========================================================================================
 
-    static const char DocString_emission[] =
-    "emission( self, il, fact )\n"
+    static const char DocString_energy[] =
+    "energy( self, il, fact )\n"
     "--\n\n"
-    "Computes the synchrotron emission at given index in the wavelenght-grid.\n"
+    "Computes the synchrotron energy at given index in the wavelenght-grid.\n"
     "\nParameters"
     "\n----------"
     "\nil : array of int\n"
     "\tarray of indexes of the positions in the wavelenght-grid"
-    " for which to compute the emission.\n"
+    " for which to compute the energy.\n"
     "\nfact : float\n"
     "\tNormalization of the synchrotron spectrum, depends on the radiation source\n"
     "\nReturns"
     "\n-------"
     "\nL_SYN : array or scalar float\n"
-    "\tthe self-absorbed Synchrotron emission\n";
-  static PyObject * CPySYN_emission ( CPySYN * self, PyObject * args ) {
+    "\tthe self-absorbed Synchrotron energy\n";
+  static PyObject * CPySYN_energy ( CPySYN * self, PyObject * args ) {
     
     PyArrayObject * il_buf;
     double fact; 
@@ -140,7 +140,7 @@ extern "C" {
 
     double * outarr = new double [ il_size ];
     for ( unsigned int ii = 0; ii < il_size; ++ii ) 
-      outarr[ ii ] = self->ptrObj->emission( il_arr[ ii ], fact );
+      outarr[ ii ] = self->ptrObj->energy( il_arr[ ii ], fact );
 
     /* Clear heap */
     delete [] il_arr;
@@ -163,10 +163,10 @@ extern "C" {
 					   (PyCFunction) CPySYN_opt_depth,
 					   METH_VARARGS,
 					   DocString_opt_depth },
-					 { "emission",
-					   (PyCFunction) CPySYN_emission,
+					 { "energy",
+					   (PyCFunction) CPySYN_energy,
 					   METH_VARARGS,
-					   DocString_emission },
+					   DocString_energy },
 					 {NULL, NULL, 0, NULL}
   };
 
