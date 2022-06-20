@@ -133,8 +133,6 @@ extern "C" {
     double * psi = new double [size];
     self->ptrObj->model( reinterpret_cast< double* >( PyArray_DATA( NPyBuf ) ), psi, size );
 
-    // return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( psi ) );
-
     PyObject * ret = PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE,
 						reinterpret_cast< void * >( psi ) );
     PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
