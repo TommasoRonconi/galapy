@@ -5,7 +5,10 @@
 import numpy
 
 # Internal imports
+from galapy.internal.constants import clight
 from .SYN_core import CSYN
+
+__all__ = [ 'SYN', 'SNSYN' ]
 
 syn_tunables = ( 'alpha_syn', 'nu_self_syn' )
 
@@ -34,6 +37,7 @@ class SYN () :
     def __init__ ( self, ll, **kwargs ) :
 
         self.l = numpy.ascontiguousarray( ll )
+        self.AngUnit = clight['A/s'] / self.l**2
         self.core = CSYN( self.l )
         self.params = syn_build_params( **kwargs )
         self.set_parameters()
@@ -68,7 +72,9 @@ class SYN () :
             return ret.item()
         return ret
 
-    def emission ( self, SynNorm, il = None ) :
+    def energy ( self, SynNorm, il = None ) :
+        """ Returns the normalized total energy radiated at given wavelenght.       
+        """
         
         if il is None :
             il = numpy.arange( len(self.l), dtype = numpy.uint64 )
@@ -78,8 +84,33 @@ class SYN () :
             il = il[None] # makes il 1D
             scalar_input = True
         
-        ret = self.core.emission( il, SynNorm )
+        ret = self.core.energy( il, SynNorm )
         if scalar_input :
             return ret.item()
         return ret
+
+    def emission ( self, SynNorm, il = None ) :
+        
+        return self.energy( SynNorm, il ) * self.AngUnit
     
+class SNSYN ( SYN ) :
+
+    NormFact = 1.e+30 # [ erg s^-1 Hz^-1 ]
+    Lsyn0    = 3.e+28 # [ erg s^-1 Hz^-1 ]
+    eta      = 2.     # [ adimensional ] 
+
+    def __init__ ( self, *args, **kwargs ) :
+
+        super().__init__( *args, **kwargs )
+        self.params['RCCSN'] = 0.
+        self.params.update(kwargs)
+
+    def emission ( self, il = None ) :
+        
+        Lsyn = super().energy( self.params['RCCSN'] * SNSYN.NormFact, il )
+        wn0 = Lsyn > 0.
+        Lsyn[wn0] /= 1 + ( SNSYN.Lsyn0 / Lsyn[wn0] )**SNSYN.eta
+
+        if il is None :
+            return Lsyn * self.AngUnit
+        return Lsyn * self.AngUnit[ il ]
