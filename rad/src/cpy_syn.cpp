@@ -171,14 +171,14 @@ extern "C" {
   };
 
   static PyTypeObject CPySYN_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "SYN_core.CSYN"   /* tp_name */
+				   "galapy.SYN_core.CSYN"   /* tp_name */
   };
   
   // ========================================================================================
 
   static struct PyModuleDef syn_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "SYN_core",
+					  "galapy.SYN_core",
 					  "Python wrap of c++ SYN component implementation.\n"
 					  "Build an object of type syn as:\n"
 					  ">>> import galapy.SYN_core as csyn\n"

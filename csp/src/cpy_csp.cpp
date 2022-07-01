@@ -341,7 +341,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyCSP_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "CSP_core.CCSP"   /* tp_name */
+				   "galapy.CSP_core.CCSP"   /* tp_name */
   };
   
   // ========================================================================================
@@ -350,7 +350,7 @@ extern "C" {
 
   static struct PyModuleDef csp_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "CSP_core",
+					  "galapy.CSP_core",
 					  "Python wrap of c++ CSP component implementation.\n"
 					  "Build an object of type csp as:\n"
 					  "\t>>> import galapy.CSP_core as ccsp\n"

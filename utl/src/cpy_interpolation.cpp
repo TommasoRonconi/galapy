@@ -178,7 +178,7 @@ extern "C" {
     };
 
   static PyTypeObject PyLinInterp_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-					"internal.interp.lin_interp"   /* tp_name */
+					"galapy.internal.interp.lin_interp"   /* tp_name */
   };
   
   // ========================================================================================
@@ -187,7 +187,7 @@ extern "C" {
 
   static struct PyModuleDef interp_module = {
 					     PyModuleDef_HEAD_INIT,
-					     "internal.interp",
+					     "galapy.internal.interp",
 					     "",
 					     -1,
 					     NULL, NULL, NULL, NULL, NULL

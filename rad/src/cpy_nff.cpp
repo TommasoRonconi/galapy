@@ -200,14 +200,14 @@ extern "C" {
   };
 
   static PyTypeObject CPyNFF_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "NFF_core.CNFF"   /* tp_name */
+				   "galapy.NFF_core.CNFF"   /* tp_name */
   };
   
   // ========================================================================================
 
   static struct PyModuleDef nff_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "NFF_core",
+					  "galapy.NFF_core",
 					  "Python wrap of c++ NFF component implementation.\n"
 					  "Build an object of type nff as:\n"
 					  ">>> import galapy.NFF_core as cnff\n"

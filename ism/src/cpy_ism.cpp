@@ -346,7 +346,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyDD_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				  "ISM_core.CDD"   /* tp_name */
+				  "galapy.ISM_core.CDD"   /* tp_name */
   };
   
   // ========================================================================================
@@ -440,7 +440,7 @@ extern "C" {
   };
 
   static PyTypeObject CPyMC_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-  				  "ISM_core.CMC"   /* tp_name */
+  				  "galapy.ISM_core.CMC"   /* tp_name */
   };
   
   // ========================================================================================
@@ -533,7 +533,7 @@ extern "C" {
 
   static struct PyModuleDef ism_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "ISM_core",
+					  "galapy.ISM_core",
 					  "Python wrap of c++ ISM component implementation.\n"
 					  "Build an object of type ism as:\n"
 					  ">>> import galapy.ISM_core as cism\n"

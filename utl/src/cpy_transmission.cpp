@@ -265,7 +265,7 @@ extern "C" {
     };
 
   static PyTypeObject CPyBPT_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "BandpassTransmission.BPT"   /* tp_name */
+				   "galapy.BandpassTransmission.BPT"   /* tp_name */
   };
   
   // ========================================================================================
@@ -274,7 +274,7 @@ extern "C" {
 
   static struct PyModuleDef bpt_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "BandpassTransmission",
+					  "galapy.BandpassTransmission",
 					  "C-Python implementation of "
 					  "bandpass transmission (BPT).\n",
 					  -1,
