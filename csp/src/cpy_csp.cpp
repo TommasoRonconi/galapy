@@ -184,7 +184,7 @@ extern "C" {
   
   // ========================================================================================
 
-  /* Pickle the object */
+  /* Un-Pickle the object */
   static PyObject * CPyCSP___setstate__ ( CPyCSP * self, PyObject * state ) {
 
     if ( !CPy___setstate__< CPyCSP, sed::csp >( self, state ) ) {
