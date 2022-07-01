@@ -102,14 +102,8 @@ PyObject * CPy___setstate__( CPyT * self, PyObject * state ) {
   char * data = new char [ len ];
   Py_ssize_t check;
   if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
-				&data, &check ) == -1 ) return NULL;
-  // Might want to use this one instead, in order to
-  // check the bytes read are of the right lenght:
-  // if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
-  // 				  &data, &check ) == -1 ||
-  // 	 ( long ) check != len ) return NULL;
-  // NOTE that the '||' operator should first check the 1st,
-  // if false, check the 2nd.
+  				  &data, &check ) == -1 ||
+  	 ( long ) check != len ) return NULL;
   self->ptrObj->deserialize( data );
   
   // still not sure whether the bytes objects takes the ownership of data

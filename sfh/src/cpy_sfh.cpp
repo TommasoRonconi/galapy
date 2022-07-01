@@ -10,9 +10,6 @@
 #include <cstring>
 #include <iostream>
 
-// static const char* PICKLE_VERSION_KEY = "_pickle_version";
-// static int PICKLE_VERSION = 1;
-
 // ==========================================================================================
 
 PyObject * _Create_SFHmodelDict () {
@@ -274,10 +271,8 @@ extern "C" {
     char * data = new char [ len ];
     Py_ssize_t check;
     if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
-				  &data, &check ) == -1 ) return NULL;
-    // if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
-    // 				  &data, &check ) == -1 ||
-    // 	 ( long ) check != len ) return NULL;
+    				  &data, &check ) == -1 ||
+    	 ( long ) check != len ) return NULL;
     self->ptrObj->deserialize( data );
   
     // still not sure whether the bytes objects takes the ownership of data
