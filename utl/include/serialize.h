@@ -79,7 +79,7 @@ public :
 
     target = SerialPOD< std::size_t >::serialize( target, value.size() );
     std::copy( value.begin(), value.end(), reinterpret_cast< POD * >( target ) );
-    return target + serialize_size( value );
+    return target + value.size() * sizeof( POD );
 
   }
 
