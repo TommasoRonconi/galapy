@@ -102,8 +102,8 @@ PyObject * CPy___setstate__( CPyT * self, PyObject * state ) {
   char * data = new char [ len ];
   Py_ssize_t check;
   if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
-  				  &data, &check ) == -1 ||
-  	 ( long ) check != len ) return NULL;
+				&data, &check ) == -1 ||
+       ( long ) check != len ) return NULL;
   self->ptrObj->deserialize( data );
   
   // still not sure whether the bytes objects takes the ownership of data
@@ -111,7 +111,7 @@ PyObject * CPy___setstate__( CPyT * self, PyObject * state ) {
   // (nonetheless the python doc says that PyBytes_FromString*
   //  makes a copy of the string, if no-memory leaks, fine with the comment)
   // delete [] data;
-
+  
   Py_RETURN_NONE;
 }
 
