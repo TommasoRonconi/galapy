@@ -13,10 +13,10 @@
 
 // external includes
 #include <cmath>
-#include <iostream>
 
 // internal includes
 #include <utilities.h>
+#include <serialize.h>
 #include <interpolation.h>
 #include <pah.h>
 
@@ -35,7 +35,7 @@ namespace sed {
   // ================================================================
   // ISM Base class
 
-  class ism {
+  class ism : public Serializable {
 
   private :
 
@@ -45,7 +45,7 @@ namespace sed {
   protected :
 
     double _Temp;
-    std::vector< double > _current_params;
+    std::vector< double > _paramsrc;
     double _low, _upp, _ext_norm_cont;
     virtual double _A_Vband ( const double * const param = nullptr ) const noexcept = 0;
     inline double _delta ( const double lambda ) const noexcept {
@@ -87,11 +87,11 @@ namespace sed {
       
     }
     
-    std::vector< double > get_params () { return _current_params; }
+    std::vector< double > get_params () { return _paramsrc; }
 
     double extinction ( const double lambda ) const noexcept {
 
-      return _current_params[ 0 ] *
+      return _paramsrc[ 0 ] *
 	std::pow( lambda * 1.81818181818181818e-4, -_delta( lambda ) ) *
 	delta( lambda, 1, _ext_norm_cont );
 
@@ -108,6 +108,44 @@ namespace sed {
     virtual double emission ( const double lambda ) const noexcept = 0;
     
     virtual double temperature ( const double Etot ) noexcept;
+
+    // ================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialVecPOD< double >::serialize_size( _paramsrc ) +
+	SerialPOD< double >::serialize_size( _Temp ) +
+	SerialPOD< double >::serialize_size( _low ) +
+	SerialPOD< double >::serialize_size( _upp ) +
+	SerialPOD< double >::serialize_size( _ext_norm_cont );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = SerialVecPOD< double >::serialize( data, _paramsrc );
+      data = SerialPOD< double >::serialize( data, _Temp );
+      data = SerialPOD< double >::serialize( data, _low );
+      data = SerialPOD< double >::serialize( data, _upp );
+      data = SerialPOD< double >::serialize( data, _ext_norm_cont );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = SerialVecPOD< double >::deserialize( data, _paramsrc );
+      data = SerialPOD< double >::deserialize( data, _Temp );
+      data = SerialPOD< double >::deserialize( data, _low );
+      data = SerialPOD< double >::deserialize( data, _upp );
+      data = SerialPOD< double >::deserialize( data, _ext_norm_cont );
+      return data;
+
+    }
+
+    // ================================================================
 
   }; // endclass ism
   
@@ -150,9 +188,9 @@ namespace sed {
     // idx_2 = f_PAH
     void set_params ( const double * const param ) noexcept override {
 
-      _current_params = { _A_Vband( param ),
-			  _fact_greybody( param ),
-			  param[ 4 ] };
+      _paramsrc = { _A_Vband( param ),
+		    _fact_greybody( param ),
+		    param[ 4 ] };
       set_slopes( param[ 5 ], param[ 6 ] );
       return;
       
@@ -163,9 +201,38 @@ namespace sed {
     double temperature ( const double Etot ) noexcept override {
 
       _Labs = Etot;
-      return ism::temperature( ( 1 - _current_params[ 2 ] ) * Etot );
+      return ism::temperature( ( 1 - _paramsrc[ 2 ] ) * Etot );
 
     }
+
+    // ================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	ism::serialize_size() +
+	SerialPOD< double >::serialize_size( _Labs );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = ism::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Labs );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = ism::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Labs );
+      return data;
+
+    }
+
+    // ================================================================
 
   }; // endclass diffuse
 
@@ -203,10 +270,10 @@ namespace sed {
     // idx_3 = 1. / tau_esc
     void set_params ( const double * const param ) noexcept override {
 
-      _current_params = { _A_Vband( param ),
-			  _fact_greybody( param ),
-			  param[ 5 ],
-			  1 / param[ 5 ] };
+      _paramsrc = { _A_Vband( param ),
+		    _fact_greybody( param ),
+		    param[ 5 ],
+		    1 / param[ 5 ] };
       set_slopes( param[ 7 ], param[ 8 ] );
       return;
       
@@ -215,10 +282,10 @@ namespace sed {
     double eta ( const double tau ) const noexcept {
 
       return
-        ( tau <= _current_params[ 2 ] ) +
-    	( 2. - tau * _current_params[ 3 ] ) *
-    	( ( _current_params[ 2 ] < tau ) &
-    	  ( tau <= 2 * _current_params[ 2 ] ) );
+        ( tau <= _paramsrc[ 2 ] ) +
+    	( 2. - tau * _paramsrc[ 3 ] ) *
+    	( ( _paramsrc[ 2 ] < tau ) &
+    	  ( tau <= 2 * _paramsrc[ 2 ] ) );
 
     }
 
