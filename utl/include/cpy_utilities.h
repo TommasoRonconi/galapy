@@ -57,8 +57,8 @@ extern "C" {
 // =================================== TEMPLATES ====================================
 // ==================================================================================
 
-template< class T >
-PyObject *  Py_call_fromScalarOrArray ( T * self, PyObject * args ) {
+template< class CPyT >
+PyObject *  Py_call_fromScalarOrArray ( CPyT * self, PyObject * args ) {
 
   PyObject * xx_buf;
   
