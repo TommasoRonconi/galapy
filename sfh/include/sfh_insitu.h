@@ -12,6 +12,7 @@
 #define __SFH_INSITU_H__
 
 // internal includes
+#include <serialize.h>
 #include <sfh_base.h>
 
 namespace sed {
@@ -37,9 +38,9 @@ namespace sed {
 
   public :
 
-    sfh_insitu () : sfh_base{} {}
+    // sfh_insitu () : sfh_base{} { _paramsrc = std::vector< double >( 4 ); }
 
-    sfh_insitu ( const double tau_quench ) noexcept
+    sfh_insitu ( const double tau_quench = 2.e+10 ) noexcept
       : sfh_base { tau_quench } {
 
       _paramsrc = std::vector< double >( 4 );
@@ -90,6 +91,38 @@ namespace sed {
       _paramsrc[ 3 ] = 1. / _tau_star;
       return;
     }
+
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	sfh_base::serialize_size() +
+	SerialPOD< double >::serialize_size( _Psi_max ) +
+	SerialPOD< double >::serialize_size( _tau_star );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = sfh_base::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Psi_max );
+      data = SerialPOD< double >::serialize( data, _tau_star );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = sfh_base::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Psi_max );
+      data = SerialPOD< double >::deserialize( data, _tau_star );
+      return data;
+
+    }
+
+    // =============================================================
 
   }; // endclass sfh_insitu
 
