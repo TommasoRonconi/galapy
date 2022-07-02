@@ -31,7 +31,7 @@ namespace sed {
     double _Zgas = 0.02;
 
     //
-    std::vector< double > _current_params;
+    std::vector< double > _paramsrc;
 
     // units array
     std::vector< double > _nu;
@@ -98,16 +98,16 @@ namespace sed {
       _Zgas = params[ 0 ];
       _Zi   = params[ 1 ];
       double lnTe = lTe( std::log10( 50 * _Zgas ) );
-      _current_params = { lnTe - 4 * sed::cnst::ln_10,
+      _paramsrc = { lnTe - 4 * sed::cnst::ln_10,
 			  std::exp( -lnTe ) };
 
     }
 
     double emission ( const std::size_t il, const double Q_H ) const noexcept {
 
-      return 1.8e-27 * Q_H * gff( il, _current_params[ 0 ] ) * _Hz2Ang[ il ] *
-	std::exp( 0.3 * _current_params[ 0 ] -
-		  sed::cnst::_hPBk * _nu[ il ] * _current_params[ 1 ] );
+      return 1.8e-27 * Q_H * gff( il, _paramsrc[ 0 ] ) * _Hz2Ang[ il ] *
+	std::exp( 0.3 * _paramsrc[ 0 ] -
+		  sed::cnst::_hPBk * _nu[ il ] * _paramsrc[ 1 ] );
   
     }
     
