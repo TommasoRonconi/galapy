@@ -16,10 +16,11 @@
 
 // internal includes
 #include <utilities.h>
+#include <serialize.h>
 
 namespace sed {
 
-  class nff {
+  class nff : Serializable {
 
   private :
 
@@ -65,7 +66,7 @@ namespace sed {
       
     }
     
-    ~nff () = default;
+    virtual ~nff () = default;
     
     // =============================================================================
     // Public functions
@@ -110,6 +111,47 @@ namespace sed {
 		  sed::cnst::_hPBk * _nu[ il ] * _paramsrc[ 1 ] );
   
     }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialPOD< double >::serialize_size( _Zi ) +
+	SerialPOD< double >::serialize_size( _Zgas ) +
+	SerialVecPOD< double >::serialize_size( _paramsrc ) +
+	SerialVecPOD< double >::serialize_size( _nu ) +
+	SerialVecPOD< double >::serialize_size( _fact_gff ) +
+	SerialVecPOD< double >::serialize_size( _Hz2Ang );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+      
+      data = SerialPOD< double >::serialize( data, _Zi );
+      data = SerialPOD< double >::serialize( data, _Zgas );
+      data = SerialVecPOD< double >::serialize( data, _paramsrc );
+      data = SerialVecPOD< double >::serialize( data, _nu );
+      data = SerialVecPOD< double >::serialize( data, _fact_gff );
+      data = SerialVecPOD< double >::serialize( data, _Hz2Ang );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+      
+      data = SerialPOD< double >::deserialize( data, _Zi );
+      data = SerialPOD< double >::deserialize( data, _Zgas );
+      data = SerialVecPOD< double >::deserialize( data, _paramsrc );
+      data = SerialVecPOD< double >::deserialize( data, _nu );
+      data = SerialVecPOD< double >::deserialize( data, _fact_gff );
+      data = SerialVecPOD< double >::deserialize( data, _Hz2Ang );
+      return data;
+      
+    }
+
+    // =============================================================================
     
   }; // endclass nff
 

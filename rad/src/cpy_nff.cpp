@@ -3,6 +3,7 @@
 #include <Python.h>
 // Internal headers
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 #include <nff.h>
 // STL headers
 #include <vector>
@@ -47,6 +48,36 @@ extern "C" {
     delete self->ptrObj;
     Py_TYPE( self )->tp_free( self );
     return;
+    
+  }
+
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPyNFF___getstate__ ( CPyNFF * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPyNFF >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPyNFF object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * CPyNFF___setstate__ ( CPyNFF * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< CPyNFF, sed::nff >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from CPyNFF object" );
+      return NULL;
+    }
+    Py_RETURN_NONE;
     
   }
   
@@ -196,6 +227,14 @@ extern "C" {
 					   (PyCFunction) CPyNFF_emission,
 					   METH_VARARGS,
 					   DocString_emission },
+					 { "__getstate__",
+					   (PyCFunction) CPyNFF___getstate__,
+					   METH_NOARGS,
+					   "Pickle the Custom object" },
+					 { "__setstate__",
+					   (PyCFunction) CPyNFF___setstate__,
+					   METH_O,
+					   "Un-pickle the Custom object" },
 					 {NULL, NULL, 0, NULL}
   };
 
