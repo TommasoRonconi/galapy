@@ -3,6 +3,7 @@
 #include <Python.h>
 // Internal headers
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 #include <ism.h>
 // STL headers
 #include <vector>
@@ -303,6 +304,39 @@ extern "C" {
   }  
   
   // ========================================================================================
+  // ======================================== CPyDD =========================================
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPyDD___getstate__ ( CPyDD * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPyDD >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPyDD object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * CPyDD___setstate__ ( CPyDD * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< CPyDD, sed::diffuse >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from CPyDD object" );
+      return NULL;
+    }
+    self->super.ptrObj = self->ptrObj;
+    Py_RETURN_NONE;
+    
+  }
+  
+  // ========================================================================================
   // Derived Type Diffuse-Dust
 
   static PyMethodDef CPyDD_Methods[] = {
@@ -338,6 +372,14 @@ extern "C" {
 					  (PyCFunction) CPyISM_get_AV,
 					  METH_NOARGS,
 					  DocString_get_AV },
+					{ "__getstate__",
+					  (PyCFunction) CPyDD___getstate__,
+					  METH_NOARGS,
+					  "Pickle the Custom object" },
+					{ "__setstate__",
+					  (PyCFunction) CPyDD___setstate__,
+					  METH_O,
+					  "Un-pickle the Custom object" },
 					// { "",
 					//   (PyCFunction) CPyISM_,
 					//   METH_VARARGS | METH_KEYWORDS,
@@ -393,6 +435,37 @@ extern "C" {
   }
 
   // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPyMC___getstate__ ( CPyMC * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPyMC >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPyMC object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * CPyMC___setstate__ ( CPyMC * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< CPyMC, sed::cloud >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from CPyMC object" );
+      return NULL;
+    }
+    self->super.ptrObj = self->ptrObj;
+    Py_RETURN_NONE;
+    
+  }
+  
+  // ========================================================================================
   // Derived Type Molecular-Clouds
 
   static PyMethodDef CPyMC_Methods[] = {
@@ -432,6 +505,14 @@ extern "C" {
   					  (PyCFunction) CPyMC_eta,
   					  METH_O,
   					  DocString_eta },
+					{ "__getstate__",
+					  (PyCFunction) CPyMC___getstate__,
+					  METH_NOARGS,
+					  "Pickle the Custom object" },
+					{ "__setstate__",
+					  (PyCFunction) CPyMC___setstate__,
+					  METH_O,
+					  "Un-pickle the Custom object" },
   					// { "",
   					//   (PyCFunction) CPyISM_,
   					//   METH_VARARGS | METH_KEYWORDS,
