@@ -3,6 +3,7 @@
 #include <Python.h>
 // Internal headers
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 #include <transmission.h>
 // STL headers
 #include <vector>
@@ -69,6 +70,36 @@ extern "C" {
     
   }
 
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPyBPT___getstate__ ( CPyBPT * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPyBPT >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPyBPT object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * CPyBPT___setstate__ ( CPyBPT * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< CPyBPT, utl::transmission >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from CPyBPT object" );
+      return NULL;
+    }
+    Py_RETURN_NONE;
+    
+  }
+  
   // ========================================================================================
 
   static PyObject * CPyBPT_call ( CPyBPT * self, PyObject * args ) {
@@ -261,6 +292,14 @@ extern "C" {
        (PyCFunction) CPyBPT_get_yaxis,
        METH_NOARGS,
        DocString_get_yaxis },
+     { "__getstate__",
+       (PyCFunction) CPyBPT___getstate__,
+       METH_NOARGS,
+       "Pickle the Custom object" },
+     { "__setstate__",
+       (PyCFunction) CPyBPT___setstate__,
+       METH_O,
+       "Un-pickle the Custom object" },
      {NULL, NULL, 0, NULL}
     };
 
