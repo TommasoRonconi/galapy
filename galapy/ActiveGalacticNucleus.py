@@ -5,6 +5,7 @@
 import numpy
 
 # Internal imports
+import galapy.internal.globs as GP_GBL
 from galapy.internal.utils import find_nearest, trap_int, powerlaw_exp_cutoff
 from galapy.internal.constants import Ang_to_keV
 from galapy.internal.interp import lin_interp
@@ -113,8 +114,8 @@ class AGN () :
     def load_template ( self ) :
 
         # load template from closest file to the parameters chosen
-        filename = self.filebase.format( *( self.params[ 'template' ][k]
-                                            for k in _template_tunables  ) )
+        filename = self._filebase.format( *( self.params[ 'template' ][k]
+                                             for k in _template_tunables  ) )
         self.ll, self.tot, self.ther, self.scat, self.disk = \
             numpy.array( [1.e+4,1.e-4,1.e-4,1.e-4,1.e-4] )[:,numpy.newaxis] * \
             numpy.genfromtxt( DataFile( filename, GP_GBL.AGN_DIR ).get_file(),
