@@ -2,10 +2,11 @@
 #define __BASE_INTERFACE__
 
 #include <utilities.h>
+#include <serialize.h>
 
 namespace utl {
 
-  class base_interface {
+  class base_interface : Serializable {
 
   private:
 
@@ -81,6 +82,44 @@ namespace utl {
     virtual std::vector< double > get_fv () const { return _fv; }
 
     virtual size_t size () const { return _thinness; }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialPOD< double >::serialize_size( _x_min ) +
+	SerialPOD< double >::serialize_size( _x_max ) +
+	SerialPOD< std::size_t >::serialize_size( _thinness ) +
+	SerialVecPOD< double >::serialize_size( _xv ) +
+	SerialVecPOD< double >::serialize_size( _fv );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = SerialPOD< double >::serialize( data, _x_min );
+      data = SerialPOD< double >::serialize( data, _x_max );
+      data = SerialPOD< std::size_t >::serialize( data, _thinness );
+      data = SerialVecPOD< double >::serialize( data, _xv );
+      data = SerialVecPOD< double >::serialize( data, _fv );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = SerialPOD< double >::deserialize( data, _x_min );
+      data = SerialPOD< double >::deserialize( data, _x_max );
+      data = SerialPOD< std::size_t >::deserialize( data, _thinness );
+      data = SerialVecPOD< double >::deserialize( data, _xv );
+      data = SerialVecPOD< double >::deserialize( data, _fv );
+      return data;
+
+    }
+
+    // =============================================================================
       
   }; // endclass base_interface
 

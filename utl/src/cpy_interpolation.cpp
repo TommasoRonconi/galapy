@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 #include <interpolation.h>
 #include <iostream>
 
@@ -94,9 +95,6 @@ PyObject *  _PyInterp_call ( T * self, PyObject * args ) {
 
     /* Clear heap */
     delete [] xx;
-    
-    // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-    // 				      reinterpret_cast< void * >( outarr ) );
 
     PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
 						reinterpret_cast< void * >( outarr ) );
@@ -129,12 +127,16 @@ extern "C" {
   // define the linear interpolator type
   typedef struct _PyInterp< utl::lin_interp > PyLinInterp;
   
+  // ========================================================================================
+  
   // initialize PyLinInterp Object
   static int PyLinInterp_init ( PyLinInterp * self, PyObject * args, PyObject * kwds ) {
     
     return _PyInterp_init< PyLinInterp, utl::lin_interp >( self, args, kwds );
 
   }
+  
+  // ========================================================================================
   
   // deallocate PyLinInterp Object
   static void PyLinInterp_dealloc ( PyLinInterp * self ) {
@@ -143,12 +145,16 @@ extern "C" {
     return;
 
   }
+  
+  // ========================================================================================
 
   static PyObject * PyLinInterp_call ( PyLinInterp * self, PyObject * args ) {
 
     return _PyInterp_call< PyLinInterp >( self, args );
 
   }
+  
+  // ========================================================================================
   
   static const char DocString_integrate[] =
     "Function for integrating the function in a range.\n"
@@ -167,6 +173,38 @@ extern "C" {
     return _PyInterp_integrate< PyLinInterp >( self, args );
 
   }
+  
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * PyLinInterp___getstate__ ( PyLinInterp * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< PyLinInterp >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPySYN object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * PyLinInterp___setstate__ ( PyLinInterp * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< PyLinInterp, utl::interpolator< utl::lin_interp > >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from PyLinInterp object" );
+      return NULL;
+    }
+    Py_RETURN_NONE;
+    
+  }
+  
+  // ========================================================================================
     
   static PyMethodDef PyLinInterp_Methods[] =
     {
@@ -174,6 +212,14 @@ extern "C" {
        (PyCFunction)PyLinInterp_integrate,
        METH_VARARGS,
        DocString_integrate },
+     { "__getstate__",
+       (PyCFunction) PyLinInterp___getstate__,
+       METH_NOARGS,
+       "Pickle the Custom object" },
+     { "__setstate__",
+       (PyCFunction) PyLinInterp___setstate__,
+       METH_O,
+       "Un-pickle the Custom object" },
      {NULL, NULL, 0, NULL}
     };
 

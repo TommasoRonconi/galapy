@@ -3,6 +3,7 @@
 
 // STL includes
 #include <vector>
+#include <utility> // std::pair
 #include <algorithm> // std::copy
 
 //=============================================================================================
@@ -96,6 +97,39 @@ public :
   }
 
 }; // endclass SerialVecPOD
+
+//=============================================================================================
+//=============================================================================================
+//=============================================================================================
+
+template < typename POD1, typename POD2 >
+class SerialPairPOD {
+
+public :
+
+  static std::size_t serialize_size ( const std::pair< POD1, POD2 > & str ) {
+
+    return sizeof( POD1 ) + sizeof( POD2 );
+
+  }
+
+  static char * serialize ( char * target, const std::pair< POD1, POD2 > & value ) {
+
+    target = SerialPOD< POD1 >::serialize( target, value.first );
+    target = SerialPOD< POD2 >::serialize( target, value.second );
+    return target;
+
+  }
+
+  static const char * deserialize ( const char * source, std::pair< POD1, POD2 > & target ) {
+
+    source = SerialPOD< POD1 >::deserialize( source, target.first );
+    source = SerialPOD< POD2 >::deserialize( source, target.second );
+    return source;
+
+  }
+
+}; // endclass SerialPairPOD
 
 //=============================================================================================
 
