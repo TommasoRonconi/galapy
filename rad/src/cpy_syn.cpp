@@ -185,29 +185,30 @@ extern "C" {
   
   // ========================================================================================
   
-  static PyMethodDef CPySYN_Methods[] = {
-					 { "set_params",
-					   (PyCFunction) CPySYN_set_params,
-					   METH_VARARGS,
-					   DocString_set_params },
-					 { "opt_depth",
-					   (PyCFunction) CPySYN_opt_depth,
-					   METH_VARARGS,
-					   DocString_opt_depth },
-					 { "energy",
-					   (PyCFunction) CPySYN_energy,
-					   METH_VARARGS,
-					   DocString_energy },
-					 { "__getstate__",
-					   (PyCFunction) CPySYN___getstate__,
-					   METH_NOARGS,
-					   "Pickle the Custom object" },
-					 { "__setstate__",
-					   (PyCFunction) CPySYN___setstate__,
-					   METH_O,
-					   "Un-pickle the Custom object" },
-					 {NULL, NULL, 0, NULL}
-  };
+  static PyMethodDef CPySYN_Methods[] =
+    {
+     { "set_params",
+       (PyCFunction) CPySYN_set_params,
+       METH_VARARGS,
+       DocString_set_params },
+     { "opt_depth",
+       (PyCFunction) CPySYN_opt_depth,
+       METH_VARARGS,
+       DocString_opt_depth },
+     { "energy",
+       (PyCFunction) CPySYN_energy,
+       METH_VARARGS,
+       DocString_energy },
+     { "__getstate__",
+       (PyCFunction) CPySYN___getstate__,
+       METH_NOARGS,
+       "Pickle the Custom object" },
+     { "__setstate__",
+       (PyCFunction) CPySYN___setstate__,
+       METH_O,
+       "Un-pickle the Custom object" },
+     {NULL, NULL, 0, NULL}
+    };
 
   static PyTypeObject CPySYN_t = { PyVarObject_HEAD_INIT( NULL, 0 )
 				   "galapy.SYN_core.CSYN"   /* tp_name */
