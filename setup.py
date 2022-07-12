@@ -5,31 +5,32 @@ import numpy as np
 
 from setuptools import setup, find_packages, Extension
 
-extra_compile_args = []
-# extra_compile_args = [ el
-#                        for el
-#                        in sysconfig.get_config_var('CFLAGS').split()
-#                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
-extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
+# extra_compile_args = []
+# # extra_compile_args = [ el
+# #                        for el
+# #                        in sysconfig.get_config_var('CFLAGS').split()
+# #                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
+# extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
+extra_compile_args = [ "-DNDEBUG", "-O3" ]
 
-extra_link_args = []
-extra_link_args += [ el
-                     #if el != '-Wl,--as-needed'
-                     #else '-Wl,--no-as-needed'
-                     for el
-                     in sysconfig.get_config_var('LDFLAGS').split() ]
-extra_link_args += [ '-Wl,--no-undefined' ]
+# extra_link_args = []
+# extra_link_args += [ el
+#                      #if el != '-Wl,--as-needed'
+#                      #else '-Wl,--no-as-needed'
+#                      for el
+#                      in sysconfig.get_config_var('LDFLAGS').split() ]
+# extra_link_args += [ '-Wl,--no-undefined' ]
 
 def main():
 
     os.environ["CC"] = "g++"
     os.environ["CXX"] = "g++"
-    os.environ["LDSHARED"] = ' '.join([ 'g++'
-                                        if el == 'gcc'
-                                        else el
-                                        for el
-                                        in sysconfig.get_config_var('BLDSHARED').split() ])
-    # print( extra_compile_args )
+    # os.environ["LDSHARED"] = ' '.join([ 'g++'
+    #                                     if el == 'gcc'
+    #                                     else el
+    #                                     for el
+    #                                     in sysconfig.get_config_var('BLDSHARED').split() ])
+    # # print( extra_compile_args )
     
 
     #############################################################################
@@ -112,6 +113,21 @@ def main():
     )
 
     #############################################################################
+    # C++ implementation of the Synchrotron emission (generic parametric)
+    
+    ext_syn = Extension( "galapy.SYN_core",
+                         [ os.path.join( 'rad', 'src', 'cpy_syn.cpp' ),
+                         ],
+                         include_dirs = [ os.path.join( 'rad', 'include' ),
+                                          os.path.join( 'utl', 'include' ),
+                                          np.get_include()
+                         ],
+                         extra_compile_args=extra_compile_args,
+                         language="c++14",
+                         libraries = [ "m", "stdc++" ]
+    )
+
+    #############################################################################
     # C++ implementation of BPT functions and types
     
     ext_bpt = Extension( "galapy.BandpassTransmission",
@@ -147,15 +163,17 @@ def main():
            description = "GalaPy - Galactic spectral analysis tools in Python",
            package_dir = {
                'galapy' : 'galapy',
+               'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
                'galapy.internal' : os.path.join( 'galapy', 'internal' )
            },
-           packages = [ 'galapy', 'galapy.internal' ],
+           packages = [ 'galapy', 'galapy.configuration', 'galapy.internal' ],
            ext_modules = [
                ext_intp,
                ext_sfh,
                ext_csp,
                ext_ism,
                ext_nff,
+               ext_syn,
                ext_bpt
            ],
            include_package_data = True,

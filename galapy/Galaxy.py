@@ -11,13 +11,12 @@ from galapy.ActiveGalacticNucleus import AGN
 from galapy.XRayBinaries import XRB
 from galapy.NebularFreeFree import NFF
 from galapy.PhotometricSystem import PMS
+from galapy.Synchrotron import SNSYN
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
-
-DL_DIR = os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                       GP_GBL.DL_DIR )
+from galapy.internal.data import DataFile
 
 class GXY () :
     """ Wrapping everything up
@@ -29,15 +28,24 @@ class GXY () :
     
     def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
                    sfh_kw = {}, csp_kw = {}, ism_kw = {},
-                   agn_kw = None, nff_kw = None, Xray = False ) :
+                   agn_kw = None, nff_kw = None, syn_kw = None,
+                   Xray = False ) :
         
         self.age      = age
         self.redshift = redshift
+        
         self.sfh = SFH( **sfh_kw )
         ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
                          'Mgas'  : self.sfh.core.Mgas(self.age),
                          'Mdust' : self.sfh.core.Mdust(self.age) } )
+        
+        # tell the CSP constructor to build with
+        # SN support if synchrotron is requested
+        csp_kw[ 'CCSN' ] = syn_kw is not None 
+
         self.csp = CSP( **csp_kw )
+        self.csp.set_parameters( self.age, self.sfh )
+
         self.ism = ISM( **ism_kw )
         
         self.xrb = None
@@ -61,6 +69,11 @@ class GXY () :
             self.nff = NFF( self.csp.l, **nff_kw )
             self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
             self.w912 = self.csp.l <= 912.
+
+        self.snsyn = None
+        if syn_kw is not None :
+            syn_kw[ 'RCCSN' ] = self.csp.core.RCCSN()
+            self.snsyn = SNSYN( self.csp.l, **syn_kw )
         
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
@@ -69,7 +82,8 @@ class GXY () :
 
         # Build the redshift-dependent constant for lum->flux conversion
         if isinstance( cosmo, str ) :
-            zz, DL = numpy.loadtxt( os.path.join( DL_DIR, f'{cosmo:s}.LumDist.txt' ),
+            zz, DL = numpy.loadtxt( DataFile( f'{cosmo:s}.LumDist.txt',
+                                              GP_GBL.DL_DIR ).get_file(),
                                     unpack = True )
         elif isinstance( cosmo, MM ) :
             zz, DL = cosmo['redshift'], cosmo['luminosity_distance']
@@ -112,11 +126,19 @@ class GXY () :
         except IndexError :
             raise TypeError('Argument lstep should be either an integer or a boolean mask!')
     
-    def set_parameters ( self, age = None, redshift = None, sfh_kw = None, ism_kw = {}, agn_kw = None, nff_kw = None ) :
+    def set_parameters ( self, age = None, redshift = None,
+                         sfh_kw = None, ism_kw = {},
+                         agn_kw = None, nff_kw = None,
+                         syn_kw = None ) :
         """divided in nested dictionaries or not?"""
+
+        # if age of sfh change, reset the csp's timetuple
+        reset_csp = False
         
         if age is not None :
             self.age = age
+            reset_csp = True
+            
         if redshift is not None :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
@@ -126,10 +148,18 @@ class GXY () :
             ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
                              'Mgas'  : self.sfh.core.Mgas(self.age),
                              'Mdust' : self.sfh.core.Mdust(self.age) } )
+            reset_csp = True
+
+        if reset_csp :
+            self.csp.set_parameters( self.age, self.sfh )
+            if self.snsyn is not None :
+                rccsn = self.csp.core.RCCSN()
+                if syn_kw is None :
+                    syn_kw = {}
+                syn_kw['RCCSN'] = rccsn
+            
         if len( ism_kw ) > 0 :
             self.ism.set_parameters(**ism_kw)
-        # if age is not None or sfh_kw is not None :
-        #     self.csp.set_parameters( self.age, self.sfh )
 
         # This one here should also be set only when either age or sfh changes:
         if self.xrb is not None :
@@ -152,13 +182,20 @@ class GXY () :
             except AttributeError :
                 raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
                                       'without an NFF component is not allowed.' )
+
+        if syn_kw is not None:
+            try :
+                self.snsyn.set_parameters( **syn_kw )
+            except AttributeError :
+                raise AttributeError( 'Passing SYN-parameters to a GXY-class built '
+                                      'without an SNSYN component is not allowed.' )
             
         return;
     
     def Lstellar ( self ) :
         
         # set derived stellar properties
-        self.csp.set_parameters( self.age, self.sfh )
+        # self.csp.set_parameters( self.age, self.sfh )
         
         # emission from stars (using directly the core function for performance)  
         return self.csp.core.emission( self.lgrid )
@@ -176,7 +213,7 @@ class GXY () :
             in units of solar luminosities (:math:`[L_\odot]`)
         """
         # set derived stellar properties
-        self.csp.set_parameters( self.age, self.sfh )
+        # self.csp.set_parameters( self.age, self.sfh )
         
         # attenuation from ISM
         attTotMC, attTot = self.ism.total_attenuation( self.wl(), self.csp.t )
@@ -221,6 +258,10 @@ class GXY () :
                             Lunatt[ self.w912[ self.lgrid ] ] *
                             self.wl()[ self.w912 ] * self.Q_H_fact )
             Ltot += self.Aavg * self.nff.emission( Q_H, il = self.lgrid )
+
+        # Synchrotron emission from SN-shocks
+        if self.snsyn is not None :
+            Ltot += self.snsyn.emission( self.lgrid ) * sunL
         
         return Ltot
 
@@ -247,7 +288,7 @@ class PhotoGXY ( GXY ) :
 
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
-                             "Use function build_photometric_system() before." )
+                             "Call function build_photometric_system() before." )
         return self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
         
 

@@ -8,6 +8,7 @@ import numpy
 from galapy.internal.utils import find_nearest, trap_int, powerlaw_exp_cutoff
 from galapy.internal.constants import Ang_to_keV
 from galapy.internal.interp import lin_interp
+from galapy.internal.data import DataFile
 
 _template_tunables = ( 'ct', 'al', 'be', 'ta', 'rm', 'ia' )
 
@@ -97,8 +98,7 @@ class AGN () :
         self._Xray = Xray
         
         # common name of all template files
-        self._filebase = os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                       GP_GBL.AGN_FILE )
+        self._filebase = GP_GBL.AGN_FILE
 
         # build the parameter dictionary
         self.params = agn_build_params( fAGN, **kwargs)
@@ -113,10 +113,11 @@ class AGN () :
     def load_template ( self ) :
 
         # load template from closest file to the parameters chosen
+        filename = self.filebase.format( *( self.params[ 'template' ][k]
+                                            for k in _template_tunables  ) )
         self.ll, self.tot, self.ther, self.scat, self.disk = \
             numpy.array( [1.e+4,1.e-4,1.e-4,1.e-4,1.e-4] )[:,numpy.newaxis] * \
-            numpy.genfromtxt( self._filebase.format( *( self.params[ 'template' ][k]
-                                                        for k in _template_tunables  ) ),
+            numpy.genfromtxt( DataFile( filename, GP_GBL.AGN_DIR ).get_file(),
                               unpack=True )
 
         # Extend the wavelenght domain by padding with zeros the emissions

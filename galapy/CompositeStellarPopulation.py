@@ -7,21 +7,20 @@
 
 # External imports
 import numpy
-import os 
+import os
+import warnings
 
 # Internal imports
 from .CSP_core import loadSSP, CCSP
+from .SYN_core import CSYN
 import galapy.internal.globs as GP_GBL
+from galapy.internal.data import DataFile
 
 _SSP_LIB = {
-    'bc03.basel.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_basel_chab_zeros ),
-    'bc03.basel.chab.refined' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_basel_chab_zeros_refined ),
-    'bc03.stelib.chab.extend' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_stelib_chab_zeros ),
-    'bc03.stelib.chab.extrap' : os.path.join( os.path.dirname( GP_GBL.__file__ ),
-                                              GP_GBL.bc03_stelib_chab_extrap ),
+    'bc03.basel.chab.extend'  : GP_GBL.bc03_basel_chab_zeros,
+    'bc03.basel.chab.refined' : GP_GBL.bc03_basel_chab_zeros_refined,
+    'bc03.stelib.chab.extend' : GP_GBL.bc03_stelib_chab_zeros,
+    'bc03.stelib.chab.extrap' : GP_GBL.bc03_stelib_chab_extrap,
     }
 
 def print_ssp_libs () :
@@ -64,9 +63,15 @@ class CSP () :
       which SSP library to load. The default is :code:`bc03.basel.chab.extend`-
       To see the list of available libraries run 
       :code:`galapy.CompositeStellarPopulation.print_ssp_libs()`
+    CCSN : bool
+      whether to allow for Core-Collapse Supernova support (default=False).
+
+    See Also
+    --------
+    :func:`galapy.CompositeStellarPopulation.print_ssp_libs()`
     """
 
-    def __init__ ( self, ssp_lib = 'bc03.basel.chab.extend' ) :
+    def __init__ ( self, ssp_lib = 'bc03.basel.chab.extend', CCSN = False ) :
         
         self.ssp_lib = None
         if ssp_lib in set(_SSP_LIB.keys()) :
@@ -75,10 +80,17 @@ class CSP () :
             raise ValueError( f'SSP library "{ssp_lib}" not available; '
                               'you can see the list of available libraries by running '
                               'galapy.CompositeStellarPopulation.print_ssp_libs()' )
-        self.l, self.t, self.Z, self.L = loadSSP(_SSP_LIB[self.ssp_lib])
+        
+        self.l, self.t, self.Z, self.L = loadSSP( DataFile( *_SSP_LIB[self.ssp_lib] ).get_file() )
         self.shape = (self.l.size, self.t.size, self.Z.size)
-        self.core = CCSP( self.l, self.t, self.Z, self.L )
+
+        self.CCSN = CCSN
+        self.core = CCSP( self.l, self.t, self.Z, self.L, self.CCSN )
         self._timetuple = None
+
+        # also allocate synchrotron object if do_synchrotron is true
+        # self._sync = None
+        # if do_synchrotron : self._sync = CSYN( self.l )
 
         # steal docstrings from C-core:
         self.SSP.__func__.__doc__      = self.core.SSP.__doc__
@@ -194,6 +206,35 @@ class CSP () :
         if scalar_input :
             return ret.item()
         return ret
-    
+
+    def RCCSN ( self, age, sfh ) :
+        """
+        Parameters
+        ----------
+        age : float
+          The age in years of the CSP.
+        sfh : object of type SFH()
+          The chosen star formation history. This has to be (or inherit from) 
+          the instance of an object of type galapy.StarFormationHistory.SFH().
+        
+        Returns
+        -------
+        RCCSN : scalar float
+           The Core-Collapse Supernova rate at given age for a given SFH.
+
+        Raises
+        ------
+        Warning
+          if the object has been built without CCSN support.
+        """
+
+        if self.CCSN :
+            self.set_parameters( age, sfh )
+            return self.core.RCCSN()
+        else :
+            warnings.warn( f"This instance of the {type(self).__name__} "
+                           "has been built without CCSN support. "
+                           "Build with `CCSN = True` " )
+            return 0.
         
     

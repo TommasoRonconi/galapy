@@ -46,9 +46,6 @@ class NFF () :
         """
 
         self.params.update( kwargs )
-        # self.params.update( { k : v
-        #                       for k, v in kwargs.items()
-        #                       if k in nff_tunables } )
         self.core.set_params( numpy.asarray( [
             self.params[k]
             for k in nff_tunables

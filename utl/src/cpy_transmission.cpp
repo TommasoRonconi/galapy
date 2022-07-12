@@ -80,11 +80,9 @@ extern "C" {
     
     npy_intp size = PyArray_DIM( NPyBuf, 0 );
     double * bpt = new double [size];
-    for ( std::size_t ii = 0; ii < size; ++ii )
+    for ( long int ii = 0; ii < size; ++ii )
       bpt[ ii ] = ( *( self->ptrObj ) )
 	( *reinterpret_cast< double * >( PyArray_GETPTR1( NPyBuf, ii ) ) );
-
-    // return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( bpt ) );
 
     PyObject * ret = PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE,
 						reinterpret_cast< void * >( bpt ) );

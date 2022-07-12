@@ -131,13 +131,15 @@ extern "C" {
 
     PyArrayObject * Lbuf = NULL, * Tbuf = NULL, * Zbuf = NULL, * SSPbuf = NULL;
     std::vector< double > Lvec, Tvec, Zvec, SSPvec;
+    int do_CCSN_rate;
         
     /* Get the passed Python object */
-    if ( !PyArg_ParseTuple( args, "O!O!O!O!",
+    if ( !PyArg_ParseTuple( args, "O!O!O!O!i",
 			    &PyArray_Type, &Lbuf,
 			    &PyArray_Type, &Tbuf,
 			    &PyArray_Type, &Zbuf,
-			    &PyArray_Type, &SSPbuf ) ) return -1;
+			    &PyArray_Type, &SSPbuf,
+			    &do_CCSN_rate ) ) return -1;
   
     /* Convert NumPy-array to C++ vector */
     if ( NPyArrayToCxxVector1D< double >( Lbuf, Lvec ) == -1 ) return -1;
@@ -146,7 +148,7 @@ extern "C" {
     if ( NPyArrayToCxxVector1D< double >( SSPbuf, SSPvec ) == -1 ) return -1;
 
     /* Call member constructor */
-    self->ptrObj = new sed::csp{ Lvec, Tvec, Zvec, SSPvec };
+    self->ptrObj = new sed::csp{ Lvec, Tvec, Zvec, SSPvec, do_CCSN_rate };
 
     /* Return 0 on success */
     return 0;
@@ -299,15 +301,22 @@ extern "C" {
     delete [] Tfact_arr;
     delete [] il_arr;
 
-    // return PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
-    // 				      reinterpret_cast< void * >( outarr ) );
-
     PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
 						reinterpret_cast< void * >( outarr ) );
     PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
     return ret;
     
-  }
+  } 
+  
+  // ========================================================================================
+
+  static const char DocString_RCCSN[] =
+    "Returns the extinction value in the visible band.\n";
+  static PyObject * CPyCSP_RCCSN ( CPyCSP * self ) {
+
+    return PyFloat_FromDouble( self->ptrObj->RCCSN() );
+    
+  }  
   
   // ========================================================================================
   
@@ -324,6 +333,10 @@ extern "C" {
 					   (PyCFunction) CPyCSP_emission,
 					   METH_VARARGS | METH_KEYWORDS,
 					   DocString_emission },
+					{ "RCCSN",
+					  (PyCFunction) CPyCSP_RCCSN,
+					  METH_NOARGS,
+					  DocString_RCCSN },
 					 {NULL, NULL, 0, NULL}
   };
 
