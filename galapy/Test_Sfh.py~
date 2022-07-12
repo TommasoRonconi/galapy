@@ -1,0 +1,708 @@
+import pytest
+import sadfit
+import numpy as np
+from sadfit import StarFormationHistory as sfh_mod
+
+"""
+prima di tutto
+    Testing the class defining the model of Star Formation History.
+    The possible models to choose are
+    
+
+    Parameters
+    ----------
+    tau_quench : float
+      Eventual abrupt quenching time for star formation. 
+      Should be expressed in years. Refers to the age of the galaxy.
+
+    model : enumerator
+      One among ( insitu, constant, delayedexp, lognormal ). 
+      The tags are aliases for an integer type in the closed interval [1,4].
+      Default is 'insitu (= 1)'.
+
+    thinness : int
+
+    burst : dictionary
+ 
+    _models = {'insitu':1, 'constant':2, 'delayedexp':3, 'lognormal':4}
+
+"""
+
+tau_quench=8.e+8
+
+p_high=1.e-6
+p_low=1.e-1
+
+######################################################
+
+#                SFH MODEL = INSITU
+
+#####################################################
+
+
+def test_init_sfh_insitu () :
+    """ 
+    Initialize the class sfh_t 
+    
+    """
+    try :
+        sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    except :
+        return False
+    return True
+
+#######################################################
+
+def test_delete_sfh_insitu ():
+    """ 
+    Delete the class                                                    
+    
+    """
+    try:
+        sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+        del(sfh)
+    except :
+        return False
+    return True
+
+########################################################
+def test_call_sfh_insitu ():
+    """ 
+    Call the class
+    
+    """
+    try:
+        sfh_insitu=sfh_mod.shf_t(tau_quench=tau_quench,model ='insitu')
+        sfh_insitu()
+    except :
+        return False
+    return True
+
+########################################################
+                                                                                 
+# def test_params_char_time_sfh_insitu():
+#     """ 
+#     A negative characteristic time t* will return a null array sfh_insitu(dovrebbe esserci errore) 
+    
+#     """
+#     sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')    
+#     sfh_insitu.set_parameters([100,-1])
+#     tau=np.logspace(6,10,100)
+#     psi=sfh_insitu.eval(tau)
+#     assert sfh_insitu.eval(tau)== pytest.approx(np.nan,nan_ok=True)
+
+# #######################################################
+
+def test_params_psimax_sfh_insitu():
+    """ 
+    Normalization factor equal to zero will return a null array sfh_insitu 
+    
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')    
+    sfh_insitu.set_parameters([0,3.e+8])
+    tau=np.logspace(6,10,100)
+    zero=np.zeros(100)
+    psi=sfh_insitu.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+
+#######################################################
+
+# def test_negative_time_sfh_insitu():
+#     """ 
+#     Sfh evaluated at negative time will return null value(dovrebbe esserci errore).
+    
+#     """
+#     sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')    
+#     sfh_insitu.set_parameters([100,3.e+8])
+#     time=-1
+#     assert sfh_insitu(time)==-4.7341091047314876e-07
+#######################################################
+
+def test_quench_sfh_insitu():
+    """
+    After tau_quench, sfh must be equal to 0
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(9,11,100)
+    psi=sfh_insitu.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+    
+#############################################################
+def test_psi_sfh_insitu():
+    """
+    Check the value of psi at a random time
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(6,10,200)
+    psi=sfh_insitu.eval(tau)
+    assert psi[50]== pytest.approx(4.103064173938209,p_high) 
+    
+#############################################################
+def test_sfh_insitu_Mstar () :
+    """
+    Check the value of the Stellar Mass at present time
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    assert sfh_insitu.Mstar(1.e+9) == pytest.approx(20730890486.269768,p_high) ;
+
+
+#############################################################
+
+def test_sfh_insitu_Mdust () :
+    """
+    Check the value of the Dust Mass at quench time and at present time
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    assert sfh_insitu.Mdust(8.e+8) == pytest.approx(136530596.03205943,p_high) ;
+    assert sfh_insitu.Mdust(1.e+9)==0
+    
+#############################################################
+
+def test_sfh_insitu_Mgas () :
+    """
+    Check the value of the Dust Mass at quench time and at present time
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    assert sfh_insitu.Mgas(8.e+8) == pytest.approx(5781720297.528179,p_high) ;
+    assert sfh_insitu.Mgas(1.e+9)==0
+    
+#############################################################
+
+def test_sfh_insitu_Zstar () :
+    """
+    Check the value of the Stellar Metallicity at
+    present time(~0.02 with an error of 1%)
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    assert sfh_insitu.Zstar(1.e+9) == pytest.approx(0.023106097623840163,p_high) ;
+
+#############################################################
+
+def test_sfh_Zgas () :
+    """
+    Check the value of the Gas Metallicity at 
+    present time(~0.034 with an error of 1%)
+    """
+    sfh_insitu = sfh_mod.sfh_t(tau_quench=tau_quench,model ='insitu')
+    sfh_insitu.set_parameters([100,3.e+8])
+    assert sfh_insitu.Zgas(1.e+9) == pytest.approx(0.03440966614222255,p_high) ;
+
+#######################################################
+
+
+
+
+
+
+
+
+###########################################################
+
+#                 MODEL = CONSTANT
+
+###########################################################à
+
+def test_init_sfh_constant () :
+    """ 
+    Initialize the class sfh_t 
+    
+    """
+    try :
+        sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+    except :
+        return False
+    return True
+
+#######################################################
+
+def test_delete_sfh_constant ():
+    """ 
+    Delete the class                                              
+    """
+    try:
+        sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+        del(sfh)
+    except :
+        return False
+    return True
+
+########################################################
+def test_call_sfh_constant ():
+    """ 
+    Call the class                                                   
+
+    """
+    try:
+        sfh_constant=sfh_mod.shf_t(tau_quench=tau_quench,model ='constant')
+        sfh_constant()
+    except :
+        return False
+    return True
+
+########################################################
+
+def test_params_psimax_sfh_constant():
+    """ 
+    Normalization factor equal to zero will return a null array sfh_insitu 
+    
+    """
+    sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')    
+    sfh_constant.set_parameters([0])
+    tau=np.logspace(6,10,100)
+    zero=np.zeros(100)
+    psi=sfh_constant.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+    
+#######################################################
+
+
+# def test_negative_time_sfh_constant():
+#     """ 
+#     Sfh evaluated at negative time will return null value(dovrebbe esserci errore).
+    
+#     """
+#     sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')    
+#     sfh_constant.set_parameters([1])
+#     time=-1
+#     assert sfh_constant(time)==1.0
+
+#######################################################
+
+def test_quench_sfh_constant():
+    """
+    After tau_quench, sfh must be equal to 0
+    """
+    sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+    sfh_constant.set_parameters([1])
+    zero=np.zeros(100)
+    tau=np.logspace(9,11,100)
+    psi=sfh_constant.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+    
+#############################################################
+def test_psi_sfh_constant():
+    """
+    Check the value of psi at a random time
+    """
+    sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+    sfh_constant.set_parameters([1])
+    zero=np.zeros(100)
+    tau=np.logspace(6,10,200)
+    psi=sfh_constant.eval(tau)
+    assert psi[50]== pytest.approx(1.0,p_high) 
+    
+#############################################################
+def test_sfh_constant_Mstar () :
+    """
+    Check the value of the Stellar Mass at present time
+    """
+    sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+    sfh_constant.set_parameters([1])
+    assert sfh_constant.Mstar(1.e+9) == pytest.approx(509519015.14239407,p_high) ;
+
+#############################################################
+
+# def test_sfh_constant_Mdust () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+#     sfh_constant.set_parameters([1])
+#     tau=np.logspace(6,10,200)
+#     assert sfh_constant.Mdust(8.e+8) == pytest.approx(800000000.0,p_high) ;
+#     assert sfh_constant.Mdust(1.e+9)==1.e+9
+#     assert all ([a==b for a,b in zip(sfh_constant.Mdust(tau),tau)])
+# #############################################################
+
+# def test_sfh_constant_Mgas () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+#     sfh_constant.set_parameters([1])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_constant.Mgas(tau),tau)])
+    
+# # #############################################################
+
+# def test_sfh_constant_Zstar () :
+#     """
+#     Check the value of the Stellar Metallicity at
+#     present time(~0.02 with an error of 1%)
+#     """
+#     sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+#     sfh_constant.set_parameters([1])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_constant.Zstar(tau),tau)])
+
+# # #############################################################
+
+# def test_sfh_constant_Zgas () :
+#     """
+#     Check the value of the Gas Metallicity at 
+#     present time(~0.034 with an error of 1%)
+#     """
+#     sfh_constant = sfh_mod.sfh_t(tau_quench=tau_quench,model ='constant')
+#     sfh_constant.set_parameters([1])
+#     tau=np.logspace(6,10,200)
+#     zero=np.zeros(100)
+#     assert all ([a==b for a,b in zip(sfh_constant.Zgas(tau),tau)])
+
+
+
+
+######################################################################
+
+
+
+
+
+
+
+
+
+
+####################################################################
+
+#             SFH MODEL = DELAYED EXP 
+
+######################################################################
+
+def test_init_sfh_delayedexp () :
+    """ 
+    Initialize the class sfh_t 
+    
+    """
+    try :
+        sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+    except :
+        return False
+    return True
+
+#######################################################
+
+def test_delete_sfh_delayedexp ():
+    """ 
+    Delete the class
+    """
+    try:
+        sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+        del(sfh)
+    except :
+        return False
+    return True
+
+########################################################
+def test_call_sfh_delayedexp ():
+    """ 
+    Call the class 
+    """
+    try:
+        sfh_delayedexp=sfh_mod.shf_t(tau_quench=tau_quench,model ='delayedexp')
+        sfh_delayedexp()
+    except :
+        return False
+    return True
+
+########################################################
+
+def test_params_psimax_sfh_delayedexp():
+    """ 
+    Normalization factor equal to zero will return a null array sfh_delayedexp 
+    
+    """
+    sfh_delayedexp=sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp') 
+    sfh_delayedexp.set_parameters([0,0.2,1.e+8])
+    tau=np.logspace(6,10,200)
+    psi=sfh_delayedexp.eval(tau)
+    zero=np.zeros(200)
+    assert all ([a==b for a,b in zip(psi,zero)])
+
+#######################################################
+# def test_params_chartime_sfh_delayedexp():
+#     """ 
+#     Negative characteristic time will return a null array sfh_delayedexp 
+    
+#     """
+#     sfh_delayedexp=sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp') 
+#     sfh_delayedexp.set_parameters([1,0.2,0])
+#     tau=np.logspace(6,10,200)
+#     psi=sfh_delayedexp.eval(tau)
+#     zero=np.zeros(200)
+#     assert all ([a==b for a,b in zip(psi,zero)])
+
+#######################################################
+
+# def test_negative_time_sfh_delayedexp():
+#     """ 
+#     Sfh evaluated at negative time will return null value(dovrebbe esserci errore).
+    
+#     """
+#     sfh_delayedexp=sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp') 
+#     sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+#     time=-1
+#     assert sfh_delayedexp(time)==pytest.approx(np.nan,nan_ok=True)
+
+#######################################################
+
+def test_quench_sfh_delayedexp():
+    """
+    After tau_quench, sfh must be equal to 0
+    """
+    sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+    sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(9,11,100)
+    psi=sfh_delayedexp.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+    
+#############################################################
+def test_psi_sfh_delayedexp():
+    """
+    Check the value of psi at a random time
+    """
+    sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+    sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(6,10,200)
+    psi=sfh_delayedexp.eval(tau)
+    assert psi[50]== pytest.approx(22.75464927121362,p_high) 
+    
+#############################################################
+def test_sfh_delayedexp_Mstar () :
+    """
+    Check the value of the Stellar Mass at present time
+    """
+    sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+    sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+    assert sfh_delayedexp.Mstar(1.e+9) == pytest.approx(2255427119.0862346,p_high) ;
+
+#############################################################
+
+# def test_sfh_delayedexp_Mdust () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+#     sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert sfh_delayedexp.Mdust(8.e+8) == pytest.approx(800000000.0,p_high) ;
+#     assert sfh_delayedexp.Mdust(1.e+9)==1.e+9
+#     assert all ([a==b for a,b in zip(sfh_delayedexp.Mdust(tau),tau)])
+# #############################################################
+
+# def test_sfh_delayedexp_Mgas () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+#     sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_delayedexp.Mgas(tau),tau)])
+    
+# # #############################################################
+
+# def test_sfh_delayedexp_Zstar () :
+#     """
+#     Check the value of the Stellar Metallicity at
+#     present time(~0.02 with an error of 1%)
+#     """
+#     sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+#     sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_delayedexp.Zstar(tau),tau)])
+
+# # #############################################################
+
+# def test_sfh_delayedexp_Zgas () :
+#     """
+#     Check the value of the Gas Metallicity at 
+#     present time(~0.034 with an error of 1%)
+#     """
+#     sfh_delayedexp = sfh_mod.sfh_t(tau_quench=tau_quench,model ='delayedexp')
+#     sfh_delayedexp.set_parameters([1,0.2,1.e+8])
+#     tau=np.logspace(6,10,200)
+#     zero=np.zeros(100)
+#     assert all ([a==b for a,b in zip(sfh_delayedexp.Zgas(tau),tau)])
+
+#########################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################################
+
+#                 MODEL = LOGNORMAL
+
+######################################################################
+
+def test_init_sfh_lognormal () :
+    """ 
+    Initialize the class sfh_t 
+    
+    """
+    try :
+        sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+    except :
+        return False
+    return True
+
+#######################################################
+
+def test_delete_sfh_lognormal ():
+    """ 
+    Delete the class
+    """
+    try:
+        sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+        del(sfh)
+    except :
+        return False
+    return True
+
+########################################################
+def test_call_sfh_lognormal ():
+    """ 
+    Call the class 
+    """
+    try:
+        sfh_lognormal=sfh_mod.shf_t(tau_quench=tau_quench,model ='lognormal')
+        sfh_lognormal()
+    except :
+        return False
+    return True
+
+########################################################
+
+def test_params_psimax_sfh_lognormal():
+    """ 
+    Normalization factor equal to zero will return a null array sfh_lognormal 
+    
+    """
+    sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+    sfh_lognormal.set_parameters([0,2,3.e+8])
+    zero=np.zeros(200)
+    tau=np.logspace(6,10,200)
+    psi=sfh_lognormal.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+
+#######################################################
+# def test_params_chartime_sfh_lognormal():
+#     """ 
+#     Negative characteristic time will return a null array lognormal 
+    
+#     """
+#     sfh_lognormal=sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal') 
+#     sfh_lognormal.set_parameters([100,2,-1])
+#     tau=np.logspace(6,10,200)
+#     psi=sfh_lognormal.eval(tau)
+#     zero=np.zeros(200)
+#     assert sfh_lognormal.eval(tau)==pytest.approx(np.nan,nan_ok=True)
+
+# #######################################################
+
+# def test_negative_time_sfh_lognormal():
+#     """ 
+#     Sfh evaluated at negative time will return null value(dovrebbe esserci errore).
+    
+#     """
+#     sfh_lognormal=sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal') 
+#     sfh_lognormal.set_parameters([100,2,3.e+8])
+#     time=0
+#     assert sfh_lognormal(time)==pytest.approx(np.nan,nan_ok=True)
+#######################################################
+
+def test_quench_sfh_lognormal():
+    """
+    After tau_quench, sfh must be equal to 0
+    """
+    sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+    sfh_lognormal.set_parameters([100,2,3.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(9,11,100)
+    psi=sfh_lognormal.eval(tau)
+    assert all ([a==b for a,b in zip(psi,zero)])
+    
+#############################################################
+def test_psi_sfh_lognormal():
+    """
+    Check the value of psi at a random time
+    """
+    sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+    sfh_lognormal.set_parameters([100,2,3.e+8])
+    zero=np.zeros(100)
+    tau=np.logspace(6,10,200)
+    psi=sfh_lognormal.eval(tau)
+    assert psi[50]== pytest.approx(4.744036754995166,p_high) 
+    
+#############################################################
+def test_sfh_lognormal_Mstar () :
+    """
+    Check the value of the Stellar Mass at present time
+    """
+    sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+    sfh_lognormal.set_parameters([100,2,3.e+8])
+    assert sfh_lognormal.Mstar(1.e+9) == pytest.approx(9273433696.49997,p_high) ;
+
+#############################################################
+
+# def test_sfh_lognormal_Mdust () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+#     sfh_lognormal.set_parameters([100,2,3.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert sfh_lognormal.Mdust(8.e+8) == pytest.approx(800000000.0,p_high) ;
+#     assert sfh_lognormal.Mdust(1.e+9)==1.e+9
+#     assert all ([a==b for a,b in zip(sfh_lognormal.Mdust(tau),tau)])
+# #############################################################
+
+# def test_sfh_lognormal_Mgas () :
+#     """
+#     Check the value of the Dust Mass at quench time and at present time
+#     """
+#     sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+#     sfh_lognormal.set_parameters([100,2,3.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_lognormal.Mgas(tau),tau)])
+    
+# # #############################################################
+
+# def test_sfh_lognormal_Zstar () :
+#     """
+#     Check the value of the Stellar Metallicity at
+#     present time(~0.02 with an error of 1%)
+#     """
+#     sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+#     sfh_lognormal.set_parameters([100,2,3.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_lognormal.Zstar(tau),tau)])
+
+# # #############################################################
+
+# def test_sfh_lognormal_Zgas () :
+#     """
+#     Check the value of the Gas Metallicity at 
+#     present time(~0.034 with an error of 1%)
+#     """
+#     sfh_lognormal = sfh_mod.sfh_t(tau_quench=tau_quench,model ='lognormal')
+#     sfh_lognormal.set_parameters([100,2,3.e+8])
+#     tau=np.logspace(6,10,200)
+#     assert all ([a==b for a,b in zip(sfh_lognormal.Zgas(tau),tau)])
