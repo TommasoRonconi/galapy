@@ -108,9 +108,23 @@ namespace utl {
      *  @param substitute whether to substitute or not the value if a node with same 
      *                    key  exists
      *
-     *  @return void
+     *  @return raw pointer to last node inserted
      */
     node * insert ( const IT key, const U value );
+
+
+    /**
+     *  @brief Recursive function to extract the current node and all the nodes 
+     *         lower in hierarchy with respect to current.
+     *         First it stores a raw pointer to the current node than calls itself again 
+     *         from the childs, first left and then right.
+     *         Finally, it returns void.
+     *
+     *  @param (out) a vector of raw constant pointers of type node<T,U>
+     *
+     *  @return void
+     */
+    void extract ( std::vector< const node * > & store ) const noexcept;
 
     /**
      *  @brief Recursive function to find the leftmost node in hierarchy from current

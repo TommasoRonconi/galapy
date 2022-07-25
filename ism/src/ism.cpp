@@ -43,7 +43,7 @@ double sed::ism::temperature ( const double Etot ) noexcept {
   
     double kL, dL;
     for ( std::size_t iL = 1; iL < NL; ++iL ) {
-      kL = _current_params[ 1 ] * ( 1 - attenuation( Lvec[ iL ] ) );
+      kL = _paramsrc[ 1 ] * ( 1 - attenuation( Lvec[ iL ] ) );
       dL = ( Lvec[ iL ] - Lvec[ iL - 1 ] ); // dLambda in [ cm ] units
       for ( std::size_t iT = 0; iT < NT; ++iT )
 	Et[ iT ] += totE * dL * kL *
@@ -98,8 +98,8 @@ double sed::diffuse::_fact_greybody ( const double * const param ) const noexcep
 double sed::diffuse::emission ( const double lambda ) const noexcept {
 
   return sed::cnst::solL *
-    ( this->_emission( lambda, _Temp, _current_params[ 1 ] ) + // dust contribute
-      _current_params[ 2 ] * _Labs * _fpah( lambda ) );        // PAH contribute
+    ( this->_emission( lambda, _Temp, _paramsrc[ 1 ] ) + // dust contribute
+      _paramsrc[ 2 ] * _Labs * _fpah( lambda ) );        // PAH contribute
 
 }
 
@@ -137,7 +137,7 @@ double sed::cloud::_fact_greybody ( const double * const param ) const noexcept 
 
 double sed::cloud::emission ( const double lambda ) const noexcept {
 
-  return sed::cnst::solL * this->_emission( lambda, _Temp, _current_params[ 1 ] );
+  return sed::cnst::solL * this->_emission( lambda, _Temp, _paramsrc[ 1 ] );
 
 }
 

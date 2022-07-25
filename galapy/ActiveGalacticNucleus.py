@@ -115,7 +115,7 @@ class AGN () :
 
         # load template from closest file to the parameters chosen
         filename = self._filebase.format( *( self.params[ 'template' ][k]
-                                            for k in _template_tunables  ) )
+                                             for k in _template_tunables  ) )
         self.ll, self.tot, self.ther, self.scat, self.disk = \
             numpy.array( [1.e+4,1.e-4,1.e-4,1.e-4,1.e-4] )[:,numpy.newaxis] * \
             numpy.genfromtxt( DataFile( filename, GP_GBL.AGN_DIR ).get_file(),

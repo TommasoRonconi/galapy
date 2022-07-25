@@ -172,8 +172,15 @@ namespace utl {
      */
     ///@{
 
+    bool planted () const noexcept {
+      
+      if ( root ) return true;
+      return false;
+      
+    }
+
     /**
-     *  @brief Templeted function to insert a new node in the ibstree.
+     *  @brief Templated function to insert a new node in the ibstree.
      *         If the root already exists it calls function node::insert, otherwise
      *         it inserts root.
      *
@@ -186,7 +193,24 @@ namespace utl {
      *
      *  @return iterator to inserted node
      */  
-    iterator insert ( const interval<T> key, const U value ); 
+    iterator insert ( const interval<T> key, const U value );
+
+
+    /**
+     *  @brief Templated function to extract a vector of raw pointers to the nodes in the ibstree.
+     *         If the root exists it calls the recursive function node::insert. 
+     *
+     *  @param (out) reference to the allocated vector used to store the raw pointers
+     *
+     *  @return void
+     */  
+    void extract ( std::vector< const node * > & store ) const noexcept {
+
+      if ( root )
+	root->extract( store );
+      return;
+      
+    }
 
     /**
      *  @brief Function to remove all nodes from ibstree. 

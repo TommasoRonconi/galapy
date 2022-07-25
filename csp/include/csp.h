@@ -13,9 +13,11 @@
 
 // external includes
 #include <vector>
+#include <cmath>
 
 // internal includes
 #include <utilities.h>
+#include <serialize.h>
 #include <interpolation.h>
 
 namespace sed {
@@ -29,7 +31,7 @@ namespace sed {
   // [ adimensional ]
   static std::vector< double > R1_CCSN = { 0.3531, 0.3673, 0.3789, 0.4140, 0.4454, 0.5146 };
 
-  class csp {
+  class csp : public Serializable {
 
   private :
 
@@ -87,18 +89,8 @@ namespace sed {
 	  const vect_double Z,
 	  const vect_double LltZ,
 	  const int do_CCSN_rate = 0 ) noexcept;
-      
-    // csp ( const vect_double lambda,
-    // 	  const vect_double tau,
-    // 	  const vect_double Z,
-    // 	  const vect_double LltZ,
-    // 	  const bool do_CCSN_rate ) :
-    //   _lambda{ lambda }, _Nlambda{ lambda.size() },
-    //   _tau{ tau }, _Ntau{ tau.size() },
-    //   _Z{ Z }, _NZ{ Z.size() },
-    //   _LltZ{ LltZ }, _NL{ LltZ.size() } {}
 
-    ~csp () = default;
+    virtual ~csp () = default;
     
     // =============================================================================
     // Public functions
@@ -141,6 +133,68 @@ namespace sed {
       return Rout;
 
     }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialVecPOD< double >::serialize_size( _lambda ) +
+	SerialPOD< std::size_t >::serialize_size( _Nlambda ) +
+	SerialVecPOD< double >::serialize_size( _tau ) +
+	SerialPOD< std::size_t >::serialize_size( _Ntau ) +
+	SerialVecPOD< double >::serialize_size( _Z ) +
+	SerialPOD< std::size_t >::serialize_size( _NZ ) +
+	SerialVecPOD< double >::serialize_size( _LltZ ) +
+	SerialPOD< std::size_t >::serialize_size( _NL ) +
+	SerialVecPOD< double >::serialize_size( _RCCSNtZ ) +
+	SerialVecPOD< double >::serialize_size( _psi ) +
+	SerialVecPOD< double >::serialize_size( _Zstar ) +
+	SerialVecPOD< std::size_t >::serialize_size( _iz_low ) +
+	SerialPOD< std::size_t >::serialize_size( _it_last );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = SerialVecPOD< double >::serialize( data, _lambda );
+      data = SerialPOD< std::size_t >::serialize( data, _Nlambda );
+      data = SerialVecPOD< double >::serialize( data, _tau );
+      data = SerialPOD< std::size_t >::serialize( data, _Ntau );
+      data = SerialVecPOD< double >::serialize( data, _Z );
+      data = SerialPOD< std::size_t >::serialize( data, _NZ );
+      data = SerialVecPOD< double >::serialize( data, _LltZ );
+      data = SerialPOD< std::size_t >::serialize( data, _NL );
+      data = SerialVecPOD< double >::serialize( data, _RCCSNtZ );
+      data = SerialVecPOD< double >::serialize( data, _psi );
+      data = SerialVecPOD< double >::serialize( data, _Zstar );
+      data = SerialVecPOD< std::size_t >::serialize( data, _iz_low );
+      data = SerialPOD< std::size_t >::serialize( data, _it_last );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = SerialVecPOD< double >::deserialize( data, _lambda );
+      data = SerialPOD< std::size_t >::deserialize( data, _Nlambda );
+      data = SerialVecPOD< double >::deserialize( data, _tau );
+      data = SerialPOD< std::size_t >::deserialize( data, _Ntau );
+      data = SerialVecPOD< double >::deserialize( data, _Z );
+      data = SerialPOD< std::size_t >::deserialize( data, _NZ );
+      data = SerialVecPOD< double >::deserialize( data, _LltZ );
+      data = SerialPOD< std::size_t >::deserialize( data, _NL );
+      data = SerialVecPOD< double >::deserialize( data, _RCCSNtZ );
+      data = SerialVecPOD< double >::deserialize( data, _psi );
+      data = SerialVecPOD< double >::deserialize( data, _Zstar );
+      data = SerialVecPOD< std::size_t >::deserialize( data, _iz_low );
+      data = SerialPOD< std::size_t >::deserialize( data, _it_last );
+      return data;
+
+    }
+
+    // =============================================================================
     
   }; // endclass csp
 

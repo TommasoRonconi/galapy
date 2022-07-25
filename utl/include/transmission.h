@@ -17,11 +17,12 @@
 
 // internal includes
 #include <utilities.h>
+#include <serialize.h>
 #include <interpolation.h>
 
 namespace utl {
 
-  class transmission {
+  class transmission : public Serializable {
 
   private :
 
@@ -37,6 +38,8 @@ namespace utl {
     double lmax = -1.;
     double lpiv = 0.;
     double norm = 0.;
+
+    transmission () = default;
     
     transmission ( const std::vector< double > ll,
 		   const std::vector< double > fl ) {
@@ -67,7 +70,7 @@ namespace utl {
       lmax = _ftran.get_xmax();
       
     }
-    ~transmission () = default;
+    virtual ~transmission () = default;
     
     inline double operator() ( const double ll ) const noexcept { return _ftran( ll ); }
 
@@ -86,6 +89,44 @@ namespace utl {
 
     std::vector< double > get_xaxis () { return _ftran.get_xv(); }
     std::vector< double > get_yaxis () { return _ftran.get_fv(); }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	_ftran.serialize_size() +
+	SerialPOD< double >::serialize_size( lmin ) +
+	SerialPOD< double >::serialize_size( lmax ) +
+	SerialPOD< double >::serialize_size( lpiv ) +
+	SerialPOD< double >::serialize_size( norm );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = _ftran.serialize( data );
+      data = SerialPOD< double >::serialize( data, lmin );
+      data = SerialPOD< double >::serialize( data, lmax );
+      data = SerialPOD< double >::serialize( data, lpiv );
+      data = SerialPOD< double >::serialize( data, norm );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = _ftran.deserialize( data );
+      data = SerialPOD< double >::deserialize( data, lmin );
+      data = SerialPOD< double >::deserialize( data, lmax );
+      data = SerialPOD< double >::deserialize( data, lpiv );
+      data = SerialPOD< double >::deserialize( data, norm );
+      return data;
+      
+    }
+
+    // =============================================================================
 
   }; // endclass transmission
 

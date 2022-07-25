@@ -45,6 +45,21 @@ node< T, U > * node< T, U >::insert ( const interval< T > key, const U value ) {
 
 // ===========================================================================
 
+template< class T, class U >
+void node< T, U >::extract ( std::vector< const node< T, U > * > & store )
+  const noexcept {
+
+  store.emplace_back( this );
+  if ( left )
+    left->extract( store );
+  if ( right )
+    right->extract( store );
+  return;
+  
+}
+
+// ===========================================================================
+
 
 template< class T, class U >
 node< T, U > * node< T, U >::find ( const T key ) {

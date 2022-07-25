@@ -29,7 +29,7 @@ namespace utl {
       : _interface{ std::forward< Args >( args )... } {}
 
     // destructor
-    ~interpolator () = default;
+    virtual ~interpolator () = default;
 
     double operator() ( const double xx ) const noexcept {
   
@@ -214,6 +214,29 @@ namespace utl {
       return interpolator{ operator/( lhs, rhs._interface ) };
 
     }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return _interface.serialize_size();
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      return _interface.serialize( data );
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      return _interface.deserialize( data );
+
+    }
+
+    // =============================================================================
 
   }; //endclass interpolator
 
