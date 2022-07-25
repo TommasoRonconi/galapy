@@ -12,6 +12,7 @@
 #define __SFH_EMPIRICAL_H__
 
 // internal includes
+#include <serialize.h>
 #include <sfh_base.h>
 
 namespace sed {
@@ -57,6 +58,38 @@ namespace sed {
     void set_Mdust ( const double Mdust ) { _Mdust = Mdust; return; }
     void set_Zgs ( const double Zgs ) { _Zgs = Zgs; return; }
 
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	sfh_base::serialize_size() +
+	SerialPOD< double >::serialize_size( _Mdust ) +
+	SerialPOD< double >::serialize_size( _Zgs );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = sfh_base::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Mdust );
+      data = SerialPOD< double >::serialize( data, _Zgs );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = sfh_base::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Mdust );
+      data = SerialPOD< double >::deserialize( data, _Zgs );
+      return data;
+
+    }
+
+    // =============================================================
+
   }; // endclass sfh_empirical
 
   // ================================================================
@@ -78,7 +111,9 @@ namespace sed {
 
   public :
 
-    sfh_constant ( const double tau_quench ) noexcept
+    // sfh_constant () : sfh_empirical{} { _paramsrc = std::vector< double >( 1 ); }
+
+    sfh_constant ( const double tau_quench = 2.e+10 ) noexcept
       : sfh_empirical { tau_quench } {
 
       _paramsrc = std::vector< double >( 1 );
@@ -109,6 +144,35 @@ namespace sed {
       _paramsrc[ 0 ] = _Psi;
       return;
     }
+
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	sfh_empirical::serialize_size() +
+	SerialPOD< double >::serialize_size( _Psi );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = sfh_empirical::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Psi );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = sfh_empirical::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Psi );
+      return data;
+
+    }
+
+    // =============================================================
     
   }; // endclass sfh_constant
 
@@ -134,7 +198,9 @@ namespace sed {
 
   public :
 
-    sfh_delayedexp ( const double tau_quench ) noexcept
+    // sfh_delayedexp () : sfh_empirical{} { _paramsrc = std::vector< double >( 3 ); }
+
+    sfh_delayedexp ( const double tau_quench = 2.e+10 ) noexcept
       : sfh_empirical { tau_quench } {
 
       _paramsrc = std::vector< double >( 3 );
@@ -189,6 +255,41 @@ namespace sed {
       _paramsrc[ 2 ] = 1. / _tau_star;
       return;
     }
+
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	sfh_empirical::serialize_size() +
+	SerialPOD< double >::serialize_size( _Psi_norm ) +
+	SerialPOD< double >::serialize_size( _k_shape ) +
+	SerialPOD< double >::serialize_size( _tau_star );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = sfh_empirical::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Psi_norm );
+      data = SerialPOD< double >::serialize( data, _k_shape );
+      data = SerialPOD< double >::serialize( data, _tau_star );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = sfh_empirical::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Psi_norm );
+      data = SerialPOD< double >::deserialize( data, _k_shape );
+      data = SerialPOD< double >::deserialize( data, _tau_star );
+      return data;
+
+    }
+
+    // =============================================================
     
   }; // endclass sfh_delayedexp
 
@@ -216,7 +317,9 @@ namespace sed {
 
   public :
 
-    sfh_lognorm ( const double tau_quench ) noexcept
+    // sfh_lognorm () : sfh_empirical{} { _paramsrc = std::vector< double >( 3 ); }
+
+    sfh_lognorm ( const double tau_quench = 2.e+10 ) noexcept
       : sfh_empirical { tau_quench } {
 
       _paramsrc = std::vector< double >( 3 );
@@ -271,6 +374,41 @@ namespace sed {
       _paramsrc[ 2 ] = 1. / _tau_star;
       return;
     }
+
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	sfh_empirical::serialize_size() +
+	SerialPOD< double >::serialize_size( _Psi_norm ) +
+	SerialPOD< double >::serialize_size( _sigma_star ) +
+	SerialPOD< double >::serialize_size( _tau_star );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = sfh_empirical::serialize( data );
+      data = SerialPOD< double >::serialize( data, _Psi_norm );
+      data = SerialPOD< double >::serialize( data, _sigma_star );
+      data = SerialPOD< double >::serialize( data, _tau_star );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = sfh_empirical::deserialize( data );
+      data = SerialPOD< double >::deserialize( data, _Psi_norm );
+      data = SerialPOD< double >::deserialize( data, _sigma_star );
+      data = SerialPOD< double >::deserialize( data, _tau_star );
+      return data;
+
+    }
+
+    // =============================================================
     
   }; // endclass sfh_lognorm
 

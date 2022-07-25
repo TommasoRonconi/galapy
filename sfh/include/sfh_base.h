@@ -16,15 +16,16 @@
 #include <cmath>
 
 // internal includes
-#include <utilities.h> 
+#include <utilities.h>
+#include <serialize.h>
 #include <imf.h>
 
 namespace sed {
 
   // =============================================================================
-  // Master of Puppets class
+  // SFH base class
 
-  class sfh_base {
+  class sfh_base : public Serializable {
 
   private :
 
@@ -48,6 +49,7 @@ namespace sed {
 
     virtual void set_params ( const double * const param ) noexcept = 0;
     void set_tau_quench ( const double tau_q ) { _tau_quench = tau_q; };
+    double get_tau_quench () { return _tau_quench; };
     
     std::vector< double > get_params () { return _paramsrc; }
     
@@ -81,6 +83,35 @@ namespace sed {
 		     double * const * const out_Zgrid,
 		     std::size_t * const * const out_Zidx,
 		     std::size_t * const out_last_idx );
+
+    // =============================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialVecPOD< double >::serialize_size( _paramsrc ) +
+	SerialPOD< double >::serialize_size( _tau_quench );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = SerialVecPOD< double >::serialize( data, _paramsrc );
+      data = SerialPOD< double >::serialize( data, _tau_quench );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = SerialVecPOD< double >::deserialize( data, _paramsrc );
+      data = SerialPOD< double >::deserialize( data, _tau_quench );
+      return data;
+
+    }
+
+    // =============================================================
 
   }; // endclass sfh_base
   

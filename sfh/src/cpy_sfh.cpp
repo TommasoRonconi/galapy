@@ -3,11 +3,14 @@
 #include <Python.h>
 // Internal headers
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 #include <sfh.h>
 // STL headers
 #include <vector>
 #include <cstring>
 #include <iostream>
+
+// ==========================================================================================
 
 PyObject * _Create_SFHmodelDict () {
 
@@ -21,6 +24,51 @@ PyObject * _Create_SFHmodelDict () {
   
 }
 
+// ==========================================================================================
+
+sed::sfh_base * set_sfh_model ( const int modelID ) {
+
+  sed::sfh_base * ptrObj = NULL;
+  
+  switch ( modelID ) {
+    
+  case 1 :
+    ptrObj = new sed::sfh_insitu{};
+    break;
+
+  case 2 :
+    ptrObj = new sed::sfh_constant{};
+    break;
+
+  case 3 :
+    ptrObj = new sed::sfh_delayedexp{};
+    break;
+
+  case 4 :
+    ptrObj = new sed::sfh_lognorm{};
+    break;
+
+    // case 5 :
+    //   self->ptrObj = new sed::sfh_burst{};
+    //   break;
+
+  default :
+    PyErr_SetString( PyExc_TypeError,
+		     "SFH model not valid. "
+		     "Valid models are: "
+		     "'insitu', 'constant', "
+		     "'delayedexp', 'lognormal', "
+		     "'burst'" );
+    return NULL;
+
+  } // endswitch ( modelID )
+  
+  return ptrObj;
+  
+}
+
+// ==========================================================================================
+
 extern "C" {
 
   // ========================================================================================
@@ -30,6 +78,7 @@ extern "C" {
   typedef struct {
     PyObject_HEAD
     sed::sfh_base * ptrObj;
+    int model = 1;
   } CPySFH;
 
   // ========================================================================================
@@ -70,29 +119,10 @@ extern "C" {
       return -1;
     }
 
-    switch ( (int) PyLong_AsLong( PyDict_GetItemString( sfh_model, model ) ) ) {
-
-    case 1 :
-      self->ptrObj = new sed::sfh_insitu{ tau_quench };
-      break;
-
-    case 2 :
-      self->ptrObj = new sed::sfh_constant{ tau_quench };
-      break;
-
-    case 3 :
-      self->ptrObj = new sed::sfh_delayedexp{ tau_quench };
-      break;
-
-    case 4 :
-      self->ptrObj = new sed::sfh_lognorm{ tau_quench };
-      break;
-
-    // case 5 :
-    //   self->ptrObj = new sed::sfh_burst{};
-    //   break;
-
-    default :
+    /* Get the model ID and set the ptr object accordingly */
+    self->model = (int) PyLong_AsLong( PyDict_GetItemString( sfh_model, model ) );
+    self->ptrObj = set_sfh_model( self->model );
+    if ( !self->ptrObj ) { 
       PyErr_SetString( PyExc_TypeError,
     		       "SFH model not valid. "
     		       "Valid models are: "
@@ -100,8 +130,8 @@ extern "C" {
     		       "'delayedexp', 'lognormal', "
     		       "'burst'" );
       return -1;
-
-    } // endswitch ( model )
+    }
+    self->ptrObj->set_tau_quench( tau_quench );
 
     /* Clear heap */
     delete [] kwlist;
@@ -133,13 +163,126 @@ extern "C" {
     double * psi = new double [size];
     self->ptrObj->model( reinterpret_cast< double* >( PyArray_DATA( NPyBuf ) ), psi, size );
 
-    // return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( psi ) );
-
     PyObject * ret = PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE,
 						reinterpret_cast< void * >( psi ) );
     PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
     return ret;
 
+  }
+
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPySFH___getstate__ ( CPySFH * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPySFH >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPySFH object" );
+      return NULL;
+    }
+    if ( PyDict_SetItemString
+	 ( ret, "model", PyLong_FromLong( ( long ) self->model ) ) < 0 )
+      return NULL;
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-pickle the object */
+  static PyObject * CPySFH___setstate__( CPySFH * self, PyObject * state ) {
+    
+    /* ---------------------------------- */
+    /* Here we make various sanity checks */
+    /* ---------------------------------- */
+
+    /* Error check. */
+    if ( !PyDict_CheckExact( state ) ) {
+      PyErr_SetString( PyExc_ValueError, "Pickled object is not a dict." );
+      return NULL;
+    }
+    
+    /* Version check. */
+    /* Borrowed reference but no need to increment as we create a C long
+     * from it. */
+    PyObject * temp = PyDict_GetItemString( state, PICKLE_VERSION_KEY );
+    if ( temp == NULL ) {
+      /* PyDict_GetItemString does not set any error state so we have to. */
+      PyErr_Format( PyExc_KeyError, "No \"%s\" in pickled dict.",
+		    PICKLE_VERSION_KEY );
+      return NULL;
+    }
+    int pickle_version = ( int ) PyLong_AsLong( temp );
+    if ( pickle_version != PICKLE_VERSION ) {
+      PyErr_Format( PyExc_ValueError,
+		    "Pickle version mismatch. Got version %d but expected version %d.",
+		    pickle_version, PICKLE_VERSION );
+      return NULL;
+    }
+
+    /* ---------------------------------- */
+    /* Here set the custom object members */
+    /* ---------------------------------- */
+
+    // First get the bytes lenght
+    /* Borrowed reference but no need to incref as we create a C long from it. */
+    PyObject * bLen = PyDict_GetItemString( state, "bytesLen" );
+    if ( bLen == NULL ) {
+      /* PyDict_GetItemString does not set any error state so we have to. */
+      PyErr_Format( PyExc_KeyError, "No \"%s\" in pickled dict.",
+		    "bytesLen" );
+      return NULL;
+    }
+    long len = PyLong_AsLong( bLen );
+    
+    // Read the bytes and check they are not NULL
+    PyObject * bytes = PyDict_GetItemString( state, "ptrBytes" );
+    if ( bytes == NULL ) {
+      /* PyDict_GetItemString does not set any error state so we have to. */
+      PyErr_SetString(PyExc_KeyError, "No \"ptrBytes\" in pickled dict.");
+      return NULL;
+    }
+    
+    // Read the model ID:
+    /* Borrowed reference but no need to incref as we create a C long from it. */
+    PyObject *modelID = PyDict_GetItemString( state, "model" );
+    if ( modelID == NULL ) {
+      /* PyDict_GetItemString does not set any error state so we have to. */
+      PyErr_SetString( PyExc_KeyError, "No \"modelID\" in pickled dict." );
+      return NULL;
+    }
+    self->model = ( int ) PyLong_AsLong( modelID );
+
+    // Allocate memory for the SFH object
+    self->ptrObj = set_sfh_model( self->model );
+    if ( !self->ptrObj ) { 
+      PyErr_SetString( PyExc_TypeError,
+    		       "SFH model not valid. "
+    		       "Valid models are: "
+    		       "'insitu', 'constant', "
+    		       "'delayedexp', 'lognormal', "
+    		       "'burst'" );
+      return NULL;
+    }
+
+    // Finally deserialized the un-pickled data
+    char * data = new char [ len ];
+    Py_ssize_t check;
+    if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
+    				  &data, &check ) == -1 ||
+    	 ( long ) check != len ) return NULL;
+    self->ptrObj->deserialize( data );
+  
+    // still not sure whether the bytes objects takes the ownership of data
+    // but if we delete it pickling and unpickling returns a memory error
+    // (nonetheless the python doc says that PyBytes_FromString*
+    //  makes a copy of the string, if no-memory leaks, fine with the comment)
+    // delete [] data;
+
+    Py_RETURN_NONE;
+    
   }
 
   // ========================================================================================
@@ -398,53 +541,6 @@ extern "C" {
 
   // ========================================================================================
   
-  // static const char DocString_time_grid[] =
-  //   "Function computing ...\n"
-  //   "\nParameters"
-  //   "\n----------"
-  //   "\ntau : float\n"
-  //   "\tgalactic age\n"
-  //   "\nnpoints : int\n"
-  //   "\nReturns"
-  //   "\n-------"
-  //   "\n : \n"
-  //   "\t\n"; 
-  // static PyObject * CPySFH_time_grid ( CPySFH * self, PyObject * args, PyObject * kwds ) {
-
-  //   double age;
-  //   PyArrayObject * tgrid_NPyBuf = NULL, * Zgrid_NPyBuf = NULL;
-  //   PyArrayObject * NPyPsiGrid = NULL, * NPyZGrid = NULL, * NPyZidxGrid = NULL;
-  //   std::vector< double > tgrid_CxxVec, Zgrid_CxxVec;
-    
-  //   if ( !PyArg_ParseTuple( args, "dO!O!",
-  // 			    &age,
-  // 			    &PyArray_Type, &tgrid_NPyBuf,
-  // 			    &PyArray_Type, &Zgrid_NPyBuf ) ) return NULL;
-
-  //   /* Convert NumPy-array to C-array */
-  //   if ( NPyArrayToCxxVector1D< double >( tgrid_NPyBuf, tgrid_CxxVec ) == -1 ) return NULL;
-  //   if ( NPyArrayToCxxVector1D< double >( Zgrid_NPyBuf, Zgrid_CxxVec ) == -1 ) return NULL;
-
-  //   /* Call member functions and convert to NumPy-arrays */
-  //   self->ptrObj->time_grid( age, tgrid_CxxVec, Zgrid_CxxVec );
-  //   NPyPsiGrid  =
-  //     ( PyArrayObject * )
-  //     CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_psi_grid() );
-  //   NPyZGrid    =
-  //     ( PyArrayObject * )
-  //     CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_Z_grid() );
-  //   NPyZidxGrid =
-  //     ( PyArrayObject * )
-  //     CxxVectorToNPyArray1D< std::size_t, NPY_UINT64 >( self->ptrObj->get_Zidx_grid() );
-    
-  //   // return tuple
-  //   return PyTuple_Pack( 4, NPyPsiGrid, NPyZGrid, NPyZidxGrid,
-  // 			 PyLong_FromSize_t( self->ptrObj->get_last_grid_idx() ) );
-    
-  // }
-
-  // ========================================================================================
-  
   static const char DocString_time_grid[] =
     "Function computing ...\n"
     "\nParameters"
@@ -563,11 +659,19 @@ extern "C" {
        (PyCFunction) CPySFH_time_grid,
        METH_VARARGS,
        DocString_time_grid },
+     { "__getstate__",
+       (PyCFunction) CPySFH___getstate__,
+       METH_NOARGS,
+       "Pickle the Custom object" },
+     { "__setstate__",
+       (PyCFunction) CPySFH___setstate__,
+       METH_O,
+       "Un-pickle the Custom object" },
      {NULL, NULL, 0, NULL}
     };
 
   static PyTypeObject CPySFH_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "SFH_core.CSFH"   /* tp_name */
+				   "galapy.SFH_core.CSFH"   /* tp_name */
   };
   
   // ========================================================================================
@@ -576,11 +680,11 @@ extern "C" {
 
   static struct PyModuleDef sfh_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "SFH_core",
+					  "galapy.SFH_core",
 					  "Python wrap of c++ SFH component implementation.\n"
 					  "Build an object of type sfh as:\n"
 					  "\t>>> import galapy.SFH_core as csfh\n"
-					  "\t>>> sfh = SFH_core.CSFH()",
+					  "\t>>> sfh = galapy.SFH_core.CSFH()",
 					  -1,
 					  NULL, NULL, NULL, NULL, NULL				  
   }; /* endPyModuleDef sfh_module */

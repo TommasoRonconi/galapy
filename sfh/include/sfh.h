@@ -12,7 +12,6 @@
 #ifndef __SFH_H__
 #define __SFH_H__
 
-// #include <sfh_def.h>
 #include <sfh_base.h>
 #include <sfh_insitu.h>
 #include <sfh_empirical.h>

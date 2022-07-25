@@ -3,6 +3,7 @@
 #include <Python.h>
 // Internal headers
 #include <cpy_utilities.h>
+#include <cpy_serialize.h>
 // STL headers
 #include <vector>
 #include <string>
@@ -165,6 +166,36 @@ extern "C" {
     
   }
 
+  // ========================================================================================
+
+  /* Pickle the object */
+  static PyObject * CPyCSP___getstate__ ( CPyCSP * self, PyObject * Py_UNUSED(ignored) ) {
+
+    PyObject * ret = CPy___getstate__< CPyCSP >( self, NULL );
+    if ( !ret ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to get state from CPyCSP object" );
+      return NULL;
+    }
+
+    return ret;
+    
+  }
+  
+  // ========================================================================================
+
+  /* Un-Pickle the object */
+  static PyObject * CPyCSP___setstate__ ( CPyCSP * self, PyObject * state ) {
+
+    if ( !CPy___setstate__< CPyCSP, sed::csp >( self, state ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Unable to set state from CPyCSP object" );
+      return NULL;
+    }
+    Py_RETURN_NONE;
+    
+  }
+  
   // ========================================================================================
   
   static const char DocString_set_params[] =
@@ -333,15 +364,23 @@ extern "C" {
 					   (PyCFunction) CPyCSP_emission,
 					   METH_VARARGS | METH_KEYWORDS,
 					   DocString_emission },
-					{ "RCCSN",
-					  (PyCFunction) CPyCSP_RCCSN,
-					  METH_NOARGS,
-					  DocString_RCCSN },
+					 { "RCCSN",
+					   (PyCFunction) CPyCSP_RCCSN,
+					   METH_NOARGS,
+					   DocString_RCCSN },
+					 { "__getstate__",
+					   (PyCFunction) CPyCSP___getstate__,
+					   METH_NOARGS,
+					   "Pickle the Custom object" },
+					 { "__setstate__",
+					   (PyCFunction) CPyCSP___setstate__,
+					   METH_O,
+					   "Un-pickle the Custom object" },
 					 {NULL, NULL, 0, NULL}
   };
 
   static PyTypeObject CPyCSP_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-				   "CSP_core.CCSP"   /* tp_name */
+				   "galapy.CSP_core.CCSP"   /* tp_name */
   };
   
   // ========================================================================================
@@ -350,7 +389,7 @@ extern "C" {
 
   static struct PyModuleDef csp_module = {
 					  PyModuleDef_HEAD_INIT,
-					  "CSP_core",
+					  "galapy.CSP_core",
 					  "Python wrap of c++ CSP component implementation.\n"
 					  "Build an object of type csp as:\n"
 					  "\t>>> import galapy.CSP_core as ccsp\n"

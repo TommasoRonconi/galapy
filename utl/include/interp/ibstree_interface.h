@@ -8,7 +8,7 @@
 #include "base_interface.h"
 #include "interval_tree.h"
 
-struct IntAcc {
+struct IntAcc : Serializable{
 
   IntAcc () = default;
   virtual ~IntAcc () = default;
@@ -23,6 +23,8 @@ struct LinIntAcc : public IntAcc {
   double m;
   double q;
   double integral;
+
+  LinIntAcc () = default;
 
   LinIntAcc ( const double x1, const double x2,
 	      const double y1, const double y2 ) {
@@ -47,6 +49,38 @@ struct LinIntAcc : public IntAcc {
       0.5 * m * aa * aa - q * aa;
 
   } 
+
+  // =============================================================================
+  // Serialize Object:
+
+  virtual std::size_t serialize_size () const {
+
+    return
+      SerialPOD< double >::serialize_size( m ) +
+      SerialPOD< double >::serialize_size( q ) +
+      SerialPOD< double >::serialize_size( integral );
+
+  }
+
+  virtual char * serialize ( char * data ) const {
+
+    data = SerialPOD< double >::serialize( data, m );
+    data = SerialPOD< double >::serialize( data, q );
+    data = SerialPOD< double >::serialize( data, integral );
+    return data;
+
+  }
+
+  virtual const char * deserialize ( const char * data ) {
+
+    data = SerialPOD< double >::deserialize( data, m );
+    data = SerialPOD< double >::deserialize( data, q );
+    data = SerialPOD< double >::deserialize( data, integral );
+    return data;
+
+  }
+
+  // =============================================================================
   
 }; // endstruct LinIntAcc
 
@@ -109,7 +143,7 @@ namespace utl {
     }
 
     /// destructor
-    ~lin_interp () = default;
+    virtual ~lin_interp () = default;
 
     /// move assignment
     lin_interp & operator= ( lin_interp && ii ) noexcept = default;
@@ -152,6 +186,9 @@ namespace utl {
       return integral;
 
     }
+
+    // =============================================================================
+    // Overload arithmetic operators
 
     /// overload of operator += for same type add
     virtual lin_interp & operator+= ( const lin_interp & rhs ) {
@@ -250,6 +287,51 @@ namespace utl {
       return rhs;
             
     }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      if ( _T.planted() ) 
+	return
+	  base_interface::serialize_size() +
+	  ( _thinness - 1 ) * ( _T.ctop()->key().serialize_size() +
+				_T.ctop()->value().serialize_size() );
+      else
+	return base_interface::serialize_size();
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+
+      data = base_interface::serialize( data );
+      std::vector< const node< double, LinIntAcc > * > store;
+      store.reserve( _thinness - 1 );
+      _T.extract( store );
+      for ( auto && _p : store ) {
+	data = _p->key().serialize( data );
+	data = _p->value().serialize( data );
+      }
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+
+      data = base_interface::deserialize( data );
+      interval< double > IT {};
+      LinIntAcc LIA {};
+      for ( std::size_t ii = 0; ii < _thinness - 1; ++ii ) {
+	data = IT.deserialize( data );
+	data = LIA.deserialize( data );
+	_T.insert( IT, LIA );
+      }
+      return data;
+
+    }
+
+    // =============================================================================
 
   }; // endclass lin_interp
 

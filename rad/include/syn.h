@@ -16,10 +16,11 @@
 
 // internal includes
 #include <utilities.h>
+#include <serialize.h>
 
 namespace sed {
 
-  class syn {
+  class syn : Serializable {
 
   private :
 
@@ -55,7 +56,7 @@ namespace sed {
 
     syn () = default;
 
-    ~syn () = default;
+    virtual ~syn () = default;
 
     syn ( const std::vector< double > & lambda ) noexcept {
 
@@ -108,6 +109,47 @@ namespace sed {
 	( 1. - std::exp( -tau ) ) / tau;
 
     }
+
+    // =============================================================================
+    // Serialize Object:
+
+    virtual std::size_t serialize_size () const {
+
+      return
+	SerialPOD< double >::serialize_size( _alpha_syn ) +
+	SerialPOD< double >::serialize_size( _nu_self ) +
+	SerialVecPOD< double >::serialize_size( _paramsrc ) +
+	SerialVecPOD< double >::serialize_size( _1_of_nu ) +
+	SerialVecPOD< double >::serialize_size( _f_emission ) +
+	SerialVecPOD< double >::serialize_size( _f_optdepth );
+
+    }
+
+    virtual char * serialize ( char * data ) const {
+      
+      data = SerialPOD< double >::serialize( data, _alpha_syn );
+      data = SerialPOD< double >::serialize( data, _nu_self );
+      data = SerialVecPOD< double >::serialize( data, _paramsrc );
+      data = SerialVecPOD< double >::serialize( data, _1_of_nu );
+      data = SerialVecPOD< double >::serialize( data, _f_emission );
+      data = SerialVecPOD< double >::serialize( data, _f_optdepth );
+      return data;
+
+    }
+
+    virtual const char * deserialize ( const char * data ) {
+      
+      data = SerialPOD< double >::deserialize( data, _alpha_syn );
+      data = SerialPOD< double >::deserialize( data, _nu_self );
+      data = SerialVecPOD< double >::deserialize( data, _paramsrc );
+      data = SerialVecPOD< double >::deserialize( data, _1_of_nu );
+      data = SerialVecPOD< double >::deserialize( data, _f_emission );
+      data = SerialVecPOD< double >::deserialize( data, _f_optdepth );
+      return data;
+      
+    }
+
+    // =============================================================================
     
   }; // endclass syn
 
