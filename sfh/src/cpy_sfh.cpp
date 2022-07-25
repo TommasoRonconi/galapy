@@ -124,7 +124,21 @@ extern "C" {
 
   static PyObject * CPySFH_call ( CPySFH * self, PyObject * args ) {
 
-    return Py_call_fromScalarOrArray< CPySFH >( self, args );
+    PyArrayObject * NPyBuf = NULL;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "O!", &PyArray_Type, &NPyBuf ) ) return NULL;
+    
+    npy_intp size = PyArray_DIM( NPyBuf, 0 );
+    double * psi = new double [size];
+    self->ptrObj->model( reinterpret_cast< double* >( PyArray_DATA( NPyBuf ) ), psi, size );
+
+    // return PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE, reinterpret_cast< void * >( psi ) );
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, &size, NPY_DOUBLE,
+						reinterpret_cast< void * >( psi ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
 
   }
 
@@ -384,6 +398,53 @@ extern "C" {
 
   // ========================================================================================
   
+  // static const char DocString_time_grid[] =
+  //   "Function computing ...\n"
+  //   "\nParameters"
+  //   "\n----------"
+  //   "\ntau : float\n"
+  //   "\tgalactic age\n"
+  //   "\nnpoints : int\n"
+  //   "\nReturns"
+  //   "\n-------"
+  //   "\n : \n"
+  //   "\t\n"; 
+  // static PyObject * CPySFH_time_grid ( CPySFH * self, PyObject * args, PyObject * kwds ) {
+
+  //   double age;
+  //   PyArrayObject * tgrid_NPyBuf = NULL, * Zgrid_NPyBuf = NULL;
+  //   PyArrayObject * NPyPsiGrid = NULL, * NPyZGrid = NULL, * NPyZidxGrid = NULL;
+  //   std::vector< double > tgrid_CxxVec, Zgrid_CxxVec;
+    
+  //   if ( !PyArg_ParseTuple( args, "dO!O!",
+  // 			    &age,
+  // 			    &PyArray_Type, &tgrid_NPyBuf,
+  // 			    &PyArray_Type, &Zgrid_NPyBuf ) ) return NULL;
+
+  //   /* Convert NumPy-array to C-array */
+  //   if ( NPyArrayToCxxVector1D< double >( tgrid_NPyBuf, tgrid_CxxVec ) == -1 ) return NULL;
+  //   if ( NPyArrayToCxxVector1D< double >( Zgrid_NPyBuf, Zgrid_CxxVec ) == -1 ) return NULL;
+
+  //   /* Call member functions and convert to NumPy-arrays */
+  //   self->ptrObj->time_grid( age, tgrid_CxxVec, Zgrid_CxxVec );
+  //   NPyPsiGrid  =
+  //     ( PyArrayObject * )
+  //     CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_psi_grid() );
+  //   NPyZGrid    =
+  //     ( PyArrayObject * )
+  //     CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_Z_grid() );
+  //   NPyZidxGrid =
+  //     ( PyArrayObject * )
+  //     CxxVectorToNPyArray1D< std::size_t, NPY_UINT64 >( self->ptrObj->get_Zidx_grid() );
+    
+  //   // return tuple
+  //   return PyTuple_Pack( 4, NPyPsiGrid, NPyZGrid, NPyZidxGrid,
+  // 			 PyLong_FromSize_t( self->ptrObj->get_last_grid_idx() ) );
+    
+  // }
+
+  // ========================================================================================
+  
   static const char DocString_time_grid[] =
     "Function computing ...\n"
     "\nParameters"
@@ -399,33 +460,70 @@ extern "C" {
 
     double age;
     PyArrayObject * tgrid_NPyBuf = NULL, * Zgrid_NPyBuf = NULL;
-    PyArrayObject * NPyPsiGrid = NULL, * NPyZGrid = NULL, * NPyZidxGrid = NULL;
-    std::vector< double > tgrid_CxxVec, Zgrid_CxxVec;
+    PyObject * NPyPsiGrid = NULL, * NPyZGrid = NULL, * NPyZidxGrid = NULL;
     
     if ( !PyArg_ParseTuple( args, "dO!O!",
 			    &age,
 			    &PyArray_Type, &tgrid_NPyBuf,
 			    &PyArray_Type, &Zgrid_NPyBuf ) ) return NULL;
 
-    /* Convert NumPy-array to C-array */
-    if ( NPyArrayToCxxVector1D< double >( tgrid_NPyBuf, tgrid_CxxVec ) == -1 ) return NULL;
-    if ( NPyArrayToCxxVector1D< double >( Zgrid_NPyBuf, Zgrid_CxxVec ) == -1 ) return NULL;
+    /* Convert Numpy-array to C-array */
+    double * tgrid, * Zgrid;
+    std::size_t tgridsize, Zgridsize;
+    if ( NPyArrayToCArray1D< double >( (PyArrayObject*)tgrid_NPyBuf,
+				       &tgrid, &tgridsize ) == -1 ) return NULL;
+    if ( NPyArrayToCArray1D< double >( (PyArrayObject*)Zgrid_NPyBuf,
+				       &Zgrid, &Zgridsize ) == -1 ) return NULL;
+
+    /* Allocate memory */
+    double * out_psigrid   = new double [ tgridsize ];
+    double * out_Zgrid     = new double [ tgridsize ];
+    std::size_t * out_Zidx = new std::size_t [ tgridsize ];
+    std::size_t last_idx;
 
     /* Call member functions and convert to NumPy-arrays */
-    self->ptrObj->time_grid( age, tgrid_CxxVec, Zgrid_CxxVec );
-    NPyPsiGrid  =
-      ( PyArrayObject * )
-      CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_psi_grid() );
-    NPyZGrid    =
-      ( PyArrayObject * )
-      CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_Z_grid() );
-    NPyZidxGrid =
-      ( PyArrayObject * )
-      CxxVectorToNPyArray1D< std::size_t, NPY_UINT64 >( self->ptrObj->get_Zidx_grid() );
+    self->ptrObj->time_grid( age,
+			     tgrid, tgridsize,
+			     Zgrid, Zgridsize,
+			     &out_psigrid,
+			     &out_Zgrid,
+			     &out_Zidx,
+			     &last_idx );
+    // 1) psi-grid
+    NPyPsiGrid  = PyArray_SimpleNewFromData( 1, (npy_intp*)&tgridsize, NPY_DOUBLE,
+    					     reinterpret_cast< void * >( out_psigrid ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) NPyPsiGrid, NPY_ARRAY_OWNDATA);
+    // 2) Z-grid
+    NPyZGrid    = PyArray_SimpleNewFromData( 1, (npy_intp*)&tgridsize, NPY_DOUBLE,
+    					     reinterpret_cast< void * >( out_Zgrid ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) NPyZGrid, NPY_ARRAY_OWNDATA);
+    // 3) Z-indices
+    NPyZidxGrid = PyArray_SimpleNewFromData( 1, (npy_intp*)&tgridsize, NPY_UINT64,
+    					     reinterpret_cast< void * >( out_Zidx ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) NPyZidxGrid, NPY_ARRAY_OWNDATA);
+    // 4) Last valid index
+    PyObject * BufLast = PyLong_FromSize_t( last_idx );
+
+    /* Clear heap */
+    delete [] tgrid;
+    delete [] Zgrid;
     
-    // return tuple
-    return PyTuple_Pack( 4, NPyPsiGrid, NPyZGrid, NPyZidxGrid,
-  			 PyLong_FromSize_t( self->ptrObj->get_last_grid_idx() ) );
+    // Build return tuple
+    PyObject * ret = PyTuple_Pack( 4,
+				   NPyPsiGrid,
+				   NPyZGrid,
+				   NPyZidxGrid,
+				   BufLast );
+    // 'PyTuple_Pack' increases the reference-count to the
+    // packed objects, therefore need to decrease the count
+    // after having called:
+    Py_DECREF( NPyPsiGrid );
+    Py_DECREF( NPyZGrid );
+    Py_DECREF( NPyZidxGrid );
+    Py_DECREF( BufLast );
+
+    // return the tuple
+    return ret;
     
   }
 

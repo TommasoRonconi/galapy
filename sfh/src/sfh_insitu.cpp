@@ -7,7 +7,7 @@ double sed::sfh_insitu::_sfr ( const double tau ) const noexcept {
   double xx = tau * _paramsrc[ 3 ];
   return _paramsrc[ 0 ] *						\
     ( std::exp( - sed::sfh_insitu::_i_s * xx ) -			\
-      std::exp( - xx * ( _paramsrc[ 1 ] - sed::R_chabrier( tau ) ) ) );
+      std::exp( - xx * ( _paramsrc[ 1 ] - sed::R_chabrier_inst ) ) );
   
 }
 
@@ -16,7 +16,7 @@ double sed::sfh_insitu::_sfr ( const double tau ) const noexcept {
 double sed::sfh_insitu::_dust_to_gas ( const double tau ) const noexcept {
 
   double xx = tau * _i_s * _paramsrc[ 3 ];
-  double fact = _s * ( _paramsrc[ 1 ] - sed::R_chabrier( tau ) ) - 1;
+  double fact = _s * ( _paramsrc[ 1 ] - sed::R_chabrier_inst ) - 1;
   double eps = _kSN + ( _eps_acc * _s * _yD ) / ( fact + _s * _kSN );
   double factx = fact * xx;
   double sex = _s * eps * xx;
@@ -49,7 +49,7 @@ double sed::sfh_insitu::get_Zgas ( const double tau ) const noexcept {
 
   if ( tau >= 1.e+5 ) {
     double xx = tau * _i_s * _paramsrc[ 3 ];
-    double fact = _s * ( _paramsrc[ 1 ] - sed::R_chabrier( tau ) ) - 1;
+    double fact = _s * ( _paramsrc[ 1 ] - sed::R_chabrier_inst ) - 1;
     return _s * _yZ / fact * ( 1 - fact * xx / ( std::exp( fact * xx ) - 1 ) );
   }
   else
@@ -63,7 +63,7 @@ double sed::sfh_insitu::get_Zstar ( const double tau ) const noexcept {
 
   if ( tau >= 1.e+5 ) {
     double xx = tau * _i_s * _paramsrc[ 3 ];
-    double gamm =_paramsrc[ 1 ] - sed::R_chabrier( tau );
+    double gamm =_paramsrc[ 1 ] - sed::R_chabrier_inst;
     double fact1 = _s * gamm;
     double fact2 = fact1 - 1;
     double exp1 = std::exp( - xx ), exp2 = std::exp( - fact1 * xx );

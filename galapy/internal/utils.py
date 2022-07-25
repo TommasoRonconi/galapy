@@ -1,6 +1,131 @@
 # External imports
 # from abc import ABC, abstractmethod
-# import collections.abc
+from collections.abc import MutableMapping as MM
+import numpy
+
+###################################################################################
+
+def trap_int ( xx, yy ) :
+    """ Trapezoid integration
+
+    Parameters
+    ----------
+    xx : array-like
+       x-domain grid
+    yy : array-like
+       y-domain grid
+    
+    Returns
+    -------
+    : float 
+       the integral along the whole x-domain
+    """
+    xx = numpy.asarray(xx)
+    yy = numpy.asarray(yy)
+    return numpy.sum( 0.5 * ( yy[:-1] + yy[1:] ) * ( xx[1:] - xx[:-1] ) )
+
+###################################################################################
+
+class FlagVal () :
+    def __init__ ( self, value, flag ) :
+        self.value = value
+        self.flag  = flag
+    def __repr__ ( self ) :
+        return f'{type(self).__name__}({self.value},"{self.flag}")'
+    def __str__ ( self ) :
+        return f'{self.flag}:{self.value}'
+
+###################################################################################
+
+def find_nearest ( array, value ) :
+    """ Function finding the indexes of array closer to the
+    values in value.
+    
+    Parameters
+    ----------
+    array : array-like 
+    
+    value : array-like or scalar
+    
+    Return
+    ------
+    : numpy-array
+      list of indexes of elements in array closer to 
+      values in value.
+    
+    Warning
+    -------
+    Uniqueness of elements in the returned array is not guaranteed.
+    """
+    import numpy
+    
+    array = numpy.asarray( array )
+    value = numpy.asarray( value )
+    scalar_input = False
+    if value.ndim == 0 :
+        value = value[None] # makes 'value' 1D
+        scalar_input = True
+        
+    idx = [ ( numpy.abs( array - _v ) ).argmin() for _v in value ] 
+
+    if scalar_input :
+        return numpy.squeeze( idx )
+    return numpy.asarray( idx )
+
+###################################################################################
+
+def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
+    return El**(-gamma+3) * numpy.exp(-El/Ecut) 
+
+###################################################################################
+
+def poly_N ( xx, coeff ) :
+    """ Method for computing N-order polynomia.
+    The order of the polynomium is set by the lenght of the `coeff` list.
+    
+    The method computes
+
+    .. math::
+    
+       y = \sum_0^N c_i * x^{N-i}
+    
+    Parameters
+    ----------
+    xx : scalar or array-like
+      the x-values 
+    coeff : list
+      the values of the coefficients of the polynomium. The list must be
+      ordered, with the first element corresponding to the coefficient multiplying
+      the highest power of the x-variable and the last coefficient being the 
+      scalar coefficient
+    
+    Returns
+    -------
+    : scalar or array-like
+      the y-values
+    """
+    yy = 0.
+    for _c in coeff :
+        yy = yy * xx + _c
+    return yy
+
+###################################################################################
+
+# def recurrent_return ( dd, keylist ) :
+#     if len( keylist ) > 1 and isinstance( dd, MM ) :
+#         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
+#     return dd[ keylist.pop( 0 ) ]
+
+# def recurrent_update ( dd, **kwargs ) :
+#     for k, v in kwargs.items() :
+#         if isinstance(v,MM) :
+#             rec_update( dd[k], **v )
+#         elif k in dd.keys() :
+#             dd[k] = v
+#         else :
+#             print( f'Key {k} not valid' )
+#             continue
+#     return;
 
 ###################################################################################
 
@@ -157,43 +282,6 @@
 
 ###################################################################################
 
-# def find_nearest ( array, value ) :
-#     """ Function finding the indexes of array closer to the
-#     values in value.
-    
-#     Parameters
-#     ----------
-#     array : array-like 
-    
-#     value : array-like or scalar
-    
-#     Return
-#     ------
-#     : numpy-array
-#       list of indexes of elements in array closer to 
-#       values in value.
-    
-#     Warning
-#     -------
-#     Uniqueness of elements in the returned array is not guaranteed.
-#     """
-#     import numpy
-    
-#     array = numpy.asarray( array )
-#     value = numpy.asarray( value )
-#     scalar_input = False
-#     if value.ndim == 0 :
-#         value = value[None] # makes 'value' 1D
-#         scalar_input = True
-        
-#     idx = [ ( numpy.abs( array - _v ) ).argmin() for _v in value ] 
-
-#     if scalar_input :
-#         return numpy.squeeze( idx )
-#     return numpy.asarray( idx )
-
-###################################################################################
-
 # def unwrap_keys ( d ) :
 #     """ Generator yielding the keys of a nested dictionary
 
@@ -284,3 +372,4 @@
 #             yield [ k ], v
 
 ###################################################################################
+

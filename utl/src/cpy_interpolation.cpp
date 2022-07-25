@@ -2,6 +2,7 @@
 #include <Python.h>
 #include <cpy_utilities.h>
 #include <interpolation.h>
+#include <iostream>
 
 template< class T >
 struct _PyInterp {
@@ -14,9 +15,10 @@ template< class T, class U >
 int _PyInterp_init ( T * self, PyObject * args, PyObject * kwds ) {
 
   // input arrays
-  PyObject *xv_buf, *fv_buf;
-  Py_buffer xv, fv;
-
+  PyArrayObject * NPyXV = NULL;
+  PyArrayObject * NPyFV = NULL;
+  std::vector< double > xv, fv;
+  
   // interpolation type
   char const * type = "linear";
     
@@ -24,44 +26,33 @@ int _PyInterp_init ( T * self, PyObject * args, PyObject * kwds ) {
   char ** kwlist = new char * [ 4 ] { (char*)"xv", (char*)"fv", (char*)"kind", NULL };
     
   // Get the passed input arrays and interpolation type
-  if ( !PyArg_ParseTupleAndKeywords( args, kwds, "OO|s", kwlist,
-				     &xv_buf, &fv_buf, &type ) ) {
+  if ( !PyArg_ParseTupleAndKeywords( args, kwds, "O!O!|s", kwlist,
+				     &PyArray_Type, &NPyXV,
+				     &PyArray_Type, &NPyFV,
+				     &type ) ) {
     return -1;
   }
-  
+
   // check for errors in passed interpolation type
-  if ( !( ( strcoll( type, "linear" )  == 0 ) ||
-	  ( strcoll( type, "cspline" ) == 0 ) ) ) {
+  // if ( !( ( strcoll( type, "linear" )  == 0 ) ||
+  // 	  ( strcoll( type, "cspline" ) == 0 ) ) ) {
+  if ( !( ( strcoll( type, "linear" )  == 0 ) ) ) {
+    // PyErr_SetString( PyExc_TypeError,
+    // 		     "Interpolation type not valid. "
+    // 		     "Valid types are: 'linear', 'cspline'" );
     PyErr_SetString( PyExc_TypeError,
 		     "Interpolation type not valid. "
-		     "Valid types are: 'linear', 'cspline'" );
-    PyBuffer_Release( &xv );
-    PyBuffer_Release( &fv );
+		     "Valid types are: 'linear'" );
     return -1;
   }
 
-  // convert input x-axis ndarray to buffer
-  if ( return_1D_array( xv_buf, &xv, "d") == -1 ) {
-    return -1;
-  }
-
-  // convert input y-axis ndarray to buffer
-  if ( return_1D_array( fv_buf, &fv, "d") == -1 ) {
-    return -1;
-  }
-
+  /* Convert NumPy-arrays to C++ vectors */
+  if ( NPyArrayToCxxVector1D< double >( NPyXV, xv ) == -1 ) return -1;
+  if ( NPyArrayToCxxVector1D< double >( NPyFV, fv ) == -1 ) return -1;
+  
   // Allocate c++ templated interpolator object
-  self->ptrObj =
-    new utl::interpolator< U >
-    { std::vector< double >( (double*)xv.buf,
-			     (double*)xv.buf + xv.shape[ 0 ] ),
-      std::vector< double >( (double*)fv.buf,
-			     (double*)fv.buf + fv.shape[ 0 ] ),
-      std::string{ type } };
+  self->ptrObj = new utl::interpolator< U >{ xv, fv, std::string{ type } };
 
-  // Indicate we're done working with the buffer
-  PyBuffer_Release( &xv );
-  PyBuffer_Release( &fv );
   return 0;
     
 }
@@ -78,30 +69,42 @@ void _PyInterp_dealloc ( T * self ) {
 template< class T >
 PyObject *  _PyInterp_call ( T * self, PyObject * args ) {
 
-  PyObject * xx_buf;
-  
-  if ( !PyArg_ParseTuple( args, "O", &xx_buf ) ) {
-    return NULL;
-  }
-  if ( PyObject_TypeCheck( xx_buf, &PyFloat_Type ) ) {
-    double xx = PyFloat_AS_DOUBLE( xx_buf );
+  PyObject * NPyBuf;
+
+  /* Parse arguments */
+  if ( !PyArg_ParseTuple( args, "O", &NPyBuf ) ) return NULL;
+
+  /* Scalar input */
+  if ( PyObject_TypeCheck( NPyBuf, &PyFloat_Type ) ) {
+    double xx = PyFloat_AS_DOUBLE( NPyBuf );
     return PyFloat_FromDouble( ( *( self->ptrObj ) )( xx ) );
   }
+  /* Array-like input */
   else {
-    Py_buffer xx;
-    if ( return_1D_array( xx_buf, &xx, "d" ) == -1 ) {
-      return NULL;
-    }
-    PyObject * pyList = PyList_New( xx.shape[ 0 ] );
-    std::vector< double > xv ( (double*)xx.buf, (double*)xx.buf + xx.shape[ 0 ] );
-    PyBuffer_Release( &xx );
-    for ( std::size_t ii = 0; ii < xv.size(); ++ii )
-      if ( PyList_SetItem( pyList, ii,
-			   PyFloat_FromDouble( ( *( self->ptrObj ) )( xv[ ii ] ) )
-			   ) != 0 ) return NULL;
-    return pyList;
-  }
+    
+    /* Convert Numpy-array to C-array */
+    double * xx;
+    std::size_t size;
+    if ( NPyArrayToCArray1D< double >( (PyArrayObject*)NPyBuf, &xx, &size ) == -1 ) return NULL;
 
+    /* Call C++ member function */
+    double * outarr = new double [ size ];
+    for ( unsigned int ii = 0; ii < size; ++ii )
+      outarr[ ii ] = ( *( self->ptrObj ) )( xx[ ii ] );
+
+    /* Clear heap */
+    delete [] xx;
+    
+    // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+    // 				      reinterpret_cast< void * >( outarr ) );
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						reinterpret_cast< void * >( outarr ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
+
+  }
+     
 }
 
 template< class T >
@@ -175,41 +178,35 @@ extern "C" {
     };
 
   static PyTypeObject PyLinInterp_t = { PyVarObject_HEAD_INIT( NULL, 0 )
-					"interpy.lin_interp"   /* tp_name */
+					"internal.interp.lin_interp"   /* tp_name */
   };
-
-  // ========================================================================================
-  // ========================================= LOG ==========================================
-  // ========================================================================================
-
-  // [ ... ]
   
   // ========================================================================================
   // ===================================== BUILD MODULE =====================================
   // ========================================================================================
 
-  static struct PyModuleDef interpy_module = {
-					      PyModuleDef_HEAD_INIT,
-					      "interpy",
-					      "",
-					      -1,
-					      NULL, NULL, NULL, NULL, NULL
-  }; /* endPyModuleDef interpy_module */
+  static struct PyModuleDef interp_module = {
+					     PyModuleDef_HEAD_INIT,
+					     "internal.interp",
+					     "",
+					     -1,
+					     NULL, NULL, NULL, NULL, NULL
+  }; /* endPyModuleDef interp_module */
 
   /* Create the module */
-  PyMODINIT_FUNC PyInit_interpy( void ) {
+  PyMODINIT_FUNC PyInit_interp( void ) {
 
-    /* --------------------- */
-    /* Create interpy module */
-    /* --------------------- */
+    /* -------------------- */
+    /* Create interp module */
+    /* -------------------- */
     PyObject * m;
-    m = PyModule_Create( &interpy_module );
+    m = PyModule_Create( &interp_module );
     if ( m == NULL )
         return NULL;
 
-    /* ---------------------------------------------- */
-    /* Adding new object lin_interp to interpy module */
-    /* ---------------------------------------------- */
+    /* --------------------------------------------- */
+    /* Adding new object lin_interp to interp module */
+    /* --------------------------------------------- */
     PyLinInterp_t.tp_new       = PyType_GenericNew;
     PyLinInterp_t.tp_basicsize = sizeof( PyLinInterp );
     PyLinInterp_t.tp_dealloc   = (destructor) PyLinInterp_dealloc;
@@ -223,10 +220,10 @@ extern "C" {
     Py_INCREF( &PyLinInterp_t );
     PyModule_AddObject( m, "lin_interp", (PyObject *)&PyLinInterp_t );
 
-    /* ---------------------------------------------- */
-    /* Adding new object log_interp to interpy module */
-    /* ---------------------------------------------- */
-    // [ ... ]
+    /* -------------------------------- */
+    /* Initialize NumPy Array interface */
+    /* -------------------------------- */
+    import_array();
 
     /* return new module */
     return m;

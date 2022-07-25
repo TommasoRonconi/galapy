@@ -9,6 +9,7 @@
 #include <csp.h>
 #include <cstring>
 #include <fstream>
+#include <algorithm>
 
 extern "C" {
 
@@ -53,6 +54,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( lambda ), sizeof( double ) * Nl );
     Pyl = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &Nl, NPY_DOUBLE,
 							reinterpret_cast< void * >( lambda ) );
+    PyArray_ENABLEFLAGS(Pyl, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & Nt, sizeof( std::size_t ) );
@@ -60,6 +62,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( tau ), sizeof( double ) * Nt );
     Pyt = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &Nt, NPY_DOUBLE,
 							reinterpret_cast< void * >( tau ) );
+    PyArray_ENABLEFLAGS(Pyt, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & NZ, sizeof( std::size_t ) );
@@ -67,6 +70,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( Z ), sizeof( double ) * NZ );
     PyZ = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &NZ, NPY_DOUBLE,
 							reinterpret_cast< void * >( Z ) );
+    PyArray_ENABLEFLAGS(PyZ, NPY_ARRAY_OWNDATA);
 
     // read the time sampling vector from file
     ifs.read( ( char * ) & NSSP, sizeof( std::size_t ) );
@@ -74,6 +78,7 @@ extern "C" {
     ifs.read( reinterpret_cast< char* >( SSP ), sizeof( double ) * NSSP );
     PySSP = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, &NSSP, NPY_DOUBLE,
 							  reinterpret_cast< void * >( SSP ) );
+    PyArray_ENABLEFLAGS(PySSP, NPY_ARRAY_OWNDATA);
     
     // Raise RuntimeError if EoF is not reached:
     if ( !ifs ) {
@@ -126,13 +131,15 @@ extern "C" {
 
     PyArrayObject * Lbuf = NULL, * Tbuf = NULL, * Zbuf = NULL, * SSPbuf = NULL;
     std::vector< double > Lvec, Tvec, Zvec, SSPvec;
+    int do_CCSN_rate;
         
     /* Get the passed Python object */
-    if ( !PyArg_ParseTuple( args, "O!O!O!O!",
+    if ( !PyArg_ParseTuple( args, "O!O!O!O!i",
 			    &PyArray_Type, &Lbuf,
 			    &PyArray_Type, &Tbuf,
 			    &PyArray_Type, &Zbuf,
-			    &PyArray_Type, &SSPbuf ) ) return -1;
+			    &PyArray_Type, &SSPbuf,
+			    &do_CCSN_rate ) ) return -1;
   
     /* Convert NumPy-array to C++ vector */
     if ( NPyArrayToCxxVector1D< double >( Lbuf, Lvec ) == -1 ) return -1;
@@ -141,7 +148,7 @@ extern "C" {
     if ( NPyArrayToCxxVector1D< double >( SSPbuf, SSPvec ) == -1 ) return -1;
 
     /* Call member constructor */
-    self->ptrObj = new sed::csp{ Lvec, Tvec, Zvec, SSPvec };
+    self->ptrObj = new sed::csp{ Lvec, Tvec, Zvec, SSPvec, do_CCSN_rate };
 
     /* Return 0 on success */
     return 0;
@@ -242,80 +249,74 @@ extern "C" {
     "L_\\lambda^\\text{SSP}\\bigl[\\tau, Z_\\ast(\\tau'-\\tau)\\bigr]\\psi(\\tau'-\\tau)\n"
     "\nParameters"
     "\n----------"
-    "\nil : array or scalar int\n"
-    "\tindex (or array of indexes) of the positions in the wavelenght-grid"
+    "\nil : array of int\n"
+    "\tarray of indexes of the positions in the wavelenght-grid"
     " for which to compute the emission.\n"
     "\nFtau : array\n"
     "\tarray containing a function of time to convolve the integrand with "
-    "(must have same dimension of the SSP's time-grid)\n"
+    "(must have same dimension of the SSP's time-grid times the lenght of the `il` array)\n"
     "\nReturns"
     "\n-------"
     "\nL_CSP : array or scalar float\n"
     "\tthe emission of the galaxy's CSP filtered by the function of time :math:`F(\\tau)`\n";
   static PyObject * CPyCSP_emission ( CPyCSP * self, PyObject * args, PyObject * kwds ) {
-
-    PyObject * il_buf;
+    
+    PyArrayObject * il_buf;
     PyArrayObject * Tfact_buf = NULL;
-    std::vector< double > Tfact( self->ptrObj->tau_size(), 1. );
+    double * Tfact_arr; 
     
     // work-around to silence compile warning (const char* -> char* forbidden in C++):
     char ** kwlist = new char * [ 3 ] { (char*)"", (char*)"Tfact", NULL };
 
     /* Parse arguments */
-    if ( !PyArg_ParseTupleAndKeywords( args, kwds, "O|O!", kwlist, &il_buf,
+    if ( !PyArg_ParseTupleAndKeywords( args, kwds, "O!|O!", kwlist,
+				       &PyArray_Type, &il_buf,
 				       &PyArray_Type, &Tfact_buf ) ) return NULL;
     
     /* Clear heap */
     delete [] kwlist;
 
-    /* If kwarg 'Tfact' is provided, copy its content into C++ vector */
-    int dim2 = 0;
+    /* Convert Numpy-array to C-array */
+    std::size_t * il_arr;
+    std::size_t il_size;
+    if ( NPyArrayToCArray1D< std::size_t >( (PyArrayObject*)il_buf, &il_arr, &il_size ) == -1 ) return NULL;
+
+    /* If kwarg 'Tfact' is provided, copy its content into C-style array, 
+       otherwise allocate C-style array filled with 1s of the correct size */
+    std::size_t tdim;
     if ( Tfact_buf ) {
-      int ndim = PyArray_NDIM( Tfact_buf );
-      switch ( ndim ) {
-      case 1 :
-	if ( NPyArrayToCxxVector1D< double >( Tfact_buf, Tfact ) == -1 ) return NULL;
-	break;
-      case 2 :
-	dim2 = 1;	
-	if ( NPyArrayToCxxVector1D< double >( ( PyArrayObject * )PyArray_Flatten( Tfact_buf,
-										  NPY_CORDER ),
-					      Tfact ) == -1 ) return NULL;
-	break;
-      default :
-	PyErr_SetString( PyExc_AttributeError,
-			 "Attribute Tfact not valid. "
-			 "Valid time-factor should are ndarrays "
-			 "with shape (Ntau,) or (Nlambda, Ntau)." );
-	return NULL;
-      } // endswitch ( ndim )
-    } // endif ( Tfact_buf )
-
-    /* If first argument is scalar return scalar, else return NumPy array */
-    if ( PyObject_TypeCheck( il_buf, &PyLong_Type ) ) 
-      return PyFloat_FromDouble( self->ptrObj->emission( PyLong_AsSize_t( il_buf ),
-							 Tfact.data() ) );
-    else {
-
-      /* Convert Numpy-array to C-array */
-      std::size_t * il_arr;
-      std::size_t il_size;
-      if ( NPyArrayToCArray1D< std::size_t >( (PyArrayObject*)il_buf, &il_arr, &il_size ) == -1 ) return NULL;
-
-      /* Call C++ member function */
-      double * outarr = new double [ il_size ];
-      for ( unsigned int ii = 0; ii < il_size; ++ii )
-	outarr[ ii ] = self->ptrObj->emission( il_arr[ ii ], Tfact.data() + ( self->ptrObj->tau_size() * ii * dim2 ) );
-
-      /* Clear heap */
-      delete [] il_arr;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
-      
+      if ( NPyArrayToCArray1D< double >( Tfact_buf, &Tfact_arr, &tdim ) == -1 ) return NULL;
     }
+    else {
+      tdim = il_size * self->ptrObj->tau_size();
+      Tfact_arr = new double [ tdim ];
+      std::fill_n( Tfact_arr, tdim, 1. );
+    }
+
+    double * outarr = new double [ il_size ];
+    for ( unsigned int ii = 0; ii < il_size; ++ii ) 
+      outarr[ ii ] = self->ptrObj->emission( il_arr[ ii ], Tfact_arr + self->ptrObj->tau_size() * ii );
+
+    /* Clear heap */
+    delete [] Tfact_arr;
+    delete [] il_arr;
+
+    PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&il_size, NPY_DOUBLE,
+						reinterpret_cast< void * >( outarr ) );
+    PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+    return ret;
     
-  }
+  } 
+  
+  // ========================================================================================
+
+  static const char DocString_RCCSN[] =
+    "Returns the extinction value in the visible band.\n";
+  static PyObject * CPyCSP_RCCSN ( CPyCSP * self ) {
+
+    return PyFloat_FromDouble( self->ptrObj->RCCSN() );
+    
+  }  
   
   // ========================================================================================
   
@@ -332,6 +333,10 @@ extern "C" {
 					   (PyCFunction) CPyCSP_emission,
 					   METH_VARARGS | METH_KEYWORDS,
 					   DocString_emission },
+					{ "RCCSN",
+					  (PyCFunction) CPyCSP_RCCSN,
+					  METH_NOARGS,
+					  DocString_RCCSN },
 					 {NULL, NULL, 0, NULL}
   };
 

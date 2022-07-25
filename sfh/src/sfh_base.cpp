@@ -13,9 +13,9 @@ double sed::sfh_base::operator() ( const double tt ) const noexcept {
 
 // =============================================================================
 
-void sed::sfh_base::_model ( const double * const tau,
-			     double * const psi,
-			     const std::size_t size ) const noexcept {
+void sed::sfh_base::model ( const double * const tau,
+			    double * const psi,
+			    const std::size_t size ) const noexcept {
   
   for ( size_t ii = 0; ii < size; ++ii )
     psi[ ii ] = ( *this )( tau[ ii ] );
@@ -55,7 +55,7 @@ void sed::sfh_base::eval ( const double * const tau,
 			   const double * const param ) noexcept {
   
   if ( param ) set_params( param );
-  _model( tau, psi, size );
+  model( tau, psi, size );
   return;
       
 }
@@ -63,24 +63,31 @@ void sed::sfh_base::eval ( const double * const tau,
 // =============================================================================
 
 void sed::sfh_base::time_grid ( const double age,
-				const std::vector< double > & tgrid,
-				const std::vector< double > & Zgrid ) {
+				const double * const tgrid,
+				const std::size_t tgrid_size,
+				const double * const Zgrid,
+				const std::size_t Zgrid_size,
+			        double * const * const out_psigrid,
+			        double * const * const out_Zgrid,
+			        std::size_t * const * const out_Zidx,
+				std::size_t * const out_last_idx ) {
 
   // 1) compute star formation history
   // 2) compute star-metal enrichment history
-  // 3) find metallicity interval for interpolation
-  _psi_grid  = std::vector< double >( tgrid.size(), 0. );
-  _Z_grid    = std::vector< double >( tgrid.size(), 0. );
-  _Zidx_grid = std::vector< std::size_t >( tgrid.size(), 0 );
-  _last_idx  = 0;
+  // 3) find metallicity interval for interpolation  
+  std::fill( *out_psigrid, *out_psigrid + tgrid_size, 0. );
+  std::fill( *out_Zgrid,   *out_Zgrid   + tgrid_size, 0. );
+  std::fill( *out_Zidx,    *out_Zidx    + tgrid_size, 0  ); 
+  *out_last_idx = 0;
 
-  double time = age - tgrid[ _last_idx ];
+  double time = age - tgrid[ *out_last_idx ];
   while ( time > 0. ) {
-    /*(1)*/ _psi_grid[ _last_idx ]  = ( *this )( time );
-    /*(2)*/ _Z_grid[ _last_idx ]    = ( *this ).get_Zstar( time );
-    /*(3)*/ _Zidx_grid[ _last_idx ] = utl::find_low( _Z_grid[ _last_idx ], Zgrid );
-    ++_last_idx; // increment index
-    time = age - tgrid[ _last_idx ]; // update time
+    /*(1)*/ (*out_psigrid)[ *out_last_idx ]  = ( *this )( time );
+    /*(2)*/ (*out_Zgrid)[ *out_last_idx ]    = ( *this ).get_Zstar( time );
+    /*(3)*/ (*out_Zidx)[ *out_last_idx ] = utl::find_low( (*out_Zgrid)[ *out_last_idx ],
+							  Zgrid, Zgrid_size );
+    ++( *out_last_idx ); // increment index
+    time = age - tgrid[ *out_last_idx ]; // update time
   }
   
   return;

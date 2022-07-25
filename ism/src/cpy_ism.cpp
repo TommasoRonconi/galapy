@@ -119,6 +119,34 @@ extern "C" {
   
   // ========================================================================================
   
+  static const char DocString_set_slopes[] =
+    "Function for setting the slopes of the ISM extinction.\n"
+    "\nParameters"
+    "\n----------"
+    "\nlower : scalar float\n"
+    "\t\n"
+    "\nupper : scalar float\n"
+    "\t\n"
+    "\nReturns"
+    "\n-------"
+    "\n: None"; 
+  static PyObject * CPyISM_set_slopes ( CPyISM * self, PyObject * args ) {
+
+    double lower, upper;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "dd", &lower, &upper ) ) return NULL;
+
+    /* Call C++ member function */
+    self->ptrObj->set_slopes( lower, upper );
+
+    // equivalent to return None
+    Py_RETURN_NONE;
+
+  }
+  
+  // ========================================================================================
+  
   static const char DocString_temperature[] =
     "Computes the temperature of the ISM assuming input total energy.\n"
     "\nParameters"
@@ -172,9 +200,11 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -211,9 +241,11 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -250,9 +282,11 @@ extern "C" {
 
       /* Clear heap */
       delete [] lambda;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
     
@@ -279,7 +313,11 @@ extern "C" {
 					{ "set_temperature",
 					  (PyCFunction) CPyISM_set_temperature,
 					  METH_VARARGS,
-					  DocString_set_temperature },
+					  DocString_set_temperature }, 
+					{ "set_slopes",
+					  (PyCFunction) CPyISM_set_slopes,
+					  METH_VARARGS,
+					  DocString_set_slopes },
 					{ "temperature",
 					  (PyCFunction) CPyISM_temperature,
 					  METH_VARARGS,
@@ -344,18 +382,11 @@ extern "C" {
 
       /* Clear heap */
       delete [] tau;
-      
-      return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      					reinterpret_cast< void * >( outarr ) );
 
-      // /* Call C++ member function */
-      // std::size_t size = PyArray_Size( buf );
-      // double * outarr = new double [ size ];
-      // for ( unsigned int ii = 0; ii < size; ++ii )
-      // 	outarr[ ii ] = self->ptrObj->eta( *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )buf, ii ) ) );
-      
-      // return PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&size, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     } 
     
@@ -372,7 +403,11 @@ extern "C" {
   					{ "set_temperature",
   					  (PyCFunction) CPyISM_set_temperature,
   					  METH_VARARGS,
-  					  DocString_set_temperature },
+  					  DocString_set_temperature }, 
+					{ "set_slopes",
+					  (PyCFunction) CPyISM_set_slopes,
+					  METH_VARARGS,
+					  DocString_set_slopes },
 					{ "temperature",
 					  (PyCFunction) CPyISM_temperature,
 					  METH_VARARGS,
@@ -442,28 +477,18 @@ extern "C" {
 			 "wavelenght-depending arrays must have same size." );
 	return NULL;
       }
-      // std::size_t ll_size = PyArray_Size( llBuf );
-      // std::size_t tt_size = PyArray_Size( etaMCBuf );
       
-      // /* Call C++ member function */
-      // double * outarr = new double [ ll_size * tt_size ];
-      // for ( unsigned int il = 0; il < ll_size; ++il )
-      // 	for ( unsigned int it = 0; it < tt_size; ++it )
-      // 	  outarr[ il * tt_size + it ] =
-      // 	    sed::total_attenuation( *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )llBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )attDDBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )attMCBuf, il ) ),
-      // 				    *( ( double * )PyArray_GETPTR1( ( PyArrayObject * )etaMCBuf, it ) ) );
-
-      // return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
-      // 					reinterpret_cast< void * >( outarr ) );
-
+      /* Convert NPy arrays into C-style arrays */
       double * llArr, * attDDArr, * attMCArr, * etaMCArr;
       std::size_t ll_size, tt_size;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)llBuf, &llArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attDDBuf, &attDDArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attMCBuf, &attMCArr, &ll_size ) == -1 ) return NULL;
-      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)etaMCBuf, &etaMCArr, &tt_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)llBuf,
+					 &llArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attDDBuf,
+					 &attDDArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)attMCBuf,
+					 &attMCArr, &ll_size ) == -1 ) return NULL;
+      if ( NPyArrayToCArray1D< double >( (PyArrayObject*)etaMCBuf,
+					 &etaMCArr, &tt_size ) == -1 ) return NULL;
 
       npy_intp dims = ll_size * tt_size;
       
@@ -479,8 +504,13 @@ extern "C" {
       delete [] attMCArr;
       delete [] etaMCArr;
 
-      return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
-					reinterpret_cast< void * >( outarr ) );
+      // return PyArray_SimpleNewFromData( 1, &dims, NPY_DOUBLE,
+      // 					reinterpret_cast< void * >( outarr ) );
+
+      PyObject * ret = PyArray_SimpleNewFromData( 1, (npy_intp*)&dims, NPY_DOUBLE,
+						  reinterpret_cast< void * >( outarr ) );
+      PyArray_ENABLEFLAGS((PyArrayObject*) ret, NPY_ARRAY_OWNDATA);
+      return ret;
       
     }
 
@@ -533,7 +563,6 @@ extern "C" {
     CPyDD_t.tp_dealloc   = (destructor) CPyISM_dealloc;
     CPyDD_t.tp_flags     = Py_TPFLAGS_DEFAULT;
     CPyDD_t.tp_doc       = "Diffuse-Dust objects";
-    // CPyDD_t.tp_call      = (ternaryfunc) CPyISM_call;
     CPyDD_t.tp_methods   = CPyDD_Methods;
     CPyDD_t.tp_init      = (initproc) CPyDD_init;
     if ( PyType_Ready( &CPyDD_t ) < 0 )
@@ -551,7 +580,6 @@ extern "C" {
     CPyMC_t.tp_dealloc   = (destructor) CPyISM_dealloc;
     CPyMC_t.tp_flags     = Py_TPFLAGS_DEFAULT;
     CPyMC_t.tp_doc       = "Molecular-Cloud objects";
-    // CPyMC_t.tp_call      = (ternaryfunc) CPyISM_call;
     CPyMC_t.tp_methods   = CPyMC_Methods;
     CPyMC_t.tp_init      = (initproc) CPyMC_init;
     if ( PyType_Ready( &CPyMC_t ) < 0 )

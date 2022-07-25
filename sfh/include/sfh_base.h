@@ -30,17 +30,10 @@ namespace sed {
 
     // private variables
     double _tau_quench;
-    std::vector< double > _psi_grid, _Z_grid;
-    std::vector< std::size_t > _Zidx_grid;
-    std::size_t _last_idx;
 
   protected :
     
     std::vector< double > _paramsrc;
-
-    void _model ( const double * const tau,
-		  double * const psi,
-		  const std::size_t size ) const noexcept;
 
     virtual double _sfr ( const double tau ) const noexcept = 0;
     
@@ -60,6 +53,10 @@ namespace sed {
     
     double operator() ( const double xx ) const noexcept;
 
+    void model ( const double * const tau,
+		 double * const psi,
+		 const std::size_t size ) const noexcept;
+
     void eval ( const double * const tau,
 	        double * const psi,
 		const std::size_t size,
@@ -76,14 +73,14 @@ namespace sed {
 
     // Compute on time grid
     void time_grid ( const double age,
-		     const std::vector< double > & tgrid,
-		     const std::vector< double > & Zgrid );
-
-    // Get gridded values
-    std::vector< double > get_psi_grid () { return _psi_grid; }
-    std::vector< double > get_Z_grid () { return _Z_grid; }
-    std::vector< std::size_t > get_Zidx_grid () { return _Zidx_grid; }
-    std::size_t get_last_grid_idx () { return _last_idx; }
+		     const double * const tgrid,
+		     const std::size_t tgrid_size,
+		     const double * const Zgrid,
+		     const std::size_t Zgrid_size,
+		     double * const * const out_psigrid,
+		     double * const * const out_Zgrid,
+		     std::size_t * const * const out_Zidx,
+		     std::size_t * const out_last_idx );
 
   }; // endclass sfh_base
   

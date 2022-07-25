@@ -139,8 +139,12 @@ static PyObject * CxxVectorToNPyArray1D ( const std::vector< T > & CxxVec ) {
   T * data = new T [ CxxVec.size() ];
   std::copy( CxxVec.begin(), CxxVec.end(), data );
 
+  // output = PyArray_SimpleNewFromData( 1, &size, typenum,
+  // 				      reinterpret_cast< void * >( data ) );
+
   output = PyArray_SimpleNewFromData( 1, &size, typenum,
 				      reinterpret_cast< void * >( data ) );
+  PyArray_ENABLEFLAGS((PyArrayObject*) output, NPY_ARRAY_OWNDATA);
 
   return output;
   
