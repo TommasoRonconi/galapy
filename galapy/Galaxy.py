@@ -127,17 +127,19 @@ class GXY () :
             raise TypeError('Argument lstep should be either an integer or a boolean mask!')
     
     def set_parameters ( self, age = None, redshift = None,
-                         sfh_kw = None, ism_kw = {},
+                         sfh_kw = None, ism_kw = None,
                          agn_kw = None, nff_kw = None,
                          syn_kw = None ) :
         """divided in nested dictionaries or not?"""
 
         # if age of sfh change, reset the csp's timetuple
         reset_csp = False
+        reset_ism = False
         
         if age is not None :
             self.age = age
             reset_csp = True
+            reset_ism = True
             
         if redshift is not None :
             self.redshift = redshift
@@ -145,10 +147,8 @@ class GXY () :
 
         if sfh_kw is not None :
             self.sfh.set_parameters(**sfh_kw)
-            ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                             'Mgas'  : self.sfh.core.Mgas(self.age),
-                             'Mdust' : self.sfh.core.Mdust(self.age) } )
             reset_csp = True
+            reset_ism = True
 
         if reset_csp :
             self.csp.set_parameters( self.age, self.sfh )
@@ -157,8 +157,17 @@ class GXY () :
                 if syn_kw is None :
                     syn_kw = {}
                 syn_kw['RCCSN'] = rccsn
-            
-        if len( ism_kw ) > 0 :
+
+        if ism_kw is not None :
+            if reset_ism :
+                ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                                 'Mgas'  : self.sfh.core.Mgas(self.age),
+                                 'Mdust' : self.sfh.core.Mdust(self.age) } )
+            self.ism.set_parameters(**ism_kw)
+        elif reset_ism :
+            ism_kw = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                       'Mgas'  : self.sfh.core.Mgas(self.age),
+                       'Mdust' : self.sfh.core.Mdust(self.age) }
             self.ism.set_parameters(**ism_kw)
 
         # This one here should also be set only when either age or sfh changes:
