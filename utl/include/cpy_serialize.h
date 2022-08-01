@@ -31,12 +31,17 @@ PyObject * CPy___getstate__ ( CPyT * self, PyObject * Py_UNUSED(ignored) ) {
 				  "bytesLen", len,
 				  "ptrBytes", bytes,
 				  PICKLE_VERSION_KEY, PICKLE_VERSION );
+  /* Need to decrement reference counting on the bytes object, 
+     this prevents leaking of memory
+     ( didn't understand whether this is because ret is a dictionary or
+       because bytes is a buffer ) */
+  Py_DECREF( bytes );
   
   // still not sure whether the bytes objects takes the ownership of data
   // but if we delete it pickling and unpickling returns a memory error
   // (nonetheless the python doc says that PyBytes_FromString*
   //  makes a copy of the string, if no-memory leaks, fine with the comment)
-  // delete [] data;
+  delete [] data;
     
   return ret;
     
@@ -104,12 +109,13 @@ PyObject * CPy___setstate__( CPyT * self, PyObject * state ) {
   if ( PyBytes_AsStringAndSize( PyBytes_FromObject( bytes ),
 				&data, &check ) == -1 ||
        ( long ) check != len ) return NULL;
+  Py_DECREF( bytes );
+
+  // deserialize the bytes into allocated object
   self->ptrObj->deserialize( data );
   
-  // still not sure whether the bytes objects takes the ownership of data
-  // but if we delete it pickling and unpickling returns a memory error
-  // (nonetheless the python doc says that PyBytes_FromString*
-  //  makes a copy of the string, if no-memory leaks, fine with the comment)
+  // Python doc (c-api: PyBytes_AsStringAndSize) states that the buffer (char * data)
+  // must NOT be deallocated, therefore no need to call the delete below.
   // delete [] data;
   
   Py_RETURN_NONE;
