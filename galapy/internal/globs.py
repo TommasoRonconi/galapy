@@ -27,6 +27,24 @@ bc03_stelib_chab_zeros = ( 'stelib_chab_zero_extended.dat', BC03 )
 bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
 
 ################################################################
+# Bressan SSP libraries
+
+# directory
+Br22 = ( DATA_DIR, 'SSP', 'Br22' )
+
+# 
+br22_NT = ( 'Bressan_NT_formatted.dat', Br22  )
+
+# 
+br22_NTL = ( 'Bressan_NTL_formatted.dat', Br22  )
+
+# 
+br22_NT_refined = ( 'Bressan_NT_formatted_refined.dat', Br22  )
+
+# 
+br22_NTL_refined = ( 'Bressan_NTL_formatted_refined.dat', Br22  )
+
+################################################################
 # Photometric Filters
 
 FILT_DIR = ( DATA_DIR, 'filters' )

@@ -21,6 +21,10 @@ _SSP_LIB = {
     'bc03.basel.chab.refined' : GP_GBL.bc03_basel_chab_zeros_refined,
     'bc03.stelib.chab.extend' : GP_GBL.bc03_stelib_chab_zeros,
     'bc03.stelib.chab.extrap' : GP_GBL.bc03_stelib_chab_extrap,
+    'br22.NT'  : GP_GBL.br22_NT,
+    'br22.NTL' : GP_GBL.br22_NTL,
+    'br22.NT.refined'  : GP_GBL.br22_NT_refined,
+    'br22.NTL.refined' : GP_GBL.br22_NTL_refined,
     }
 
 def print_ssp_libs () :
