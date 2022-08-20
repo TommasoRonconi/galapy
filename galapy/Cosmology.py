@@ -17,7 +17,7 @@ class CSM () :
         """"""
         
         if isinstance( cosmo, str ) :
-            zz, DL, AU = numpy.loadtxt( DataFile( f'{cosmo:s}.txt',
+            zz, DL, UA = numpy.loadtxt( DataFile( f'{cosmo:s}.txt',
                                                   GP_GBL.COSMO_DIR ).get_file(),
                                         unpack = True )
         elif isinstance( cosmo, MM ) :

@@ -42,7 +42,7 @@ class GXY () :
         self.UA = self.cosmo.age( self.redshift )
 
         # Check that age and redshift are compatible
-        if self.age > self.AU :
+        if self.age > self.UA :
             raise RuntimeError( f"The age of the galaxy (t={self.age:e} years) "
                                 f"cannot be larger than the age of the Universe "
                                 f"which at the given redshift is {self.AU:e} years." )
@@ -94,10 +94,10 @@ class GXY () :
             self.lgrid = numpy.arange(self.csp.l.size)
 
         # Build the redshift-dependent constant for lum->flux conversion
-        zz = numpy.ascontiguousarray(cosmo.DL.get_x())
+        zz = numpy.ascontiguousarray(self.cosmo.DL.get_x())
         TF = numpy.ascontiguousarray(
             1.e+26 * (1 + zz) * Lsun /
-            ( 4 * numpy.pi * clight['A/s'] * cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
+            ( 4 * numpy.pi * clight['A/s'] * self.cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
         )
         self._to_flux = lin_interp( zz, TF )
         
@@ -143,9 +143,12 @@ class GXY () :
         if redshift is not None :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
+            self.UA = self.cosmo.age( self.redshift )
         
         if age is not None :
-            self.age = age
+            # if the provided age is larger than the age of the Universe,
+            # set the age to the age of the Universe
+            self.age = numpy.min( age, self.UA )
             reset_csp = True
             reset_ism = True
 
