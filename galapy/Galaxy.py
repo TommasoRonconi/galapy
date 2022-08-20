@@ -12,6 +12,7 @@ from galapy.XRayBinaries import XRB
 from galapy.NebularFreeFree import NFF
 from galapy.PhotometricSystem import PMS
 from galapy.Synchrotron import SNSYN
+from galapy.Cosmology import CSM
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
@@ -33,6 +34,18 @@ class GXY () :
         
         self.age      = age
         self.redshift = redshift
+
+        # Build the redshift-dependent cosmological quantities:
+        self.cosmo = CSM( cosmo )
+
+        # Compute Universe Age at given redshift
+        self.UA = self.cosmo.age( self.redshift )
+
+        # Check that age and redshift are compatible
+        if self.age > self.AU :
+            raise RuntimeError( f"The age of the galaxy (t={self.age:e} years) "
+                                f"cannot be larger than the age of the Universe "
+                                f"which at the given redshift is {self.AU:e} years." )
         
         self.sfh = SFH( **sfh_kw )
         ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
@@ -81,21 +94,12 @@ class GXY () :
             self.lgrid = numpy.arange(self.csp.l.size)
 
         # Build the redshift-dependent constant for lum->flux conversion
-        if isinstance( cosmo, str ) :
-            zz, DL = numpy.loadtxt( DataFile( f'{cosmo:s}.LumDist.txt',
-                                              GP_GBL.DL_DIR ).get_file(),
-                                    unpack = True )
-        elif isinstance( cosmo, MM ) :
-            zz, DL = cosmo['redshift'], cosmo['luminosity_distance']
-        else :
-            raise ValueError( 'Argument `cosmo` should be either a string '
-                              'or a formatted dictionary.' )
-        zz = numpy.ascontiguousarray(zz)
-        DL = numpy.ascontiguousarray(
+        zz = numpy.ascontiguousarray(cosmo.DL.get_x())
+        TF = numpy.ascontiguousarray(
             1.e+26 * (1 + zz) * Lsun /
-            ( 4 * numpy.pi * clight['A/s'] * DL**2 * Mpc_to_cm**2 )
+            ( 4 * numpy.pi * clight['A/s'] * cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
         )
-        self._fDL = lin_interp( zz, DL )
+        self._to_flux = lin_interp( zz, TF )
         
     def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
@@ -135,15 +139,15 @@ class GXY () :
         # if age of sfh change, reset the csp's timetuple
         reset_csp = False
         reset_ism = False
+            
+        if redshift is not None :
+            self.redshift = redshift
+            self._z = 1. / ( 1 + self.redshift )
         
         if age is not None :
             self.age = age
             reset_csp = True
             reset_ism = True
-            
-        if redshift is not None :
-            self.redshift = redshift
-            self._z = 1. / ( 1 + self.redshift )
 
         if sfh_kw is not None :
             self.sfh.set_parameters(**sfh_kw)
@@ -278,7 +282,7 @@ class GXY () :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
-        return self.get_emission() * self.wl()**2 * self._fDL( self.redshift )
+        return self.get_emission() * self.wl()**2 * self._to_flux( self.redshift )
     
 
 class PhotoGXY ( GXY ) :

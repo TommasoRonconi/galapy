@@ -50,9 +50,9 @@ br22_NTL_refined = ( 'Bressan_NTL_formatted_refined.dat', Br22  )
 FILT_DIR = ( DATA_DIR, 'filters' )
 
 ################################################################
-# Luminosity Distances
+# Cosmology
 
-DL_DIR = ( DATA_DIR, 'DL' )
+COSMO_DIR = ( DATA_DIR, 'Cosmologies' )
 
 ################################################################
 # AGN Templates (Fritz et al., 2006)
