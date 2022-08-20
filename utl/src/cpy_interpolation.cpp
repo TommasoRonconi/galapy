@@ -160,7 +160,7 @@ extern "C" {
     "Return the x-array grid\n"; 
   static PyObject * PyLinInterp_get_x ( PyLinInterp * self ) {
     
-    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self-ptrObj->get_xv() );
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_xv() );
     
   }
   
@@ -168,7 +168,7 @@ extern "C" {
     "Return the y-array grid\n"; 
   static PyObject * PyLinInterp_get_y ( PyLinInterp * self ) {
     
-    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self-ptrObj->get_fv() );
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_fv() );
     
   }
   
