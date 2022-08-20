@@ -156,6 +156,24 @@ extern "C" {
   
   // ========================================================================================
   
+  static const char DocString_get_x[] =
+    "Return the x-array grid\n"; 
+  static PyObject * PyLinInterp_get_x ( PyLinInterp * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self-ptrObj->get_xv() );
+    
+  }
+  
+  static const char DocString_get_y[] =
+    "Return the y-array grid\n"; 
+  static PyObject * PyLinInterp_get_y ( PyLinInterp * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self-ptrObj->get_fv() );
+    
+  }
+  
+  // ========================================================================================
+  
   static const char DocString_integrate[] =
     "Function for integrating the function in a range.\n"
     "\nParameters"
