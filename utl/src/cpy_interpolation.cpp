@@ -226,6 +226,14 @@ extern "C" {
     
   static PyMethodDef PyLinInterp_Methods[] =
     {
+     { "get_x",
+       (PyCFunction)PyLinInterp_get_x,
+       METH_NOARGS,
+       DocString_get_x },
+     { "get_y",
+       (PyCFunction)PyLinInterp_get_y,
+       METH_NOARGS,
+       DocString_get_y },
      { "integrate",
        (PyCFunction)PyLinInterp_integrate,
        METH_VARARGS,
