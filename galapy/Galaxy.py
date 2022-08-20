@@ -1,3 +1,6 @@
+""" Galaxy module
+"""
+
 # External imports
 import numpy
 import os
