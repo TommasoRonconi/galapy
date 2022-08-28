@@ -156,6 +156,24 @@ extern "C" {
   
   // ========================================================================================
   
+  static const char DocString_get_x[] =
+    "Return the x-array grid\n"; 
+  static PyObject * PyLinInterp_get_x ( PyLinInterp * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_xv() );
+    
+  }
+  
+  static const char DocString_get_y[] =
+    "Return the y-array grid\n"; 
+  static PyObject * PyLinInterp_get_y ( PyLinInterp * self ) {
+    
+    return CxxVectorToNPyArray1D< double, NPY_DOUBLE >( self->ptrObj->get_fv() );
+    
+  }
+  
+  // ========================================================================================
+  
   static const char DocString_integrate[] =
     "Function for integrating the function in a range.\n"
     "\nParameters"
@@ -208,6 +226,14 @@ extern "C" {
     
   static PyMethodDef PyLinInterp_Methods[] =
     {
+     { "get_x",
+       (PyCFunction)PyLinInterp_get_x,
+       METH_NOARGS,
+       DocString_get_x },
+     { "get_y",
+       (PyCFunction)PyLinInterp_get_y,
+       METH_NOARGS,
+       DocString_get_y },
      { "integrate",
        (PyCFunction)PyLinInterp_integrate,
        METH_VARARGS,
