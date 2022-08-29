@@ -91,7 +91,7 @@ def download_file ( url, out_file, overwrite = False, verbose = True ) :
         try :
             # creates multi-level subdirs. similarly to the *Nix command `mkdir -p`
             # (while os.mkdir() only allows to create the highest level directory)
-            os.makedirs(path) 
+            os.makedirs( out_dir ) 
         except OSError:
             print ( f"Creation of the directory {out_dir} failed" )
         else :
@@ -128,8 +128,8 @@ class DataFile () :
                                   *path_line,
                                   file_name )
             try :
-                byte_count = download(
-                    url = DATA_URL.format( '/'.join( *path_line, file_name ) ),
+                byte_count = download_file(
+                    url = DATA_URL.format( '/'.join( [ *path_line, file_name ] ) ),
                     out_file = where,
                     overwrite = rcParams[ 'force_downloads' ],
                     verbose = rcParams[ 'verbose_downloads' ]

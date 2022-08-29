@@ -151,7 +151,7 @@ class GXY () :
         if age is not None :
             # if the provided age is larger than the age of the Universe,
             # set the age to the age of the Universe
-            self.age = numpy.min( age, self.UA )
+            self.age = numpy.min( [ age, self.UA ] )
             reset_csp = True
             reset_ism = True
 
