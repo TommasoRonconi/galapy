@@ -70,7 +70,7 @@ class PMS () :
                     fl = numpy.ascontiguousarray(value[ 'photons' ])
                     self.bpt[ key ] = BPT( ll, fl )
                 except KeyError :
-                    raise ValueError( f'The provided dictionary {k} does not contain the necessary items, '
+                    raise ValueError( f'The provided dictionary "{key}" does not contain the necessary items, '
                                       'please provide a "wavelenghts" and a "photons" array.' )
                 except :
                     raise ValueError()

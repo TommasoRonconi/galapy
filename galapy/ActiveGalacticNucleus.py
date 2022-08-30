@@ -152,7 +152,7 @@ class AGN () :
         # convert wavelenght to energy
         El = Ang_to_keV( ll )
 
-        if El.min() > 2. :
+        if El.max() < 2. :
             raise RuntimeError( "Cannot build the X-ray spectrum for "
                                 "a wavelenght grid starting at lambda > "
                                 "6 Angstrom ~ 2 keV! "
