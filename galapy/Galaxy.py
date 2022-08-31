@@ -293,10 +293,10 @@ class GXY () :
 
 class PhotoGXY ( GXY ) :
 
-    def __init__ ( self, *args, **kwargs ) :
+    def __init__ ( self, *args, pms = None, **kwargs ) :
 
         super().__init__( *args, **kwargs )
-        self.pms = None
+        self.pms = pms
 
     def build_photometric_system ( self, *args, **kwargs ) :
 
