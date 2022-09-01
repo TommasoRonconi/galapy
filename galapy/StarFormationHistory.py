@@ -50,7 +50,7 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
     _models = {
         # In-Situ SF model
         'insitu' : {
-            'psi_max' :  100.,
+            'psi_max'  : 100.,
             'tau_star' : 3.e+8,
         },
         # Constant SF model
@@ -62,16 +62,16 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
         # Delayed-Exponential model
         'delayedexp' : {
             'psi_norm' : 1.,
-            'k_shape'  :  0.2,
+            'k_shape'  : 0.2,
             'tau_star' : 1.e+8,
             'Mdust'    : 1.e+8,
             'Zgs'      : 0.1,
         },
         # Log-Normal model
         'lognormal' : {
-            'psi_norm'   :   100.,
+            'psi_norm'   : 100.,
             'sigma_star' : 2.,
-            'tau_star'   :   3.e+8,
+            'tau_star'   : 3.e+8,
             'Mdust'      : 1.e+8,
             'Zgs'        : 0.1,
         }
@@ -118,8 +118,6 @@ class SFH () :
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
         self.set_parameters()
-
-        self.Mstar.__func__.__doc__    = self.core.Mstar.__doc__        
 
     def __call__ ( self, tau ) :
         """ Method for returning the Star Formation Rate (SFR) at given age.
