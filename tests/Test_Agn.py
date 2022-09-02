@@ -65,7 +65,7 @@ def test_agn_nearest_params () :
 def test_agn_build_params () :
 
     """
-    Check the module parameters after setting some different by default ones.
+    Check the module parameters after setting some different from default ones.
 
     """
 

@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------#
-#                  Test of galapy.NebularFreeFree module.
+#                    Test of galapy.NebularFreeFree module.
 #------------------------------------------------------------------------------#
 
 """
@@ -8,12 +8,12 @@
 Testing the Galapy module providing the Nebular Emission component. (see Murphy
 et al. 2011; Bressan et al. 2002; Mancuso et al. 2017)
 
-Parameters
-----------
+    Parameters
+    ----------
 
-Zgas:  Gas metallicity
+    Zgas: Gas metallicity
 
-Zi: Gas atomic number ( = 1 for a pure H plasma )
+    Zi: Gas atomic number ( = 1 for a pure H plasma )
 
 """
 
@@ -37,12 +37,13 @@ def nff () :
     NFF class is initialize with a pytest fixture to avoid repetitions.
     Required parameters: wavelength grid
   
-
     """
+    
     ll = np.logspace( 0., 10., 5 )
     nff =  gpnff.NFF( ll )
     return nff
  
+#------------------------------------------------------------------------------#
 
 def test_nff_init ( nff ) :
    
@@ -53,7 +54,7 @@ def test_nff_init ( nff ) :
  
     assert isinstance( nff, galapy.NebularFreeFree.NFF ) 
     
-
+#------------------------------------------------------------------------------#
 
 def test_nff_build_params () :
 
@@ -66,6 +67,7 @@ def test_nff_build_params () :
     nff = gpnff.NFF( ll, Zgas = 0.01 )
     assert nff.params == { 'Zgas' : 0.01, 'Zi' : 1.0 }
 
+#------------------------------------------------------------------------------#
 
 def test_nff_set_params ( nff ) :
     
@@ -77,6 +79,7 @@ def test_nff_set_params ( nff ) :
     nff.set_parameters( Zgas = 0.01 )
     assert nff.params == { 'Zgas' : 0.01, 'Zi' : 1.0 }
 
+#------------------------------------------------------------------------------#
 
 def test_nff_Te ( nff ) :
 
@@ -87,6 +90,8 @@ def test_nff_Te ( nff ) :
 
     Tem = nff.Te( Zgas = 0.1 )
     assert Tem == 3502.185479394832
+
+#------------------------------------------------------------------------------#
 
 def test_nff_gff ( nff ) :
 
@@ -102,7 +107,9 @@ def test_nff_gff ( nff ) :
                                            1.20434471,
                                            2.85905773,
                                            5.87106787 ] ) )
-    
+
+#------------------------------------------------------------------------------#
+
 def test_nff_emission ( nff ) :
    
     """
