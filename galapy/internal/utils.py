@@ -75,6 +75,25 @@ def find_nearest ( array, value ) :
 ###################################################################################
 
 def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
+    """ Returns a powerlaw with exponential cut-off of the form
+
+    .. math::
+      
+      y = E_\lambda^{-\gamma+3} e^{E_\lambda/E_\text{cut}}
+
+    Parameters
+    ----------
+    El : scalar or array-like
+      the x-values
+    gamma : scalar
+      the spectral index
+    Ecut : scalar
+      the cut-off x-scale
+    
+    Returns
+    -------
+    : scalar or array-like
+    """
     return El**(-gamma+3) * numpy.exp(-El/Ecut) 
 
 ###################################################################################
@@ -108,6 +127,146 @@ def poly_N ( xx, coeff ) :
     for _c in coeff :
         yy = yy * xx + _c
     return yy
+
+###################################################################################
+
+def unwrap_keys ( d ) :
+    """ Generator yielding the keys of a nested dictionary
+
+    Paramters
+    ---------
+    d : dictionary
+      A nested dictionary (whathever object inheriting from 'dict' 
+      or collections.abc.MutableMapping or similar)
+    
+    Yields
+    ------
+    : list of keys    
+
+    Examples
+    --------
+    >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
+    >>> for i in unwrap_keys( d ) : print( i )
+    ['a']
+    ['b', 'c']
+    ['b', 'd']
+    """
+    from collections.abc import MutableMapping
+    for k, v in d.items() :
+        if isinstance( v, MutableMapping ) :
+            for t in unwrap_keys( v ) :
+                yield [ k ] + t
+        else :
+            yield [ k ]
+
+def unwrap_values ( d ) :
+    """ Generator yielding the values of a nested dictionary
+
+    Paramters
+    ---------
+    d : dictionary
+      A nested dictionary (whathever object inheriting from 'dict' 
+      or collections.abc.MutableMapping or similar)
+    
+    Yields
+    ------
+    : values
+
+    Examples
+    --------
+    >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
+    >>> for i in unwrap_values( d ) : print( i )
+    1
+    2
+    3
+    """
+    from collections.abc import MutableMapping
+    for k, v in d.items() :
+        if isinstance( v, MutableMapping ) :
+            for t in unwrap_values( v ) :
+                yield t
+        else :
+            yield v
+
+def unwrap_items ( d ) :
+    """ Generator yielding the items of a nested dictionary
+
+    Paramters
+    ---------
+    d : dictionary
+      A nested dictionary (whathever object inheriting from 'dict' 
+      or collections.abc.MutableMapping or similar)
+    
+    Yields
+    ------
+    : items
+      a 2d tuple in which the first element is the list of nested keys
+      and the second is the associated value
+
+    Examples
+    --------
+    >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
+    >>> for i in unwrap_items( d ) : print( i )
+    (['a'], 1)
+    (['b', 'c'], 2)
+    (['b', 'd'], 3)
+    """
+    from collections.abc import MutableMapping
+    for k, v in d.items() :
+        if isinstance( v, MutableMapping ) :
+            for tk, tv in unwrap_items( v ) :
+                yield [ k ] + tk, tv
+        else :
+            yield [ k ], v
+
+###################################################################################
+
+def set_nested ( d, kl, v ) :
+    """ Recursive function for setting values in a nested dictionary.
+    
+    Parameters
+    ----------
+    d : dictionary
+        the i/o dictionary
+    kl : list
+        a list of keywords to traverse the nested dictionary
+        the first element is the highest position in the hierarchy
+        of the nested dictionary
+    v : whatever
+        the value to set at corresponding nested sequence of keywords
+    
+    Returns
+    -------
+    : None
+    
+    Examples
+    --------
+    >>> d = {}
+    >>> kl1 = ['first', 'second', 'third']
+    >>> kl2 = ['a', 'b', 'c']
+    >>> set_nested(d,kl1, 3.)
+    >>> set_nested(d,kl2, True)
+    >>> d
+    {'first': {'second': {'third': 3.0}}, 
+     'a': {'b': True}}
+    
+    If we want to add a new key-value pair to an already existing level:
+    >>> kl3 = ['first', 'second', 'fourth']
+    >>> set_nested(d, kl3, 4.)
+    >>> d
+    {'first': {'second': {'third': 3.0, 'fourth': 4.0}}, 
+     'a': {'b': True}}
+    """
+    k = kl.pop(0)
+    if len(kl) == 0 :
+        d[k] = v
+        return;
+    try :
+        set_nested( d[k], kl, v )
+    except KeyError :
+        d[k] = {}
+        set_nested( d[k], kl, v )
+    return;        
 
 ###################################################################################
 
@@ -279,97 +438,6 @@ def poly_N ( xx, coeff ) :
 #         else:
 #             setattr( parent_obj, k, v )
 #     return;
-
-###################################################################################
-
-# def unwrap_keys ( d ) :
-#     """ Generator yielding the keys of a nested dictionary
-
-#     Paramters
-#     ---------
-#     d : dictionary
-#       A nested dictionary (whathever object inheriting from 'dict' 
-#       or collections.abc.MutableMapping or similar)
-    
-#     Yields
-#     ------
-#     : list of keys    
-
-#     Examples
-#     --------
-#     >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
-#     >>> for i in unwrap_keys( d ) : print( i )
-#     ['a']
-#     ['b', 'c']
-#     ['b', 'd']
-#     """
-#     from collections.abc import MutableMapping
-#     for k, v in d.items() :
-#         if isinstance( v, MutableMapping ) :
-#             for t in unwrap_keys( v ) :
-#                 yield [ k ] + t
-#         else :
-#             yield [ k ]
-
-# def unwrap_values ( d ) :
-#     """ Generator yielding the values of a nested dictionary
-
-#     Paramters
-#     ---------
-#     d : dictionary
-#       A nested dictionary (whathever object inheriting from 'dict' 
-#       or collections.abc.MutableMapping or similar)
-    
-#     Yields
-#     ------
-#     : values
-
-#     Examples
-#     --------
-#     >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
-#     >>> for i in unwrap_values( d ) : print( i )
-#     1
-#     2
-#     3
-#     """
-#     from collections.abc import MutableMapping
-#     for k, v in d.items() :
-#         if isinstance( v, MutableMapping ) :
-#             for t in unwrap_values( v ) :
-#                 yield t
-#         else :
-#             yield v
-
-# def unwrap_items ( d ) :
-#     """ Generator yielding the items of a nested dictionary
-
-#     Paramters
-#     ---------
-#     d : dictionary
-#       A nested dictionary (whathever object inheriting from 'dict' 
-#       or collections.abc.MutableMapping or similar)
-    
-#     Yields
-#     ------
-#     : items
-#       a 2d tuple in which the first element is the list of nested keys
-#       and the second is the associated value
-
-#     Examples
-#     --------
-#     >>> d = { 'a' : 1, 'b' : { 'c' : 2, 'd' : 3 } }
-#     >>> for i in unwrap_items( d ) : print( i )
-#     (['a'], 1)
-#     (['b', 'c'], 2)
-#     (['b', 'd'], 3)
-#     """
-#     from collections.abc import MutableMapping
-#     for k, v in d.items() :
-#         if isinstance( v, MutableMapping ) :
-#             for tk, tv in unwrap_items( v ) :
-#                 yield [ k ] + tk, tv
-#         else :
-#             yield [ k ], v
 
 ###################################################################################
 
