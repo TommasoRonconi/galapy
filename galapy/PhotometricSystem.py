@@ -132,7 +132,7 @@ class PMS () :
         : list
         """
         fluxes = []
-        for key in self.keys() :
+        for key in self.keys :
             wl, wu = [ numpy.argmax( self.bpt[key].get_lmin() < ll ),
                        numpy.argmin( ll < self.bpt[key].get_lmax() ) ]
             fluxes += [self.bpt[key].get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
