@@ -103,11 +103,11 @@ class GXY () :
         if do_AGN :
             if agn is None :
                 agn = {}
-                self.agn = AGN( lmin = self.csp.l.min(),
-                                lmax = self.csp.l.max(),
-                                Xray = Xray,
-                                **agn )
-                self.params[ 'agn' ] = self.agn.params
+            self.agn = AGN( lmin = self.csp.l.min(),
+                            lmax = self.csp.l.max(),
+                            Xray = Xray,
+                            **agn )
+            self.params[ 'agn' ] = self.agn.params
 
         self.nff   = None
         self.snsyn = None
@@ -117,16 +117,16 @@ class GXY () :
             if 'br22.NT' not in self.csp.ssp_lib :
                 if nff is None :
                     nff = {}
-                    self.nff = NFF( self.csp.l, **nff )
-                    self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
-                    self.w912 = self.csp.l <= 912.
-                    self.params[ 'nff' ] = self.nff.params
+                self.nff = NFF( self.csp.l, **nff )
+                self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
+                self.w912 = self.csp.l <= 912.
+                self.params[ 'nff' ] = self.nff.params
 
             if syn is None :
                 syn = {}
-                syn[ 'RCCSN' ] = self.csp.core.RCCSN()
-                self.snsyn = SNSYN( self.csp.l, **syn )
-                self.params[ 'syn' ] = self.snsyn.params
+            syn[ 'RCCSN' ] = self.csp.core.RCCSN()
+            self.snsyn = SNSYN( self.csp.l, **syn )
+            self.params[ 'syn' ] = self.snsyn.params
                 
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
