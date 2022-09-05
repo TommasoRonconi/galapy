@@ -92,10 +92,6 @@ class CSP () :
         self.core = CCSP( self.l, self.t, self.Z, self.L, self.CCSN )
         self._timetuple = None
 
-        # also allocate synchrotron object if do_synchrotron is true
-        # self._sync = None
-        # if do_synchrotron : self._sync = CSYN( self.l )
-
         # steal docstrings from C-core:
         self.SSP.__func__.__doc__      = self.core.SSP.__doc__
         self.emission.__func__.__doc__ = self.core.emission.__doc__

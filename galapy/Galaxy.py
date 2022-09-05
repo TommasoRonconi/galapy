@@ -30,13 +30,26 @@ class GXY () :
     * Should figure out a smart way of passing arguments to constructor
     """
     
-    def __init__ ( self, age, redshift, lstep = None, cosmo = 'Planck18',
-                   sfh_kw = {}, csp_kw = {}, ism_kw = {},
-                   agn_kw = None, nff_kw = None, syn_kw = None,
-                   Xray = False ) :
-        
-        self.age      = age
-        self.redshift = redshift
+    def __init__ ( self, age = None, redshift = None,
+                   cosmo = 'Planck18', lstep = None,
+                   do_Xray = False, do_Radio = False, do_AGN = False,
+                   sfh = None, csp = None, ism = None,
+                   agn = None, nff = None, syn = None ) :
+
+        # Define a dictionary for parameters storage
+        self.params = {}
+
+        if age is None :
+            self.age = 1.e+6
+        else :
+            self.age = age
+        self.params[ 'age' ] = self.age
+
+        if redshift is None :
+            self.redshift = 0.
+        else :
+            self.redshift = redshift
+        self.params[ 'redshift' ] = self.redshift
 
         # Build the redshift-dependent cosmological quantities:
         self.cosmo = CSM( cosmo )
@@ -47,50 +60,74 @@ class GXY () :
         # Check that age and redshift are compatible
         if self.age > self.UA :
             raise RuntimeError( f"The age of the galaxy (t={self.age:e} years) "
-                                f"cannot be larger than the age of the Universe "
-                                f"which at the given redshift is {self.AU:e} years." )
-        
-        self.sfh = SFH( **sfh_kw )
-        ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                         'Mgas'  : self.sfh.core.Mgas(self.age),
-                         'Mdust' : self.sfh.core.Mdust(self.age) } )
+                                f"cannot be larger than the age of the Universe which, "
+                                f"at the given redshift ( z = {self.redshift:.3f} ),"
+                                f" is {self.UA:e} years." )
+
+        if sfh is None :
+            sfh = {}
+        if csp is None :
+            csp = {}
+        if ism is None :
+            ism = {}
+            
+        self.sfh = SFH( **sfh )
+        self.params[ 'sfh' ] = self.sfh.params
+        ism.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                      'Mgas'  : self.sfh.core.Mgas(self.age),
+                      'Mdust' : self.sfh.core.Mdust(self.age) } )
         
         # tell the CSP constructor to build with
-        # SN support if synchrotron is requested
-        csp_kw[ 'CCSN' ] = syn_kw is not None 
+        # SN support if Radio support is requested
+        csp[ 'CCSN' ] = do_Radio 
 
-        self.csp = CSP( **csp_kw )
+        self.csp = CSP( **csp )
         self.csp.set_parameters( self.age, self.sfh )
 
-        self.ism = ISM( **ism_kw )
+        self.ism = ISM( **ism )
+        self.params[ 'ism' ] = {}
+        self.params[ 'ism' ].update( self.ism.mc.params )
+        self.params[ 'ism' ].update( self.ism.dd.params )
         
         self.xrb = None
-        if Xray :
+        if do_Xray :
             self.xrb = XRB( lmin = self.csp.l.min(),
                             lmax = self.csp.l.max(),
                             age = self.age,
                             psi = self.sfh( self.age ),
                             Mstar = self.sfh.Mstar( self.age ),
                             Zstar = self.sfh.Zstar( self.age ) )
+            self.params[ 'xrb' ] = self.xrb.params
             
         self.agn = None
-        if agn_kw is not None :
-            self.agn = AGN( lmin = self.csp.l.min(),
-                            lmax = self.csp.l.max(),
-                            Xray = Xray,
-                            **agn_kw )
+        if do_AGN :
+            if agn is None :
+                agn = {}
+                self.agn = AGN( lmin = self.csp.l.min(),
+                                lmax = self.csp.l.max(),
+                                Xray = Xray,
+                                **agn )
+                self.params[ 'agn' ] = self.agn.params
 
-        self.nff = None
-        if nff_kw is not None :
-            self.nff = NFF( self.csp.l, **nff_kw )
-            self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
-            self.w912 = self.csp.l <= 912.
-
+        self.nff   = None
         self.snsyn = None
-        if syn_kw is not None :
-            syn_kw[ 'RCCSN' ] = self.csp.core.RCCSN()
-            self.snsyn = SNSYN( self.csp.l, **syn_kw )
-        
+        if do_Radio :
+            # Build the Nebular-Free support only if
+            # it is not already included in the SSP library
+            if 'br22.NT' not in self.csp.ssp_lib :
+                if nff is None :
+                    nff = {}
+                    self.nff = NFF( self.csp.l, **nff )
+                    self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
+                    self.w912 = self.csp.l <= 912.
+                    self.params[ 'nff' ] = self.nff.params
+
+            if syn is None :
+                syn = {}
+                syn[ 'RCCSN' ] = self.csp.core.RCCSN()
+                self.snsyn = SNSYN( self.csp.l, **syn )
+                self.params[ 'syn' ] = self.snsyn.params
+                
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
@@ -110,7 +147,7 @@ class GXY () :
         if obs :
             return ( 1 + self.redshift ) * self.csp.l[ self.lgrid ]
         return self.csp.l[self.lgrid]
-        
+    
     def get_wavelenght_grid ( self, lstep ) :
         """ Reduces the granularity of the wavelenght grid [optimization]
         
@@ -132,22 +169,22 @@ class GXY () :
             return numpy.arange(self.csp.l.size)[lstep]
         except IndexError :
             raise TypeError('Argument lstep should be either an integer or a boolean mask!')
-    
+        
     def set_parameters ( self, age = None, redshift = None,
-                         sfh_kw = None, ism_kw = None,
-                         agn_kw = None, nff_kw = None,
-                         syn_kw = None ) :
+                         sfh = None, ism = None,
+                         agn = None, nff = None,
+                         syn = None ) :
         """divided in nested dictionaries or not?"""
 
         # if age of sfh change, reset the csp's timetuple
         reset_csp = False
         reset_ism = False
-            
+        
         if redshift is not None :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
-        
+            
         if age is not None :
             # if the provided age is larger than the age of the Universe,
             # set the age to the age of the Universe
@@ -155,8 +192,8 @@ class GXY () :
             reset_csp = True
             reset_ism = True
 
-        if sfh_kw is not None :
-            self.sfh.set_parameters(**sfh_kw)
+        if sfh is not None :
+            self.sfh.set_parameters(**sfh)
             reset_csp = True
             reset_ism = True
 
@@ -164,21 +201,21 @@ class GXY () :
             self.csp.set_parameters( self.age, self.sfh )
             if self.snsyn is not None :
                 rccsn = self.csp.core.RCCSN()
-                if syn_kw is None :
-                    syn_kw = {}
-                syn_kw['RCCSN'] = rccsn
+                if syn is None :
+                    syn = {}
+                    syn['RCCSN'] = rccsn
 
-        if ism_kw is not None :
+        if ism is not None :
             if reset_ism :
-                ism_kw.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                                 'Mgas'  : self.sfh.core.Mgas(self.age),
-                                 'Mdust' : self.sfh.core.Mdust(self.age) } )
-            self.ism.set_parameters(**ism_kw)
+                ism.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                              'Mgas'  : self.sfh.core.Mgas(self.age),
+                              'Mdust' : self.sfh.core.Mdust(self.age) } )
+                self.ism.set_parameters(**ism)
         elif reset_ism :
-            ism_kw = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                       'Mgas'  : self.sfh.core.Mgas(self.age),
-                       'Mdust' : self.sfh.core.Mdust(self.age) }
-            self.ism.set_parameters(**ism_kw)
+            ism = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                    'Mgas'  : self.sfh.core.Mgas(self.age),
+                    'Mdust' : self.sfh.core.Mdust(self.age) }
+            self.ism.set_parameters(**ism)
 
         # This one here should also be set only when either age or sfh changes:
         if self.xrb is not None :
@@ -187,24 +224,24 @@ class GXY () :
                                      Mstar = self.sfh.Mstar( self.age ),
                                      Zstar = self.sfh.Zstar( self.age ) )
 
-        if agn_kw is not None :
+        if agn is not None :
             try :
-                self.agn.set_parameters(**agn_kw)
+                self.agn.set_parameters(**agn)
             except AttributeError :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
 
-        if nff_kw is not None :
+        if nff is not None :
             try :
-                nff_kw.update( { 'Zgas' : ism_kw[ 'Zgas' ] } )
-                self.nff.set_parameters( **nff_kw )
+                nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
+                self.nff.set_parameters( **nff )
             except AttributeError :
                 raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
                                       'without an NFF component is not allowed.' )
 
-        if syn_kw is not None:
+        if syn is not None:
             try :
-                self.snsyn.set_parameters( **syn_kw )
+                self.snsyn.set_parameters( **syn )
             except AttributeError :
                 raise AttributeError( 'Passing SYN-parameters to a GXY-class built '
                                       'without an SNSYN component is not allowed.' )
@@ -293,10 +330,10 @@ class GXY () :
 
 class PhotoGXY ( GXY ) :
 
-    def __init__ ( self, *args, **kwargs ) :
+    def __init__ ( self, *args, pms = None, **kwargs ) :
 
         super().__init__( *args, **kwargs )
-        self.pms = None
+        self.pms = pms
 
     def build_photometric_system ( self, *args, **kwargs ) :
 

@@ -104,6 +104,14 @@ class PMS () :
         self.lpiv = numpy.asarray( [ bpt.get_lpiv()
                                      for bpt
                                      in self.bpt.values() ] )
+        self.keys = numpy.asarray( [ k for k in self.bpt.keys() ] )
+        
+        idxsort = numpy.argsort( self.lpiv )
+        self.lpiv = self.lpiv[idxsort]
+        self.keys = tuple( self.keys[idxsort] )
+
+    def __len__ ( self ) :
+        return len( self.bpt )
 
     def get_intervals ( self ) :
         """
@@ -124,9 +132,9 @@ class PMS () :
         : list
         """
         fluxes = []
-        for filt in self.bpt.values() :
-            wl, wu = [ numpy.argmax( filt.get_lmin() < ll ),
-                       numpy.argmin( ll < filt.get_lmax() ) ]
-            fluxes += [filt.get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
+        for key in self.keys :
+            wl, wu = [ numpy.argmax( self.bpt[key].get_lmin() < ll ),
+                       numpy.argmin( ll < self.bpt[key].get_lmax() ) ]
+            fluxes += [self.bpt[key].get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
     
         return fluxes
