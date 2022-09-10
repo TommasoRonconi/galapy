@@ -54,6 +54,7 @@ Lift-off TL;DR
   **[Provided that the database has been correctly installed]**
 
   The steps required for running the sampling are just two:
+  
   - first we will have to generate a parameter file, this can be done by running
     the utility command
 
@@ -63,6 +64,7 @@ Lift-off TL;DR
 
     The generated file contains should be self-explanatory, this has to be
     modified according to the fitting the user has to perform.
+    
   - Once the parameter file has been generated and properly modified, we can run
 
     .. code-block:: bash
