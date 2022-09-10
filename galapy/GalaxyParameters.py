@@ -49,7 +49,51 @@ class GXYParameters () :
         self.par_prior = numpy.asarray(self.par_prior)
                     
     def return_nested ( self, par ) :
+        """ From a list of parameters returns a nested dictionary in 
+        the proper format. Here 'proper' means that such dictionary has
+        the hierarchy necessary to pass it as keyword arguments dictionary
+        to an object of type galapy.Galaxy.GXY()
         
+        Parameters
+        ----------
+        par : array-like or iterable
+          a list of values to be assigned to the parameters flagged as `free`
+        
+        Returns
+        -------
+        : dict
+        A nested dictionary with the proper format to be passed as keyword 
+        arguments to the constructor or to function `set_parameters` of 
+        a `galapy.Galaxy.GXY()` object.
+        
+        Examples
+        --------
+        Given a galaxy model of type GXY:
+
+        >>> from galapy.Galaxy import GXY
+        >>> gxy = GXY()
+
+        and a dictionary with the fixed and free parameters as follows
+        
+        >>> p = { 'age' : 1.e+8, 'sfh.psi_max' : ( [0., 5.], True ) }
+
+        we can build a parameter handler:
+ 
+        >>> from galapy.GalaxyParameters import GXYParameters
+        >>> par = GXYParameters( gxy, p )
+        >>> par.par_free
+        numpy.array( [ 'sfh.psi_max' ] )
+        
+        Now, assuming we want to set a new value to the 'sfh.psi_max' parameter,
+        >>> nested = par.return_nested( [ 123. ] )
+        >>> nested 
+        { 'sfh' : { 'psi_max' : 123. } }
+        
+        This dictionary can be used to set the parameters of the galaxy model
+        >>> gxy.set_parameters( **nested )
+        """
+
+        par = numpy.asarray( par ) 
         if len(par) != len(self.par_free) :
             raise RuntimeError( f'Provided {len(par)} but there are exactly '
                                 f'{len(self.par_free)} free parameters to set.' )
