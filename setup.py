@@ -178,6 +178,17 @@ def main():
                ext_bpt
            ],
            include_package_data = True,
+           entry_points = {
+               'console_scripts' : [
+                   'galapy-fit = galapy.sampling.Run:run',
+               ]
+           },
+           install_requires = [
+               'numpy',
+               'scipy',
+               'emcee',
+               'dynesty',
+           ]
     )
 
 if __name__ == "__main__":
