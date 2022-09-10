@@ -48,6 +48,32 @@ Lift-off TL;DR
      psed = pgxy.photoSED()
 
   Link to `tutorials`_ here
+
+* Sampling the parameter space can be done from the command line in a terminal.
+
+  **[Provided that the database has been correctly installed]**
+
+  The steps required for running the sampling are just two:
+  - first we will have to generate a parameter file, this can be done by running
+    the utility command
+
+    .. code-block:: bash
+
+       $ galapy-genparams [--name/-n NAME]
+
+    The generated file contains should be self-explanatory, this has to be
+    modified according to the fitting the user has to perform.
+  - Once the parameter file has been generated and properly modified, we can run
+
+    .. code-block:: bash
+
+       $ galapy-fit parameter_file.py [--serial/-s | --multiprocessing/-mp NCPU]
+
+    which will run the sampling and authomatically store the results, as specified
+    by the user in the parameter file.
+    NOTE THAT the two optional arguments regulate whether to run the sampling
+    serially or using shared-memory parallelism.
+    The default behaviour is to run parallely on all the available CPUs.
      
 * Link to `API docs`_ here 
 
