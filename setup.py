@@ -24,14 +24,7 @@ extra_compile_args = [ "-DNDEBUG", "-O3" ]
 def main():
 
     os.environ["CC"] = "g++"
-    os.environ["CXX"] = "g++"
-    # os.environ["LDSHARED"] = ' '.join([ 'g++'
-    #                                     if el == 'gcc'
-    #                                     else el
-    #                                     for el
-    #                                     in sysconfig.get_config_var('BLDSHARED').split() ])
-    # # print( extra_compile_args )
-    
+    os.environ["CXX"] = "g++"    
 
     #############################################################################
     # C++ implementation of the interpolation class
@@ -159,7 +152,7 @@ def main():
     # Call setup
     
     setup( name        = "galapy",
-           version     = "0.0.1",
+           version     = "0.0.2",
            description = "GalaPy - Galactic spectral analysis tools in Python",
            package_dir = {
                'galapy' : 'galapy',
@@ -181,6 +174,7 @@ def main():
            entry_points = {
                'console_scripts' : [
                    'galapy-fit = galapy.sampling.Run:run',
+                   'galapy-genparams = galapy.sampling.Run:generate_parameter_file',
                ]
            },
            install_requires = [
