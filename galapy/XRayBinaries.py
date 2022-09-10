@@ -151,12 +151,14 @@ class XRB () :
 
     def __init__ ( self, lmin, lmax, **kwargs ) :
 
+        self.params = {}
         self.hm = HMXRB(
             lmin, lmax,
             **{ k : v
                 for k, v in kwargs.items()
                 if k in xrb_tunables[ 'hm' ] }
         )
+        self.params.update( self.hm.params )
         
         self.lm = LMXRB(
             lmin, lmax,
@@ -164,8 +166,11 @@ class XRB () :
                 for k, v in kwargs.items()
                 if k in xrb_tunables[ 'lm' ] }
         )
+        self.params.update( self.lm.params )
 
     def set_parameters ( self, **kwargs ) :
+        
+        self.params.update( kwargs )
         self.hm.set_parameters( **{ k : v
                                     for k, v in kwargs.items()
                                     if k in xrb_tunables[ 'hm' ] } )

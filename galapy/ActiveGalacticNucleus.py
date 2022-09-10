@@ -89,14 +89,14 @@ class AGN () :
     ia : scalar   
     """
     
-    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, Xray = True, **kwargs ) :
+    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, do_Xray = True, **kwargs ) :
         import galapy.internal.globs as GP_GBL
         import os
 
         # store the argument variables
         self.lmin, self.lmax = lmin, lmax
         self._pad = pad
-        self._Xray = Xray
+        self.do_Xray = do_Xray
         
         # common name of all template files
         self._filebase = GP_GBL.AGN_FILE
@@ -108,7 +108,7 @@ class AGN () :
         self.load_template()
 
         # also compute the X-ray template if requested (default=True)
-        if self._Xray :
+        if self.do_Xray :
             self.compute_X_template()
 
     def load_template ( self ) :
@@ -196,7 +196,7 @@ class AGN () :
     def emission ( self, ll, Lref ) :
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
-        if self._Xray :
+        if self.do_Xray :
             return fact * Lref * ( self.f_norm_tot( ll ) +
                                    self.f_norm_X( ll ) *
                                    self.X_bolometric_correction( Lref ) )

@@ -97,7 +97,7 @@ class GXY () :
                             psi = self.sfh( self.age ),
                             Mstar = self.sfh.Mstar( self.age ),
                             Zstar = self.sfh.Zstar( self.age ) )
-            self.params[ 'xrb' ] = self.xrb.params
+            # self.params[ 'xrb' ] = self.xrb.params
             
         self.agn = None
         if do_AGN :
@@ -105,7 +105,7 @@ class GXY () :
                 agn = {}
                 self.agn = AGN( lmin = self.csp.l.min(),
                                 lmax = self.csp.l.max(),
-                                Xray = Xray,
+                                do_Xray = do_Xray,
                                 **agn )
                 self.params[ 'agn' ] = self.agn.params
 
