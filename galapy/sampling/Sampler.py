@@ -6,6 +6,28 @@ import sys
 
 #############################################################################################
 
+emcee_default_sampler_kw = { 'moves' : None, 'args' : None, 'kwargs' : None }
+emcee_default_sampling_kw = { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
+                              'tune' : False, 'skip_initial_state_check' : False,
+                              'thin_by' : 1, 'thin' : None, 'store' : True,
+                              'progress' : False, 'progress_kwargs' : None }
+
+#############################################################################################
+
+dynesty_default_sampler_kw = { 'bound' : 'multi', 'sample' : 'rwalk',
+                               'update_interval' : 0.6, 'walks' : 25,
+                               'bootstrap' : 0 }
+dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
+                                'maxcall_init' : None, 'dlogz_init' : 0.02,
+                                'nlive_batch' : 1024, 'maxiter_batch' : None,
+                                'maxcall_batch' : None,
+                                'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
+                                'maxbatch' : sys.maxsize,
+                                'n_effective' : None, 'print_progress' : True,
+                                'stop_kwargs' : { 'target_n_effective' : 10000 } }
+
+#############################################################################################
+
 class Sampler () :
     
     def __init__ ( self, loglikelihood, ndim, 
@@ -27,28 +49,32 @@ class Sampler () :
             if prior_transform is None or not hasattr(prior_transform, '__call__'):
                 raise RuntimeError( 'You have to pass a function to `prior_transform` '
                                     'when running with the dynesty sampler.')
-                
+
+            kw = dynesty_default_sampler_kw
+            kw.update( dynesty_sampler_kw )
             from dynesty import DynamicNestedSampler
             self.sampler = DynamicNestedSampler( 
                 loglikelihood = loglikelihood,
                 prior_transform = prior_transform,
                 ndim = ndim,
                 pool = pool,
-                **dynesty_sampler_kw
+                **kw
             )
-
+            
         ######################################################################################
         # MCMC Ensemble sampling with emcee
         if self.which_sampler == 'emcee' :
             if nwalkers is None :
                 raise RuntimeError( 'You have to pass an integer number of walkers to `nwalkers` '
                                     'when running with the emcee sampler.')
+            kw = emcee_default_sampler_kw
+            kw.update( emcee_sampler_kw )
             from emcee import EnsembleSampler
             self.sampler = EnsembleSampler( nwalkers = nwalkers,
                                             ndim = ndim, 
                                             log_prob_fn = loglikelihood, 
                                             pool = pool, 
-                                            **emcee_sampler_kw )
+                                            **kw )
         
         ######################################################################################
         # Maybe in the future we'll add more sampling options ...    
@@ -58,13 +84,24 @@ class Sampler () :
             
     def run_sampling ( self, pos = None, nsample = None,
                        dynesty_sampling_kw = {}, emcee_sampling_kw = {} ) :
-        """
+        """ Run the sampling with the chosen sampler.
+        
+        Parameters
+        ----------
+        pos : iterable
+        nsample : int
+        
+        Returns
+        -------
+        : None
         """
         from time import time
         
         if self.which_sampler == 'dynesty' :
+            kw = dynesty_default_sampling_kw
+            kw.update( dynesty_sampling_kw )
             tstart = time()
-            self.sampler.run_nested( **dynesty_sampling_kw )
+            self.sampler.run_nested( **kw )
             ndur = time() - tstart
             print( f'\nDone dynesty (dynamic) in {ndur} seconds' )
             # Print summary of the results:
@@ -77,8 +114,10 @@ class Sampler () :
             if nsample is None :
                 raise RuntimeError( '`nsample = None` but you should provide a number '
                                     'of samples to draw when running with emcee.')
+            kw = emcee_default_sampling_kw
+            kw.update( emcee_sampling_kw )
             tstart = time()
-            self.emcee_state = self.sampler.run_mcmc( pos, nsample, **emcee_sampling_kw )
+            self.emcee_state = self.sampler.run_mcmc( pos, nsample, **kw )
             ndur = time() - tstart
             print( f'\nDone emcee in {ndur} seconds' )
             
