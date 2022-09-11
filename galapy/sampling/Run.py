@@ -406,7 +406,7 @@ parameters = {{
     # Star Formation History #
     ##########################
     
-    'sfh.tau_quench' : ( [6., 11.], True )
+    'sfh.tau_quench' : ( [6., 11.], True ),
 
     # In-Situ model
     'sfh.psi_max' : ( [0., 4.], True ),
