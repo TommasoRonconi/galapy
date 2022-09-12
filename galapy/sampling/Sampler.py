@@ -10,7 +10,7 @@ emcee_default_sampler_kw = { 'moves' : None, 'args' : None, 'kwargs' : None }
 emcee_default_sampling_kw = { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
                               'tune' : False, 'skip_initial_state_check' : False,
                               'thin_by' : 1, 'thin' : None, 'store' : True,
-                              'progress' : False, 'progress_kwargs' : None }
+                              'progress' : True, 'progress_kwargs' : None }
 
 #############################################################################################
 
