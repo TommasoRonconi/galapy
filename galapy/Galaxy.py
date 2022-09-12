@@ -79,7 +79,8 @@ class GXY () :
         
         # tell the CSP constructor to build with
         # SN support if Radio support is requested
-        csp[ 'CCSN' ] = do_Radio 
+        # and is not already included in SSps
+        csp[ 'CCSN' ] = do_Radio and 'br22.NT' not in self.csp.ssp_lib
 
         self.csp = CSP( **csp )
         self.csp.set_parameters( self.age, self.sfh )
@@ -111,22 +112,24 @@ class GXY () :
 
         self.nff   = None
         self.snsyn = None
-        if do_Radio :
-            # Build the Nebular-Free support only if
+        # Build the Nebular-Free support only if
+        # it is not already included in the SSP library
+        if do_Radio and 'br22.NTL' not in self.csp.ssp_lib :
+            if nff is None :
+                nff = {}
+            self.nff = NFF( self.csp.l, **nff )
+            self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
+            self.w912 = self.csp.l <= 912.
+            self.params[ 'nff' ] = self.nff.params
+
+            # Build the Synchrotron support only if
             # it is not already included in the SSP library
             if 'br22.NT' not in self.csp.ssp_lib :
-                if nff is None :
-                    nff = {}
-                self.nff = NFF( self.csp.l, **nff )
-                self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
-                self.w912 = self.csp.l <= 912.
-                self.params[ 'nff' ] = self.nff.params
-
-            if syn is None :
-                syn = {}
-            syn[ 'RCCSN' ] = self.csp.core.RCCSN()
-            self.snsyn = SNSYN( self.csp.l, **syn )
-            self.params[ 'syn' ] = self.snsyn.params
+                if syn is None :
+                    syn = {}
+                syn[ 'RCCSN' ] = self.csp.core.RCCSN()
+                self.snsyn = SNSYN( self.csp.l, **syn )
+                self.params[ 'syn' ] = self.snsyn.params
                 
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
