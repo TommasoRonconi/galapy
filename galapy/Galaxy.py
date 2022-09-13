@@ -79,8 +79,11 @@ class GXY () :
         
         # tell the CSP constructor to build with
         # SN support if Radio support is requested
-        # and is not already included in SSps
-        csp[ 'CCSN' ] = do_Radio and 'br22.NT' not in self.csp.ssp_lib
+        csp[ 'CCSN' ] = do_Radio
+        # NOTE THAT a more consistent implementation would be
+        # to also set the parameter to false if synchrotron
+        # is already included in the SSps, left for future development:
+        # csp[ 'CCSN' ] = do_Radio and 'br22.NT' not in csp['ssp_lib']
 
         self.csp = CSP( **csp )
         self.csp.set_parameters( self.age, self.sfh )
