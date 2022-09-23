@@ -18,10 +18,9 @@ import sys
 # sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
 # sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
 import galapy
+import galapy.sampling
+import galapy.configuration
 import galapy.internal
-import galapy.SFH_core
-import galapy.CSP_core
-import galapy.ISM_core
 
 # -- Configuration for ReadTheDocs setup -------------------------------------
 
@@ -45,7 +44,7 @@ for fn in glob.glob("../notebooks/*.ipynb"):
 # -- Project information -----------------------------------------------------
 
 project = 'GaLapy'
-copyright = '2021, Tommaso Ronconi'
+copyright = '2022, Tommaso Ronconi'
 author = 'Tommaso Ronconi'
 
 # -- General configuration ---------------------------------------------------
