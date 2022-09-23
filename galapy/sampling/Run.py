@@ -50,7 +50,7 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
 
 ################################################################################
 
-def loglikelihood ( par, data, model, handler ) :
+def loglikelihood ( par, data, model, handler, **kwargs ) :
 
     try :
         model.set_parameters( **handler.return_nested( par ) )
@@ -61,24 +61,25 @@ def loglikelihood ( par, data, model, handler ) :
     return gaussian_loglikelihood( data   = data.fluxes,
                                    error  = data.errors,
                                    model  = flux_model,
-                                   uplims = data.uplims )
+                                   uplims = data.uplims,
+                                   **kwargs )
 
-def loglikelihood_globals ( par ) :
-    return loglikelihood( par, gxy_data, gxy_model, gxy_params )
+def loglikelihood_globals ( par, **kwargs ) :
+    return loglikelihood( par, gxy_data, gxy_model, gxy_params, **kwargs )
 
 ################################################################################
 
 # Include prior in likelihood (here uniform prior)
-def logprob ( par, data, model, handler ) :
+def logprob ( par, data, model, handler, **kwargs ) :
     
     pmin, pmax = handler.par_prior.T
     if all( ( pmin < par ) & ( par < pmax ) ) :
-        return loglikelihood( par, data, model, handler )
+        return loglikelihood( par, data, model, handler, **kwargs )
     
     return -numpy.inf
 
-def logprob_globals ( par ) :
-    return logprob( par, gxy_data, gxy_model, gxy_params )
+def logprob_globals ( par, **kwargs ) :
+    return logprob( par, gxy_data, gxy_model, gxy_params, **kwargs )
 
 ################################################################################
         
@@ -108,8 +109,12 @@ def sample_serial ( hyperpar ) :
 
         # Build sampler
         kw = hyperpar.sampler_kw
-        kw.update( { 'logl_args' : ( gxy_data, gxy_model, gxy_params ),
-                     'ptform_args' : (gxy_params.par_prior,) } ) 
+        kw.update(
+            { 'logl_args' : ( gxy_data, gxy_model, gxy_params ),
+              'logl_kwargs' : { 'method_uplims' : hyperpar.method_uplims },
+              'ptform_args' : (gxy_params.par_prior,)
+            }
+        ) 
         sampler = Sampler( loglikelihood = loglikelihood,
                            ndim = len( gxy_params.par_free ),
                            sampler = hyperpar.sampler,
@@ -123,7 +128,11 @@ def sample_serial ( hyperpar ) :
 
         # Build sampler
         kw = hyperpar.sampler_kw
-        kw.update( { 'args' : ( gxy_data, gxy_model, gxy_params ) } ) 
+        kw.update(
+            { 'args' : ( gxy_data, gxy_model, gxy_params ),
+              'kwargs' : { 'method_uplims' : hyperpar.method_uplims }
+            }
+        ) 
         sampler = Sampler( loglikelihood = logprob,
                            ndim = len( gxy_params.par_free ),
                            sampler = hyperpar.sampler,
@@ -166,8 +175,12 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
 
             # Build sampler
             kw = hyperpar.sampler_kw
-            kw.update( { 'ptform_args' : ( gxy_params.par_prior, ),
-                         'queue_size' : Ncpu } ) 
+            kw.update(
+                { 'ptform_args' : ( gxy_params.par_prior, ),
+                  'logl_kwargs' : { 'method_uplims' : hyperpar.method_uplims },
+                  'queue_size' : Ncpu
+                }
+            ) 
             sampler = Sampler( loglikelihood = loglikelihood_globals,
                                ndim = len( gxy_params.par_free ),
                                sampler = hyperpar.sampler,
@@ -182,6 +195,7 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
 
             # Build sampler
             kw = hyperpar.sampler_kw
+            kw.update( { 'kwargs' : { 'method_uplims' : hyperpar.method_uplims } } )
             sampler = Sampler( loglikelihood = logprob_globals,
                                ndim = len( gxy_params.par_free ),
                                sampler = hyperpar.sampler,
@@ -314,6 +328,13 @@ fluxes = None
 errors = None
 uplims = None
 
+# Method for treatment of the upper limits, when present.
+# Available methods are:
+# - 'simple' : 
+# - 'chi2' :
+# - 'S12' :
+method_uplims = 'chi2'
+
 ########################################
 # Parameters defining the galaxy model #
 ########################################
@@ -355,7 +376,7 @@ do_Radio = False
 # Whether to build a galaxy containing an AGN (True) or not (False).
 do_AGN = False
 
-# Whether to sub-sample the wavelenght grid.
+# Sub-sampling of the wavelenght grid.
 # If lstep is an integer it will consider a wavelenght grid entry every lstep values.
 # If lstep is a sequence of integers or a mask, only the wavelenght grid entries
 # corresponding to the indices provided will be considered.
@@ -388,9 +409,9 @@ lstep = None
 #   The list `a_list` contains the minimum and maximum value of the
 #   UNIFORM prior from which to draw samples for the 'free_parameter'.
 #   The boolean `a_bool` states whether the prior has to be considered
-#   * logarithmic: `a_bool = True` therefore samples wille be drawn from the interval
+#   * logarithmic: `a_bool = True` therefore samples will be drawn from the interval
 #                  10**min(a_list) < 'free_parameter' < 10**max(a_list)
-#   * linear: `a_bool = True` therefore samples wille be drawn from the interval
+#   * linear: `a_bool = True` therefore samples will be drawn from the interval
 #             min(a_list) < 'free_parameter' < max(a_list)
 
 parameters = {{
