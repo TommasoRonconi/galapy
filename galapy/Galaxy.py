@@ -139,13 +139,13 @@ class GXY () :
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
 
-        # Build the redshift-dependent constant for lum->flux conversion
-        zz = numpy.ascontiguousarray(self.cosmo.DL.get_x())
-        TF = numpy.ascontiguousarray(
-            1.e+26 * (1 + zz) * Lsun /
-            ( 4 * numpy.pi * clight['A/s'] * self.cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
-        )
-        self._to_flux = lin_interp( zz, TF )
+        # # Build the redshift-dependent constant for lum->flux conversion
+        # zz = numpy.ascontiguousarray(self.cosmo.DL.get_x())
+        # TF = numpy.ascontiguousarray(
+        #     1.e+26 * (1 + zz) * Lsun /
+        #     ( 4 * numpy.pi * clight['A/s'] * self.cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
+        # )
+        # self._to_flux = lin_interp( zz, TF )
         
     def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
@@ -331,7 +331,8 @@ class GXY () :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
-        return self.get_emission() * self.wl()**2 * self._to_flux( self.redshift )
+        return self.cosmo.to_flux( self.redshift, self.wl(), self.get_emission() )
+        # return self.get_emission() * self.wl()**2 * self._to_flux( self.redshift )
     
 
 class PhotoGXY ( GXY ) :

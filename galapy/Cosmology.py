@@ -32,7 +32,31 @@ class CSM () :
             ( 4 * numpy.pi * clight['A/s'] * DL**2 * Mpc_to_cm**2 )
         )
         UA = numpy.ascontiguousarray(UA)
-        self.DL = lin_interp( zz, DL )
+        self.DL  = lin_interp( zz, DL )
         self.age = lin_interp( zz, UA )
+        self._TF = lin_interp( zz, TF )
+
+    def to_flux ( self, redshift, restframe_wavelenght, luminosity )  :
+        """ Converts a restframe luminosity to the flux received at 
+        a given redshift.
+        
+        .. math::
+        
+          S_{\lambda_O} = \lambda_R^2 * L_tot(\lambda_R) * (1+z)/(4 * \pi * c * D_L^2 )
+        
+        Parameters
+        ----------
+        redshift : float
+        restframe_wavelenght : array-like 
+        luminosity : array-like
+        
+        Returns
+        -------
+        : array-like
+          a flux in milliJansky
+        """
+        return luminosity * restframe_wavelenght**2 * self._TF( redshift ) 
+
+        
 
 
