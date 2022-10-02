@@ -330,9 +330,11 @@ uplims = None
 
 # Method for treatment of the upper limits, when present.
 # Available methods are:
-# - 'simple' : 
-# - 'chi2' :
-# - 'S12' :
+# - 'simple' : a heaviside function which is 0. when the model's flux is
+#              smaller than the upper-limit and +infty otherwise
+# - 'chi2' : the distance between model and data is expressed as a normal chi-squared
+# - 'S12' : modified version of the chi-squared integrating a gaussian, with mean = data-flux
+#           and std = data-error, up to the value of the model's flux (Sawicki, 2012)
 method_uplims = 'chi2'
 
 ########################################
