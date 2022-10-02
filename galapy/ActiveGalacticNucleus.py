@@ -23,12 +23,17 @@ _template_pars = {
 }
 
 def find_template_par ( key, value ) :
+    """ Given a key-value pair returns the parameter corresponding to `key`
+    included in the template-library and closest to `value`
+    """
     try :
         return _template_pars[ key ][ find_nearest( _template_pars[ key ], value ) ]
     except KeyError :
         raise AttributeError( f"Parameter '{key}' is not a valid template parameter." )
 
 def agn_build_params ( fAGN, **kwargs ) :
+    """ Standard function for building the parameters dictionary of class AGN()
+    """
     out = {
         'fAGN' : fAGN,
         'template' : {
@@ -78,15 +83,34 @@ class AGN () :
       number of padding values to match the requested wavelenght domain
     fAGN : float
       fraction of the total reference emission
+    do_Xray : bool
+      If :code:`True` compute the X-ray template along with the closest template for
+      the lower energy part of the spectrum (default is :code:`True`)
 
     Keyword Arguments
     -----------------
     ct : scalar
-    al : scalar
-    be : scalar
+      the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane:
+    
+      .. math ::
+         
+         \Theta = 90^\circ - \dfrac{\Gamma}{2}
+
+    al, be : scalars
+      parameters regulating the dust density distribution in spherical coordinates, respectively :math:`\alpha` and :math:`\beta` in
+    
+      .. math ::
+         
+         \rho \propto r^\beta e^{- \alpha|\cos\theta|}
+    
     ta : scalar
+      the optical depth at :math:`9.7\ \mu m`
     rm : scalar
-    ia : scalar   
+      the ratio between the maximum to minimum radii of the dusty torus      
+    ia : scalar
+      the inclination angle between the rotation axis of the AGN torus and the line of sight.
+      Note that by assuming the unifed AGN model, with :code:`ia = 90` the geometry of the object corresponds to a type 1 AGN, 
+      while :code:`ia = 0` to a type 2 AGN.
     """
     
     def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, do_Xray = True, **kwargs ) :
@@ -144,6 +168,8 @@ class AGN () :
         return;
 
     def compute_X_template ( self ) :
+        """ Pre-computes the not-normalized and not-corrected X spectrum. 
+        """
 
         # generate wavelenght grid
         ll = numpy.logspace( numpy.log10( self.lmin ),
@@ -194,6 +220,23 @@ class AGN () :
         return;
 
     def emission ( self, ll, Lref ) :
+        """ Computes the emission coming from the AGN adding the X-ray part 
+        if the internal variable do_Xray has been set to :code:`True` at build time
+        
+        Parameters
+        ----------
+        ll : iterable
+          wavelenght list or array or iterable
+        Lref : float
+          bolometric reference luminosity used to compute the bolometric correction
+          of the high-energy part of the spectrum
+        
+        Returns
+        -------
+        : numpy-array
+          Luminosity per unit wavelenght in units of solar luminosities emitted by
+          the AGN.
+        """
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
         if self.do_Xray :
