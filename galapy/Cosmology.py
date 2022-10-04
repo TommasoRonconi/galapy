@@ -12,9 +12,40 @@ from galapy.internal.data import DataFile
 
 
 class CSM () :
+    """ Class for cosmological computations. It is built using pre-computed redshift-dependent
+    quantities useful for transforming energies radiated per unit wavelenght into fluxes from
+    objects at a given distance.
+    
+    Parameters
+    ----------
+    cosmo : string or dictionary
+      If a string is passed, it should name one of the pre-computed cosmologies available in the
+      database. Available cosmologies are :code:`('WMAP7', 'WMAP9', 'Planck15', 'Planck18')`.
+      If a dictionary is passed, the class expects to find 3 key-value couples:
+      * key = 'redshift', value = an array of redshift values;
+      * key = 'luminosity_distance', value = an array of luminosity distances corresponding to 
+        the redshift values of the first key-value couple;
+      * key = 'age', value = an array of ages of the Universe corresponding to the redshift 
+        values of the first key-value couple.
+      It is obvious all these arrays should have the same lenght.
+    
+    Attributes
+    ----------
+    At construction the class builds 2 interpolator-objects: :code:`CSM.DL` and :code:`CSM.age`.
+    These objects provide an interpolation interface to the pre-computed values of luminosity 
+    distance and age of the Universe.
+    They can be called as functions:
+    
+    .. code ::
+      
+      $ csm = CSM('Planck18')
+      $ csm.DL(1.0)
+      6791.26894
+
+    The returned value is in MegaParsecs for the luminosity distance and in years for the age.
+    """
     
     def __init__ ( self, cosmo ) :
-        """"""
         
         if isinstance( cosmo, str ) :
             zz, DL, UA = numpy.loadtxt( DataFile( f'{cosmo:s}.txt',
