@@ -1,4 +1,51 @@
-""" The ActiveGalacticNucleus module implements the AGN contribution by loading templates from Fritz et al., 2006
+r""" The ActiveGalacticNucleus module implements the AGN contribution by loading templates from Fritz et al., 2006.
+
+Templated emission is divided into 3 components:
+
+- Accretion disk around the central SMBH (accessible through the instance variable :code:`AGN().disk`)
+- Scattered emission by the surrounding dusty torus (accessible through the instance variable :code:`AGN().scat`)
+- Thermal dust emission associated to the dusty torus (accessible through the instance variable :code:`AGN().ther`)
+
+The templates are computed accounting for the variation of 6 structural parameters:
+
+- the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane:
+
+  .. math ::
+
+    \Theta = 90^\circ - \dfrac{\Gamma}{2}
+
+- the dust density distribution in spherical coordinates:
+
+  .. math ::
+
+    \rho \propto r^\beta e^{- \alpha|\cos\theta|}
+
+  parameterized in terms of :math:`\alpha` and :math:`\beta`;
+- the ratio :math:`R^\text{AGN}_\text{torus}` between the maximum to minimum radii of the dusty torus;
+- the optical depth :math:`\tau^\text{AGN}_{9.7}` at :math:`9.7\ \mu m`;
+- the viewing angle :math:`\Psi^\text{AGN}_\text{los}`, i.e. the angle between the rotation axis and the line-of-sight.
+  (note that by assuming the unifed AGN model, with :math:`\Psi^\text{AGN}_\text{los} = 90^\circ` the geometry of 
+  the object corresponds to a type 1 AGN, while :math:`\Psi^\text{AGN}_\text{los} = 0^\circ` to a type 2 AGN)
+  
+The above parameters in our implementation are controlled through the above parameters following the original naming schema used by the authors and summarized in the following table:
+
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| Parameter                          | Key        | :math:`N_\text{values}` | Values                                                         |
++====================================+============+=========================+================================================================+
+| :math:`\Theta`                     | :code:`ct` | 3                       | (:math:`20^\circ,\ 40^\circ,\ 60^\circ`)                       |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+ 
+| :math:`\alpha`                     | :code:`al` | 4                       | (:math:`0,\ 2,\ 4,\ 6`)                                        |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\beta`                      | :code:`be` | 5                       | (:math:`-1,\ -0.75,\ -0.5,\ -0.25,\ 0`)                        |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`R^\text{AGN}_\text{torus}`  | :code:`rm` | 5                       | (:math:`10,\ 30,\ 60,\ 100,\ 150`)                             |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\tau^\text{AGN}_{9.7}`      | :code:`ta` | 8                       | (:math:`0.1,\ 0.3,\ 0.6,\ 1,\ 2,\ 3,\ 6,\ 10`)                 |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\Psi^\text{AGN}_\text{los}` | :code:`ia` | 10                      | :math:`0^\circ` to :math:`90^\circ` with step :math:`10^\circ` |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+
+Which results in 24000 available templates. The user can nevertheless set the parameters to whatever value and the template whose parameters are closer to the selection is chosen.
 """
 
 # External imports
@@ -54,8 +101,8 @@ def agn_build_params ( fAGN, **kwargs ) :
 # AGN class
 #################################################################################
 
-vclass AGN () :
-    """ AGN component class
+class AGN () :
+    r""" AGN component class
     This class implements the templated emission from an Active Galactic Nucleus
     within the galaxy.
     We use templates from Fritz et al., 2006 to model the AGN emission normalized
@@ -90,19 +137,11 @@ vclass AGN () :
     Keyword Arguments
     -----------------
     ct : scalar
-      the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane:
-    
-      .. math ::
-         
-         \Theta = 90^\circ - \dfrac{\Gamma}{2}
-
-    al, be : scalars
-      parameters regulating the dust density distribution in spherical coordinates, respectively :math:`\alpha` and :math:`\beta` in
-    
-      .. math ::
-         
-         \rho \propto r^\beta e^{- \alpha|\cos\theta|}
-    
+      the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane
+    al : scalar
+      parameter regulating the dust density distribution in spherical coordinates, corresponds to :math:`\alpha`
+    be : scalar
+      parameter regulating the dust density distribution in spherical coordinates, corresponds to :math:`\beta`
     ta : scalar
       the optical depth at :math:`9.7\ \mu m`
     rm : scalar
@@ -207,7 +246,7 @@ vclass AGN () :
         
 
     def X_bolometric_correction ( self, Lref ) :
-        """ Computes the bolometric correction from Duras et al., 2020 (Eq. 2):
+        r""" Computes the bolometric correction from Duras et al., 2020 (Eq. 2):
         
         .. math ::
         
@@ -226,7 +265,7 @@ vclass AGN () :
         return 10.96 * ( 1. + ( numpy.log10( Lref ) / 11.93 )**17.79 )
         
     def set_parameters ( self, fAGN = None, **kwargs ) :
-        """ Sets the internal parameters defining the emission coming from the AGN.
+        r""" Sets the internal parameters defining the emission coming from the AGN.
         All the parameters that are not passed to this function will be left to the
         value they already have.
         
@@ -236,11 +275,9 @@ vclass AGN () :
           sets the normalization of the templated emission. The parameters fAGN 
           provides the amount of energy radiated by the AGN in units of some other
           emission contributor, typically the energy radiated by dust in the same band.
-
-        Keyword Arguments
-        -----------------
-        These are the parameters passed to function :code:`find_template_par`. Used
-        to find the nearest AGN emission template in the Fritz et al. (2006) library.
+        **kwargs 
+          These are the parameters passed to function :code:`find_template_par`. Used
+          to find the nearest AGN emission template in the Fritz et al. (2006) library.
         """
 
         if fAGN is not None :

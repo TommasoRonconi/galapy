@@ -10,3 +10,7 @@ Each of the galactic component can be used independently and, eventually, extend
    galapy.StarFormationHistory
    galapy.CompositeStellarPopulation
    galapy.InterStellarMedium
+   galapy.ActiveGalacticNucleus
+   galapy.NebularFreeFree
+   galapy.Synchrotron
+   galapy.XRayBinaries
