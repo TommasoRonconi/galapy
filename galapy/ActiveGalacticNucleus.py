@@ -54,7 +54,7 @@ def agn_build_params ( fAGN, **kwargs ) :
 # AGN class
 #################################################################################
 
-class AGN () :
+vclass AGN () :
     """ AGN component class
     This class implements the templated emission from an Active Galactic Nucleus
     within the galaxy.
@@ -136,6 +136,8 @@ class AGN () :
             self.compute_X_template()
 
     def load_template ( self ) :
+        """ Loads the template corresponding to the current parameters (mostly intended for internal usage).
+        """
 
         # load template from closest file to the parameters chosen
         filename = self._filebase.format( *( self.params[ 'template' ][k]
@@ -168,7 +170,7 @@ class AGN () :
         return;
 
     def compute_X_template ( self ) :
-        """ Pre-computes the not-normalized and not-corrected X spectrum. 
+        """ Pre-computes the not-normalized and not-bolometric-corrected X-ray spectrum. 
         """
 
         # generate wavelenght grid
@@ -205,11 +207,41 @@ class AGN () :
         
 
     def X_bolometric_correction ( self, Lref ) :
-        """ Duras et al., 2020
+        """ Computes the bolometric correction from Duras et al., 2020 (Eq. 2):
+        
+        .. math ::
+        
+          \dfrac{L_\text{bol}^\text{AGN}}{L_\text{X}^\text{AGN}} \approx 10.96\;\biggl[1 + \biggl(\dfrac{\log L_\text{bol}^\text{AGN}/L_\odot}{11.93}\biggr)^17.79\biggr]
+
+        Parameters
+        ----------
+        Lref : scalar
+          Bolometric luminosity of the AGN in units of solar luminosities :math:`L_\odot`
+        
+        Returns
+        -------
+        : scalar
+          Value of the bolometric correction.
         """
         return 10.96 * ( 1. + ( numpy.log10( Lref ) / 11.93 )**17.79 )
         
     def set_parameters ( self, fAGN = None, **kwargs ) :
+        """ Sets the internal parameters defining the emission coming from the AGN.
+        All the parameters that are not passed to this function will be left to the
+        value they already have.
+        
+        Parameters
+        ----------
+        fAGN : scalar
+          sets the normalization of the templated emission. The parameters fAGN 
+          provides the amount of energy radiated by the AGN in units of some other
+          emission contributor, typically the energy radiated by dust in the same band.
+
+        Keyword Arguments
+        -----------------
+        These are the parameters passed to function :code:`find_template_par`. Used
+        to find the nearest AGN emission template in the Fritz et al. (2006) library.
+        """
 
         if fAGN is not None :
             self.params.update( fAGN = fAGN )
@@ -225,7 +257,7 @@ class AGN () :
         
         Parameters
         ----------
-        ll : iterable
+        ll : sequence
           wavelenght list or array or iterable
         Lref : float
           bolometric reference luminosity used to compute the bolometric correction
