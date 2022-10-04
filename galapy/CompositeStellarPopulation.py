@@ -1,8 +1,5 @@
 """ GalaPy module for combining Simple Stellar Populations(SSP) into a 
-    Composite Stellar Population (CSP).
-
-
-
+Composite Stellar Population (CSP).
 """
 
 # External imports
@@ -32,11 +29,11 @@ def print_ssp_libs () :
     
     This has the only purpose of listing the possible choices.
 
-    Naming convention: **author.method.imf.filling_schema**
+    Naming convention: **author.method[.imf].filling_schema**
 
     #. **author**: An achronym for the authors of the SSP library
     #. **method**: if present, shows which method was used to compute the SSP
-    #. **imf**: initial mass function
+    #. **imf**: if present shows the initial mass function used to compute the SSP
     #. **filling_schema**: all the SSPs' wavelenght domain has been extended to
        span from :math:`1\ \mathring{A}` to :math:`10^{10}\ \mathring{A}`. 
        This code provides the strategy used (:code:`extend` = filled with zeros, 
@@ -128,8 +125,11 @@ class CSP () :
         Parameters
         ----------
         il : uint or array-like of uints
+          index in the wavelenght-grid of pre-computed SSPs
         it : uint or array-like of uints
+          index in the time-grid of pre-computed SSPs
         iz : uint or array-like of uints
+          index in the metallicity-grid of pre-computed SSPs
         
         Returns
         -------
