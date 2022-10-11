@@ -10,6 +10,123 @@ from galapy.internal.utils import set_nested, unwrap_items
 
 ########################################################################################
 
+gxy_params_defaults = {
+
+    ##########
+    # Galaxy #
+    ##########
+
+    'age'      : ( 'Age of the galaxy',
+                   [6., 11.], True, 'age' ),
+    'redshift' : ( 'Redshift of the galaxy',
+                   [0., 10.], False, 'redshift' ),
+
+    ##########################
+    # Star Formation History #
+    ##########################
+    
+    'sfh.tau_quench' : ( 'Age of the abrupt quenching',
+                         [6., 11.], True, '\\tau_\\mathrm{quench}' ),
+
+    # In-Situ model
+    'sfh.psi_max' : ( 'Normalisation',
+                      [0., 4.], True, '\\psi_\\mathrm{max}' ),
+    'sfh.tau_star' : ( 'Characteristic timescale',
+                       [6., 11.], True, '\\tau_\\star' ),
+
+    # Constant model
+    'sfh.psi'   : ( 'Value of the constant SFR',
+                    [0., 4.], True, '\\psi_0' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgs'   : ( 'Characteristic timescale',
+                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+    
+    # Delayed-Exponential model
+    'sfh.psi_norm' : ( 'Normalisation',
+                       [0., 4.], True, '\\psi_\\mathrm{norm}' ),
+    'sfh.k_shape'  : ( 'Shape parameter of the early evolution',
+                       [0., 5.], False, '\\kappa' ),
+    'sfh.tau_star' : ( 'Characteristic timescale',
+                       [6., 11.], True, '\\tau_\\star' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgs'   : ( 'Metallicity of all phases in galaxy at the given age',
+                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+    
+    # Log-Normal model
+    'sfh.psi_norm'   : ( 'Normalisation',
+                         [0., 4.], True, '\\psi_\\mathrm{norm}' ),
+    'sfh.sigma_star' : ( 'Characteristic width',
+                         [0., 5.], False, '\\sigma_\\star' ),
+    'sfh.tau_star'   : ( 'Peak age',
+                         [6., 11.], True, '\\tau_\\star' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgs'   : ( 'Metallicity of all phases in galaxy at the given age',
+                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+
+    ########################
+    # Inter-Stellar Medium #
+    ########################
+
+    'ism.f_MC' : ( 'Fraction of dust in the MC phase',
+                   [0., 1.], False, 'f_\\mathrm{MC}' ),
+
+    ##################
+    # Molecular Clouds
+    
+    'ism.norm_MC' : ( 'Normalisation of the MC attenuation in the visible band',
+                      [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{MC}}' ),
+    'ism.N_MC'    : ( 'Number of MCs in the galaxy',
+                      [0., 5.], True, 'N_\\mathrm{MC}' ),
+    'ism.R_MC'    : ( 'Average radius of a MC',
+                      [0., 5.], True, 'R_\\mathrm{MC}' ),
+    'ism.tau_esc' : ( 'Time required by stars to start escaping their MC',
+                      [4., 8.], True, '\\tau_\\mathrm{esc}' ),
+    'ism.dMClow'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
+    'ism.dMCupp'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
+    
+    ##############
+    # Diffuse Dust
+    
+    'ism.norm_DD' : ( '', [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{DD}}' ),
+    'ism.Rdust'   : ( '', [0., 5.], True, 'R_\\mathrm{DD}' ),
+    'ism.f_PAH'   : ( '', [0., 1.], False, 'f_\\mathrm{PAH}' ),
+    'ism.dDDlow'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
+    'ism.dDDupp'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
+
+    ###############
+    # Synchrotorn #
+    ###############
+
+    'syn.alpha_syn'   : ( '', [0., 5.], False, '\\alpha_\\mathrm{syn}' ), 
+    'syn.nu_self_syn' : ( '', [0., 1.], False, '\\nu_\\mathrm{syn}^\\mathrm{self}'),
+
+    #####################
+    # Nebular Free-Free #
+    #####################
+
+    'nff.Zgas' : ( '', [0., 2.], False, 'Z_\\mathrm{gas}' ),
+    'nff.Zi'   : ( '', [0., 10.], False, '\\mathcal{Z}^i'),
+
+    ###########################
+    # Active Galactic Nucleus #
+    ###########################
+
+    'agn.fAGN' : ( '', [-3., 3.], True, 'f_\\mathrm{AGN}' ),
+    
+    'agn.ct' : 40,
+    'agn.al' : 0.,
+    'agn.be' : -0.5,
+    'agn.ta' : 6.,
+    'agn.rm' : 60,
+    'agn.ia' : 0.001,
+
+}
+
+########################################################################################
+
 class GXYParameters () :
     
     def __init__ ( self, gxy_model, sample_params, rng_kw = {} ) :
@@ -19,7 +136,8 @@ class GXYParameters () :
         
         # Extract parameterisation from the galaxy model
         if not isinstance( gxy_model, GXY ) :
-            raise RuntimeError( f'The provided gxy_model is not an instance of class galapy.Galaxy.GXY.' )
+            raise RuntimeError(
+                f'The provided gxy_model is not an instance of class galapy.Galaxy.GXY.' )
         self.parameters = { '.'.join(k) : v for k, v in unwrap_items(gxy_model.params) }
         
         # Read fixed and free parameters from dictionary
@@ -28,7 +146,9 @@ class GXYParameters () :
         self.par_prior = []
         for key, value in sample_params.items() :
             if key not in self.parameters.keys() :
-                warnings.warn( f'Parameter "{key}" is not present in the gxy_model requested and will be ignored.')
+                warnings.warn(
+                    f'Parameter "{key}" is not present in the gxy_model '
+                    'requested and will be ignored.')
                 continue
             if isinstance(value, tuple) :
                 prior, log = value
