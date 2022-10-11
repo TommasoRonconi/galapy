@@ -10,6 +10,7 @@ from galapy.GalaxyParameters import GXYParameters
 from galapy.sampling.Statistics import gaussian_loglikelihood
 from galapy.sampling.Sampler import Sampler
 from galapy.sampling.Observation import Observation
+from galapy.sampling.Results import generate_output_base, dump_results
 from galapy.internal.utils import set_nested
 
 ################################################################################
@@ -149,9 +150,13 @@ def sample_serial ( hyperpar ) :
                               emcee_sampling_kw = hyperpar.sampling_kw )
 
     # Store results:
-    sampler.save_results( out_dir = hyperpar.output_directory,
-                          name = hyperpar.run_id,
-                          pickle_sampler = hyperpar.pickle_sampler )
+    outbase = generate_output_base( out_dir = hyperpar.output_directory,
+                                    name = hyperpar.run_id )
+    _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
+                      sampler = sampler, outbase = outbase )
+    sampler.save_results( outbase = outbase,
+                          pickle_sampler = hyperpar.pickle_sampler,
+                          pickle_raw = hyperpar.pickle_raw )
 
     return;
 
@@ -213,9 +218,13 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
                                   emcee_sampling_kw = hyperpar.sampling_kw )
 
     # Store results:
-    sampler.save_results( out_dir = hyperpar.output_directory,
-                          name = hyperpar.run_id,
-                          pickle_sampler = hyperpar.pickle_sampler )
+    outbase = generate_output_base( out_dir = hyperpar.output_directory,
+                                    name = hyperpar.run_id )
+    _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
+                      sampler = sampler, outbase = outbase )
+    sampler.save_results( outbase = outbase,
+                          pickle_sampler = hyperpar.pickle_sampler,
+                          pickle_raw = hyperpar.pickle_raw )
     
     return;
 
@@ -537,6 +546,10 @@ output_directory = ''
 # An identification name, it will be pre-pended to all files stored in the output directory
 # (if the string is empty the current date+time will be used)
 run_id = ''
+
+# Whether to pickle the sampler raw results.
+# (might be useful for analyzing run statistics)
+pickle_raw = True
 
 # Whether to pickle the sampler at the end-of-run state.
 # (might be useful for extending the run)
