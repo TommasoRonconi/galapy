@@ -158,9 +158,14 @@ def main():
                'galapy' : 'galapy',
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
                'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
-               'galapy.internal' : os.path.join( 'galapy', 'internal' )
+               'galapy.internal' : os.path.join( 'galapy', 'internal' ),
+               'galapy.analysis' : os.path.join( 'galapy', 'analysis' )
            },
-           packages = [ 'galapy', 'galapy.configuration', 'galapy.internal', 'galapy.sampling' ],
+           packages = [ 'galapy',
+                        'galapy.configuration',
+                        'galapy.internal',
+                        'galapy.sampling',
+                        'galapy.analysis' ],
            ext_modules = [
                ext_intp,
                ext_sfh,
@@ -182,6 +187,8 @@ def main():
                'scipy',
                'emcee',
                'dynesty',
+               'matplotlib',
+               'getdist',
            ]
     )
 
