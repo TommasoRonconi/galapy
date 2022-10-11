@@ -1,8 +1,13 @@
 #############################################################################################
-
 # External imports
+
 import numpy
 import sys
+
+#############################################################################################
+# Internal imports
+
+from galapy.internal.utils import now_string
 
 #############################################################################################
 
@@ -123,20 +128,42 @@ class Sampler () :
             
         return;
 
-    def save_results ( self, out_dir = '', name = '', pickle_sampler = False ) :
+    def return_samples_logl_weights ( self ) :
+
+        outtuple = None
+        if self.which_sampler == 'dynesty' :
+            weights = numpy.exp( self.sampler.results.logwt -
+                                 self.sampler.results.logz[-1] )
+            outtuple = ( self.sampler.results.samples,
+                         self.sampler.results.logl,
+                         weights )
+        if self.which_sampler == 'emcee' :
+            outtuple = ( self.sampler.flatchain,
+                         self.sampler.flatlnprobability,
+                         numpy.ones_like( self.sampler.flatlnprobability ) )
+        if outtuple is None :
+            raise RuntimeError(
+                "Function must be called after sampling run"
+            )
+        
+        return outtuple
+
+    def save_results ( self, outbase = '',
+                       pickle_sampler = False,
+                       pickle_raw = True ) :
         """ Store the results of the last sampling run.
         NOTE THAT the type of output depends on the sampler used.
         
         Parameters
         ----------
-        out_dir : string
+        outbase : string
           Position in the filesystem where the results will be stored.
-          Default to the directory where the command has been called.
-        name : string 
-          A string identifying the run that will be saved. 
-          By default it will use a string with the current date+time 
+          Default to the directory where the command has been called with
+          a current date+time as name.
         pickle_sampler : bool
           If set to `True` the sampler will be pickled for future re-use.
+        pickle_raw : bool
+          If set to `True` the raw results of the sampling run will be pickled.
         
         Returns
         -------
@@ -145,56 +172,39 @@ class Sampler () :
         import os
         import pickle
 
-        # If no output directory is passed, set it to the current working directory
-        if len( out_dir ) == 0 or out_dir is None :
-            out_dir = os.getcwd()
-
-        # First check whether the required output directory exists,
-        # if not it will be created in the correct position of the file-system
-        if not os.path.isdir( out_dir ) :
-            try :
-                # creates multi-level subdirs. similarly to the *Nix command `mkdir -p`
-                # (while os.mkdir() only allows to create the highest level directory)
-                os.makedirs( out_dir ) 
-            except OSError:
-                print ( f"Creation of the directory {out_dir} failed" )
-
+                    
         # If no name for the current run has been provided, set it to
         # a string with the current date+time: 'year+month+day+hour+minute'
-        if len(name) == 0 :
-            from time import localtime as lt
-            now = lt()
-            name = ( f'{now.tm_year:04}{now.tm_mon:02}{now.tm_mday:02}' +
-                     f'{now.tm_hour:02}{now.tm_min:02}' )
-
-        # Set the string with the output base name
-        outbase = os.path.join( out_dir, name )
+        if len(outbase) == 0 :
+            outbase = now_string()
             
         if self.which_sampler == 'dynesty' :
-            with open( '_'.join( [ outbase, 'dynesty_results.pickle' ] ), 'wb' ) as f :
-                pickle.dump( self.sampler.results, f )
+            if pickle_raw :
+                with open( '_'.join( [ outbase, 'dynesty_results.pickle' ] ), 'wb' ) as f :
+                    pickle.dump( self.sampler.results, f )
             if pickle_sampler :
                 with open( '_'.join( [ outbase, 'dynesty_sampler.pickle' ] ), 'wb' ) as f :
                     pickle.dump( self.sampler, f )
 
         if self.which_sampler == 'emcee' :
-            # Pickling sampler-state:
-            with open( '_'.join( [ outbase, 'emcee_state.pickle' ] ), 'wb' ) as f :
-                pickle.dump( self.emcee_state, f )
-            # Storing the flattened chains:
-            numpy.save( '_'.join( [ outbase, 'emcee_flatchain' ] ),
-                        self.sampler.flatchain )
-            # Storing the flattened probabilities:
-            numpy.save( '_'.join( [ outbase, 'emcee_flatlnprob' ] ),
-                        self.sampler.flatlnprobability )
-            # Storing the acceptance-fraction:
-            numpy.save( '_'.join( [ outbase, 'emcee_axeptfrac' ] ),
-                        self.sampler.acceptance_fraction )
+            if pickle_raw :
+                # Pickling sampler-state:
+                with open( '_'.join( [ outbase, 'emcee_state.pickle' ] ), 'wb' ) as f :
+                    pickle.dump( self.emcee_state, f )
+                # Storing the flattened chains:
+                numpy.save( '_'.join( [ outbase, 'emcee_flatchain' ] ),
+                            self.sampler.flatchain )
+                # Storing the flattened probabilities:
+                numpy.save( '_'.join( [ outbase, 'emcee_flatlnprob' ] ),
+                            self.sampler.flatlnprobability )
+                # Storing the acceptance-fraction:
+                numpy.save( '_'.join( [ outbase, 'emcee_axeptfrac' ] ),
+                            self.sampler.acceptance_fraction )
             if pickle_sampler :
                 with open( '_'.join( [ outbase, 'emcee_sampler.pickle' ] ), 'wb' ) as f :
                     pickle.dump( self.sampler, f )
 
-        print( f'Results stored in files with prefix: {outbase}' )
+        print( f'Sampler results stored in files with prefix: {outbase}' )
 
         return;
 
