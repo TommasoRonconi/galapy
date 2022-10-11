@@ -270,6 +270,121 @@ def set_nested ( d, kl, v ) :
 
 ###################################################################################
 
+def get_nested ( d, kl ) :
+    if len( kl ) > 1 and isinstance( d, MM ) :
+        return get_nested( d[ kl.pop( 0 ) ], kl )
+    return d[ kl.pop( 0 ) ]
+
+###################################################################################
+
+def func_scalar_or_array ( var, function, *args, **kwargs ) :
+    """ A function applying some function to a scalar or an ndarray.
+    
+    Parameters
+    ----------
+    var : scalar or ndarray
+        The argument of the function
+    function : callable
+        A function taking a scalar as input
+    args : sequence
+        A list or tuple of additional arguments to be passed to function
+    kwargs : dict
+        A dictionary of additional keyword arguments to be passed to function
+    
+    Returns
+    -------
+    : scalar or ndarray
+        Depending on the shape of ``var``, it is the result of 
+        - if ``var`` is a scalar it is the result of ``function(var)``
+        - if ``var`` is an ndarray it is the result of 
+          ``array([function(v) for v in var])``
+    """
+    var = numpy.asarray(var)
+    scalar = False
+    if var.ndim == 0 :
+        var = var[None]
+        scalar = True
+    ret = numpy.array([function(v,*args,**kwargs) for v in var])
+    if scalar :
+        return ret[0]
+    return ret
+
+###################################################################################
+
+def quantile_weighted ( values, quantiles, weights = None, 
+                        values_sorted = False, old_style = False, 
+                        axis=-1 ) :
+    """ Very close to numpy.percentile, but supports weights.
+    (partially stolen from stackoverflow: 
+     https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy)
+
+    Parameters
+    ----------
+    values : numpy.array 
+        with data
+    quantiles : array-like 
+        quantiles needed (NOTE: quantiles should be in [0, 1]!)
+    sample_weight : array-like 
+        same length as ``values``
+    values_sorted : bool
+        if True, then will avoid sorting of initial array
+    old_style : bool
+        if True, will correct output to be consistent
+        with numpy.percentile.
+    axis : int
+    
+    Returns
+    -------
+    : numpy.array 
+        computed quantiles.
+    """
+    values = numpy.array(values)
+    quantiles = numpy.array(quantiles)
+    if weights is None:
+        weights = numpy.ones(len(values))
+        
+    weights = numpy.array(weights)
+    if numpy.any(quantiles < 0) or numpy.any(quantiles > 1) :
+        raise ValueError( 'Quantiles should be in [0, 1]' )        
+
+    def get_weighted_1D( val, wgh ) :
+        if not values_sorted :
+            sorter = numpy.argsort(val)
+            val = val[sorter]
+            wgh = weights[sorter]
+            
+        weighted_quantiles = numpy.cumsum(wgh) - 0.5 * wgh
+        if old_style : 
+            # To be convenient with numpy.percentile
+            weighted_quantiles -= weighted_quantiles[0]
+            weighted_quantiles /= weighted_quantiles[-1]
+        else :
+            weighted_quantiles /= numpy.sum(wgh)
+        return numpy.interp(quantiles, weighted_quantiles, val)
+    
+    if values.ndim > 1 :
+        axes = numpy.delete(numpy.arange(values.ndim, dtype=numpy.int64), axis)
+        res = numpy.empty( ( *[values.shape[a] for a in axes], *quantiles.shape ) )
+        values = numpy.transpose(values, axes = numpy.append( axes, axis ))
+        for i, val in enumerate(values) :
+            res[i] = get_weighted_1D( val, weights )
+
+        return res.T
+    
+    return get_weighted_1D( values, weights )
+
+###################################################################################
+
+def now_string () :
+    """ Generates a string with the minute the function is called
+    """
+    from time import localtime as lt
+    now = lt()
+    return ( f'{now.tm_year:04}{now.tm_mon:02}{now.tm_mday:02}' +
+             f'{now.tm_hour:02}{now.tm_min:02}' )
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
