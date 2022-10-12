@@ -31,7 +31,7 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 import galapy as gp
 from galapy.GalaxyParameters import gxy_params_defaults as gpdefault
 from galapy.sampling.Results import Results
-from galapy.analysis.funcs import get_parameters_summary_strings
+from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
 
 ######################################################################################
 # Basic functions
@@ -249,12 +249,25 @@ def plot_sed_flux_res ( res,
                 raise AttributeError(
                     'Attribute "observation" should be an instance of type ``Observation``'
                 )
-        
-    # Set the wavelenght (lambda) axis 
-    lx = model.wl( obs = frame in set(['obs', 'both']) )
+
+    # Set the wavelenght (lambda) axis:
+    # If 'redshift' is a free parameter the local variable
+    # will be set to the best-fit value, otherwise the
+    # spectroscopic redshift will be extracted from the model.
+    redshift = None
+    lx = None
+    obs_scale = frame in set(['obs', 'both'])
+    if 'redshift' in res.get_sampling_params().par_free :
+        redshift = res.get_bestfit( 'params' )['redshift']
+        lx = model.wl()
+        if obs_scale :
+            lx *= ( 1 + redshift )
+    else :
+        redshift = model.redshift
+        lx = model.wl( obs = obs_scale )
     
     # Set the layout
-    ax = sed_plot_layout( model.redshift, frame, ax = ax, **ax_kwargs )
+    ax = sed_plot_layout( redshift, frame, ax = ax, **ax_kwargs )
     
     ##################################################################
     # Here the plots start
@@ -270,7 +283,10 @@ def plot_sed_flux_res ( res,
                            observation.uplims )
         ff[lo] = 3*ee[lo]
         legend_primary.append(
-            plot_sed_obs( ll, ff, ee, lo, ax=ax )
+            plot_sed_obs( ll, ff, ee, lo,
+                          redshift = redshift,
+                          frame = frame,
+                          ax=ax )
         )
             
     # Plot the different components
@@ -280,16 +296,25 @@ def plot_sed_flux_res ( res,
         model.set_parameters(**bestfit_p)
         flux_bestf = model.get_SED()
         components = model.components_to_flux()
-        legend_secondary += plot_sed_components( lx, components, ax=ax )
+        legend_secondary += plot_sed_components( lx, components,
+                                                 redshift = redshift,
+                                                 frame = frame,
+                                                 ax=ax )
         
     if flux_bestf is None :
         flux_bestf = res.get_bestfit( 'SED' )
-    legend_primary.append( plot_sed_flux( lx, flux_bestf, label = 'best-fit', ax=ax) )
+    legend_primary.append( plot_sed_flux( lx, flux_bestf, label = 'best-fit',
+                                          redshift = redshift,
+                                          frame = frame,
+                                          ax=ax ) )
     
     if plot_contours :
         flux_mean = res.get_mean( 'SED' )
         flux_err  = res.get_std( 'SED' )
-        legend_primary += plot_sed_1sigma2sigma( lx, flux_mean, flux_err, ax=ax )
+        legend_primary += plot_sed_1sigma2sigma( lx, flux_mean, flux_err,
+                                                 redshift = redshift,
+                                                 frame = frame,
+                                                 ax=ax )
     
     ##################################################################
     # Finalise and return
@@ -445,12 +470,7 @@ def plot_corner_res ( res, handler = None, which_params = None, getdist_settings
     ranges = dict(zip(handler.par_free, handler.par_prior))
     
     # Prepare list with labels
-    labels = { 
-        key : gpdefault[key][3] 
-        if not log else '\\log~'+gpdefault[key][3]
-        for key, log in zip(handler.par_free, 
-                            handler.par_log) 
-    }
+    labels = get_parameters_label_strings( handler )
     
     # Extract the sampler's name from results
     sampler = None
