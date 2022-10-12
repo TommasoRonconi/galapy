@@ -7,6 +7,7 @@ import numpy
 # Internal imports
 
 from galapy.sampling.Results import Results
+from galapy.GalaxyParameters import gxy_params_defaults, GXYParameters 
 
 ######################################################################################
 
@@ -87,5 +88,34 @@ def get_parameters_summary_strings ( res, digits = 2,
     if stat_type == 'mean_and_std' :
         fstring = f'{{0:.{digits}f}} \\pm {{1:.{digits}f}}'
     return numpy.array([fstring.format(*s) for s in summary])
+
+######################################################################################
+
+def get_parameters_label_strings ( handler ) :
+    """ Returns strings formatted for TeX math
+    
+    Parameters
+    ----------
+    handler : galapy.GalaxyParameters.GXYParameters
+        an instance of type ``GXYParameters``
+    
+    Returns
+    -------
+    : dict
+        Dictionary where the keys are the name of the free-parameter
+        and the values are the TeX-formatted strings
+    """
+
+    if not isinstance( handler, GXYParameters ) :
+        raise ValueError( "Attribute ``handler`` should be an instance of type ``GXYParameters``" )
+    
+    labels = { 
+        key : gxy_params_defaults[key][3] 
+        if not log else '\\log~'+gxy_params_defaults[key][3]
+        for key, log in zip(handler.par_free, 
+                            handler.par_log) 
+    }
+
+    return labels
 
 ######################################################################################
