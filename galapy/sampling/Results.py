@@ -167,7 +167,7 @@ class Results () :
         self.weights = sample_weights
         self.wnot0 = ( self.weights > 0. )
         self.SED    = numpy.empty(shape=(self.size, 
-                                      *model.wl().shape))
+                                         *model.wl().shape))
         self.Mstar  = numpy.empty(shape=(self.size,))
         self.Mdust  = numpy.empty(shape=(self.size,))
         self.Mgas   = numpy.empty(shape=(self.size,))
@@ -179,8 +179,8 @@ class Results () :
         
         for i, par in enumerate(sample_res) :
             self.params += [handler.return_nested(par)]
-            age = self.params[-1]['age']
             model.set_parameters( **self.params[-1] )
+            age = model.age
             self.SED[i]   = model.get_SED()
             self.Mstar[i] = model.sfh.Mstar(age)
             self.Mdust[i] = model.sfh.Mdust(age)
