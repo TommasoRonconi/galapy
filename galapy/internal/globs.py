@@ -32,16 +32,18 @@ bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
 # directory
 Br22 = ( DATA_DIR, 'SSP', 'Br22' )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission
 br22_NT = ( 'Bressan_NT_formatted.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
 br22_NTL = ( 'Bressan_NTL_formatted.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
 br22_NT_refined = ( 'Bressan_NT_formatted_refined.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
 br22_NTL_refined = ( 'Bressan_NTL_formatted_refined.dat', Br22  )
 
 ################################################################
