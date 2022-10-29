@@ -1,11 +1,14 @@
 import os
+# from galapy.configuration import rcParams
 
 ################################################################
 #                      DATA DIRECTORY:                         #
 # contains binary and ASCII files to be used along the library #
 ################################################################
 
-DATA_URL = "https://github.com/TommasoRonconi/galapy_data/blob/main/{:s}?raw=true"
+DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_data/releases/'
+DATA_VERSION = '0.0.1'
+DATA_URL = 'https://github.com/TommasoRonconi/galapy_data/blob/main/{:s}?raw=true'
 DATA_DIR = 'data'
 
 ################################################################

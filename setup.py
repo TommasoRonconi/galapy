@@ -5,6 +5,26 @@ import numpy as np
 
 from setuptools import setup, find_packages, Extension
 
+################################################################################
+# Functions for reading the version 
+
+def read( rel_path ):
+    here = os.path.abspath( os.path.dirname( __file__ ) )
+    with open( os.path.join( here, rel_path ), 'r' ) as fp :
+        return fp.read()
+
+def get_version( rel_path ):
+    for line in read( rel_path ).splitlines() :
+        if line.startswith( '__version__' ) :
+            delim = '"' if '"' in line else "'"
+            return line.split( delim )[ 1 ]
+    else:
+        raise RuntimeError( "Unable to find version string." )
+
+
+################################################################################
+# Global variables for compiler
+
 # extra_compile_args = []
 # # extra_compile_args = [ el
 # #                        for el
@@ -152,7 +172,7 @@ def main():
     # Call setup
     
     setup( name        = "galapy",
-           version     = "0.0.2",
+           version     = get_version( os.path.join('galapy', '__init__.py') ),
            description = "GalaPy - Galactic spectral analysis tools in Python",
            package_dir = {
                'galapy' : 'galapy',
@@ -180,6 +200,7 @@ def main():
                'console_scripts' : [
                    'galapy-fit = galapy.sampling.Run:run',
                    'galapy-genparams = galapy.sampling.Run:generate_parameter_file',
+                   'galapy-download-database = galapy.internal.data:_entrypoint_download_database',
                ]
            },
            install_requires = [
