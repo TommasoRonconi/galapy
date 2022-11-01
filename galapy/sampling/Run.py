@@ -400,9 +400,9 @@ lstep = None
 
 # The dictionary provided here will be used to set the fixed parameters to
 # the given value or to flag parameters as 'free' with some associated prior.
-# All the parameters listed here are filtered by a parameter handler
-# (i.e. an instance of galapy.GXYParameters), thus only the parameters that
-# are actually present in the built galaxy model will be considered.
+# All the parameters that are not used in the specified galaxy model will be ignored.
+# (e.g. if the galaxy model has been built with `do_AGN = False` all the eventual
+#  AGN-related parameters provided will be ignored)
 #
 # - To set the parameter 'fixed_parameter' as FIXED provide a single value:
 #   parameters = {{
@@ -420,9 +420,9 @@ lstep = None
 #   The list `a_list` contains the minimum and maximum value of the
 #   UNIFORM prior from which to draw samples for the 'free_parameter'.
 #   The boolean `a_bool` states whether the prior has to be considered
-#   * logarithmic: `a_bool = True` therefore samples will be drawn from the interval
+#   * logarithmic: `a_bool = True`, therefore samples will be drawn from the interval
 #                  10**min(a_list) < 'free_parameter' < 10**max(a_list)
-#   * linear: `a_bool = True` therefore samples will be drawn from the interval
+#   * linear: `a_bool = False`, therefore samples will be drawn from the interval
 #             min(a_list) < 'free_parameter' < max(a_list)
 
 parameters = {{
