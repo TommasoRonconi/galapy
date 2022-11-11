@@ -202,6 +202,7 @@ class GXY () :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
+            self.params['redshift'] = self.redshift
             
         if age is not None :
             # if the provided age is larger than the age of the Universe,
@@ -209,11 +210,13 @@ class GXY () :
             self.age = numpy.min( [ age, self.UA ] )
             reset_csp = True
             reset_ism = True
+            self.params['age'] = self.age
 
         if sfh is not None :
             self.sfh.set_parameters(**sfh)
             reset_csp = True
             reset_ism = True
+            self.params['sfh'].update(self.sfh.params)
 
         if reset_csp :
             self.csp.set_parameters( self.age, self.sfh )
@@ -229,11 +232,15 @@ class GXY () :
                               'Mgas'  : self.sfh.core.Mgas(self.age),
                               'Mdust' : self.sfh.core.Mdust(self.age) } )
                 self.ism.set_parameters(**ism)
+                self.params['ism'].update(self.ism.mc.params)
+                self.params['ism'].update(self.ism.dd.params)
         elif reset_ism :
             ism = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
                     'Mgas'  : self.sfh.core.Mgas(self.age),
                     'Mdust' : self.sfh.core.Mdust(self.age) }
             self.ism.set_parameters(**ism)
+            self.params['ism'].update(self.ism.mc.params)
+            self.params['ism'].update(self.ism.dd.params)
 
         # This one here should also be set only when either age or sfh changes:
         if self.xrb is not None :
@@ -245,6 +252,7 @@ class GXY () :
         if agn is not None :
             try :
                 self.agn.set_parameters(**agn)
+                self.params['agn'].update(self.agn.params)
             except AttributeError :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
@@ -253,6 +261,7 @@ class GXY () :
             try :
                 nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
                 self.nff.set_parameters( **nff )
+                self.params['nff'].update(self.nff.params)
             except AttributeError :
                 raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
                                       'without an NFF component is not allowed.' )
@@ -260,6 +269,7 @@ class GXY () :
         if syn is not None:
             try :
                 self.snsyn.set_parameters( **syn )
+                self.params['syn'].update(self.snsyn.params)
             except AttributeError :
                 raise AttributeError( 'Passing SYN-parameters to a GXY-class built '
                                       'without an SNSYN component is not allowed.' )
