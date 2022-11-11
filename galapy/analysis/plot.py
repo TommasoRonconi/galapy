@@ -44,20 +44,47 @@ def format_axes_ticks(fig, labelsize=14):
 ######################################################################################
 # Default values of the plots settings
 
-_plot_specs_default = {
-    'ax_kw' : {
+_specs_default = {
+    'sed_ax_kw' : {
         'xscale' : 'log', 
         'yscale' : 'log',
-        'xlim' : (1.e+0,1.e+10),
-        'ylim' : (1.e-10, 1.e+10),
+        'xlim'   : (1.e+0,1.e+10),
+        'ylim'   : (1.e-10, 1.e+10),
         'xlabel' : '$\\lambda\\ [\\,\\AA\\,]$',
         'ylabel' : '$S_\\lambda\\ [\\mathrm{mJy}]$',
     },
+    'pms_ax_kw' : {
+        'xscale' : 'log',
+        'yscale' : 'log',
+        'ylim'   : (1.e-2,1.e+1),
+        'ylabel' : 'Transmission'
+    },
+    'residuals_ax_kw' : {
+        'xlim' : (1., 1.e+10),
+        'ylim' : (-1.0, +1.0),
+        'xscale' : 'log',
+        'yscale' : 'linear',
+        'ylabel' : 'residuals',
+    },
+    'textbox_kw' : {
+        'loc' : 'upper right',
+        'borderpad' : 0.2, 
+        'frameon' : False, 
+        'prop' : {
+            'fontsize' : 12,
+            'bbox' : {
+                'boxstyle' : 'round',
+                'facecolor' : 'white',
+                'alpha' : 0.5
+            },
+        },
+    },
     'getdist_settings' : { 
         'mult_bias_correction_order' : 1,
-        'smooth_scale_2D':4, 
-        'smooth_scale_1D':4, 
-        'fine_bins': 128, 'fine_bins_2D' : 128,
+        'smooth_scale_2D' : 4, 
+        'smooth_scale_1D' : 4, 
+        'fine_bins': 128,
+        'fine_bins_2D' : 128,
         'contours' : [0.68, 0.95, 0.99],
     },
     'titles_kw' : { 
@@ -76,13 +103,13 @@ def show_default_dict ( name = None ) :
     """ Shows the default dictionary for the kwargs dictionary with name 'name'.
     """
     if name is not None :
-        return _plot_specs_default[ name ]
-    return _plot_specs_default
+        return _specs_default[ name ]
+    return _specs_default
 
 ######################################################################################
 # Functions for plotting SEDs
 
-def sed_plot_layout ( redshift, frame, ax = None, **kwargs ) :
+def sed_layout ( redshift, frame, ax = None, **kwargs ) :
     """ Produces/modifies a matplotlib.axes.Axes instance with the grid a labels for
     plotting SED fluxes.
     
@@ -95,7 +122,7 @@ def sed_plot_layout ( redshift, frame, ax = None, **kwargs ) :
       to the observed frame, the rest-frame or both.
       In the latter case a secondary x-axis will be added on top of the grid
     ax : matplotlib.axes.Axes
-      (Optional) 
+      (Optional) an instance of matplotlib axes
     kwargs : dictionary
       (Optional) the eventual keyword arguments to pass to the ```set``` function
       of ```ax```.
@@ -112,7 +139,7 @@ def sed_plot_layout ( redshift, frame, ax = None, **kwargs ) :
     if hasattr(ax, 'sed_layout_set' ) :
         if ax.sed_layout_set :
             return(ax)
-    
+        
     # Add secondary axis REST-FRAME WAVELENGHT
     if frame == 'both' :
         def red(x):
@@ -124,7 +151,7 @@ def sed_plot_layout ( redshift, frame, ax = None, **kwargs ) :
         frame = 'obs'
         
     # Set axis parameters
-    default_ax_kw = _plot_specs_default['ax_kw']
+    default_ax_kw = dict( _specs_default['sed_ax_kw'] )
     default_ax_kw['xlabel'] = f'$\\lambda_\\mathrm{{{frame}}}\\ [\\,\\AA\\,]$'
     default_ax_kw.update(kwargs)
     _ = ax.set(**default_ax_kw)
@@ -140,9 +167,9 @@ def sed_plot_layout ( redshift, frame, ax = None, **kwargs ) :
     
     return(ax)
 
-def plot_sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+def sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
 
-    ax = sed_plot_layout(redshift, frame, ax, **ax_kwargs)
+    ax = sed_layout(redshift, frame, ax, **ax_kwargs)
     
     Pdata = ax.errorbar(ll, ff, ee, uplims = lo, 
                         label='data', 
@@ -153,23 +180,23 @@ def plot_sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, a
     
     return Pdata
 
-def plot_sed_components ( ll, components,
-                          redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
-    ax = sed_plot_layout(redshift, frame, ax, **ax_kwargs)
+def sed_components ( ll, components,
+                     redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+    ax = sed_layout(redshift, frame, ax, **ax_kwargs)
     Pcomp = []
     for k,L in components.items() :
         Pcomp.append(ax.plot(ll, L, '-', lw = 1.5, label=k)[0])
     return Pcomp
 
-def plot_sed_flux ( ll, flux,
-                    color = 'black', label = 'total', 
-                    redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
-    ax = sed_plot_layout(redshift, frame, ax, **ax_kwargs)
+def sed_flux ( ll, flux,
+               color = 'black', label = 'total', 
+               redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+    ax = sed_layout(redshift, frame, ax, **ax_kwargs)
     return ax.plot( ll, flux, ls='-', color=color, lw=1.5, label=label)[0]
 
-def plot_sed_1sigma2sigma ( ll, flux, err, center = False, color = 'gray', center_label = 'mean', 
-                            redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
-    ax = sed_plot_layout( redshift, frame, ax, **ax_kwargs )
+def sed_1sigma2sigma ( ll, flux, err, center = False, color = 'gray', center_label = 'mean', 
+                       redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+    ax = sed_layout( redshift, frame, ax, **ax_kwargs )
     handles = []
     if center :
         handles.append( ax.plot( ll, flux,
@@ -187,16 +214,19 @@ def plot_sed_1sigma2sigma ( ll, flux, err, center = False, color = 'gray', cente
     )
     return handles
 
-def plot_sed_flux_res ( res,
-                        model = None,
-                        observation = None,
-                        plot_observation = False,
-                        plot_components = False, 
-                        plot_contours = True,
-                        frame = 'both', 
-                        ax = None, 
-                        ax_kwargs = {} ) :
-    """ Plots the flux
+def sed_flux_res ( res,
+                   model = None,
+                   observation = None,
+                   plot_observation = False,
+                   plot_components = False, 
+                   plot_contours = True,
+                   frame = 'both', 
+                   ax = None, 
+                   ax_kwargs = {} ) :
+    """ Plots the formatted SED flux from a galapy.sampling.Results instance.
+    Optional specs that can be activated or de-activated are the observed points,
+    1- and 2-sigma contours around the mean of the sampled SEDs and the different
+    physical components contributing to the total best-fit SED.
     
     Parameters
     ----------
@@ -220,7 +250,7 @@ def plot_sed_flux_res ( res,
     ax : matplotlib.axes.Axes
         (Optional) an instance of matplotlib axes
     ax_kwargs : dict
-        (Optional) keyword arguments to pass to the function ``sed_plot_layout``
+        (Optional) keyword arguments to pass to the function ``sed_layout``
     
     Returns
     -------
@@ -265,9 +295,9 @@ def plot_sed_flux_res ( res,
     else :
         redshift = model.redshift
         lx = model.wl( obs = obs_scale )
-    
+        
     # Set the layout
-    ax = sed_plot_layout( redshift, frame, ax = ax, **ax_kwargs )
+    ax = sed_layout( redshift, frame, ax = ax, **ax_kwargs )
     
     ##################################################################
     # Here the plots start
@@ -283,12 +313,12 @@ def plot_sed_flux_res ( res,
                            observation.uplims )
         ff[lo] = 3*ee[lo]
         legend_primary.append(
-            plot_sed_obs( ll, ff, ee, lo,
-                          redshift = redshift,
-                          frame = frame,
-                          ax=ax )
+            sed_obs( ll, ff, ee, lo,
+                     redshift = redshift,
+                     frame = frame,
+                     ax=ax )
         )
-            
+        
     # Plot the different components
     flux_bestf = None
     if plot_components :
@@ -296,25 +326,25 @@ def plot_sed_flux_res ( res,
         model.set_parameters(**bestfit_p)
         flux_bestf = model.get_SED()
         components = model.components_to_flux()
-        legend_secondary += plot_sed_components( lx, components,
-                                                 redshift = redshift,
-                                                 frame = frame,
-                                                 ax=ax )
+        legend_secondary += sed_components( lx, components,
+                                            redshift = redshift,
+                                            frame = frame,
+                                            ax=ax )
         
     if flux_bestf is None :
         flux_bestf = res.get_bestfit( 'SED' )
-    legend_primary.append( plot_sed_flux( lx, flux_bestf, label = 'best-fit',
-                                          redshift = redshift,
-                                          frame = frame,
-                                          ax=ax ) )
-    
+    legend_primary.append( sed_flux( lx, flux_bestf, label = 'best-fit',
+                                     redshift = redshift,
+                                     frame = frame,
+                                     ax=ax ) )
+        
     if plot_contours :
         flux_mean = res.get_mean( 'SED' )
         flux_err  = res.get_std( 'SED' )
-        legend_primary += plot_sed_1sigma2sigma( lx, flux_mean, flux_err,
-                                                 redshift = redshift,
-                                                 frame = frame,
-                                                 ax=ax )
+        legend_primary += sed_1sigma2sigma( lx, flux_mean, flux_err,
+                                            redshift = redshift,
+                                            frame = frame,
+                                            ax=ax )
     
     ##################################################################
     # Finalise and return
@@ -326,15 +356,174 @@ def plot_sed_flux_res ( res,
         lsec = ax.legend(handles = legend_secondary, 
                          loc = 'upper left', ncol = 2, fontsize=12)
         ax.add_artist(lsec)
-    
+        
     return(ax)
 
-######################################################################################
 
-def plot_corner_res ( res, handler = None, which_params = None, getdist_settings = None,
-                      param_limits = 'auto', plot_titles = True, mark = 'bestfit',
-                      titles_kw = {}, triangle_kw = {}, marker_kw = {} ) :
-    """ Plot the triangle plot with the 2D posteriors of a sampling run and 1D marginals on the diagonal.
+def sed_residuals_res ( res,
+                        frame = 'both', 
+                        plot_contours = False, 
+                        plot_chi2 = True,
+                        ax = None,
+                        text_kwargs = {},
+                        ax_kwargs = {}) :
+    """
+    Plots the formatted residuals with respect to the best-fit model from a sampling run.
+    
+    Parameters
+    ----------
+    res : Results instance
+        A ``Results`` instance from a sampling run.
+    frame : string
+        One among {``'rest'``, ``'obs'``, ``'both'``}, choose the frame, observed- or rest-frame,
+        to plot the wavelenght-axis (default is ``'both'``)
+    plot_contours : bool
+        Whether to plot the 1- and 2-sigma contours around the mean SED (dafault is ``False``).
+    plot_chi2 : bool
+        Whether to plot a text box with the best-fit value of the reduced 
+        chi2 (dafault is ``True``).
+    ax : matplotlib.axes.Axes
+        (Optional) an instance of matplotlib axes
+    text_kwargs : dict
+        (Optional) keyword arguments to pass to the matplotlib.offsetbox.AnchoredText class
+        (regulates shape and text-formatting of the text-box for the eventual chi2 plot)
+    ax_kwargs : dict
+        (Optional) keyword arguments to pass to the function ``sed_layout``
+    
+    Results
+    -------
+    : matplotlib.axes.Axes
+        An instance of ``matplotlib.axes.Axes`` with the plotted fluxes
+    """
+    
+    # Get sampled model
+    pbest = res.get_bestfit('params')
+    pgxy = res.get_model()
+    pgxy.set_parameters(**pbest)
+    redshift = pbest['redshift']
+
+    # Get reference observation
+    obs = res.get_observation()
+    ll, ff, ee, lo = ( obs.pms.lpiv,
+                       obs.fluxes,
+                       obs.errors,
+                       obs.uplims )
+    lsed = pgxy.wl(obs=(frame != 'rest'))
+
+    # compute residuals
+    chi = (pgxy.photoSED()-ff)/ee
+    
+    # Set axes
+    ax_kw = dict(_specs_default['residuals_ax_kw'])
+    ax_kw.update(ax_kwargs)
+    ax = sed_layout(redshift, frame=frame, ax = ax, **ax_kw )
+    
+    #
+    if plot_contours :
+        _ = sed_1sigma2sigma( lsed, 
+                              (res.get_mean('SED')-res.get_bestfit('SED'))/res.get_std('SED'), 
+                              numpy.ones_like(lsed),
+                              center=True, redshift=redshift, frame=frame, ax = ax)
+        
+    _ = sed_flux( lsed, numpy.zeros_like(lsed), redshift=redshift, frame=frame, ax = ax )
+    _ = sed_obs(ll, chi, numpy.zeros_like(ll), numpy.zeros_like(ll, dtype=bool), 
+                redshift=redshift, frame=frame, ax = ax)
+    
+    # Plot eventual text-box
+    if plot_chi2 :
+        from matplotlib.offsetbox import AnchoredText
+        text_kw = dict(_specs_default['textbox_kw'])
+        text_kw.update(text_kwargs)
+        
+        textstr = f'$\\chi^2_\\mathrm{{red}} = {numpy.sum(chi**2)/(len(ll)-res.ndim):.2f}$'
+        text = AnchoredText(textstr, **text_kw)
+        _ = ax.add_artist(text)
+        
+    return ax
+
+######################################################################################
+# Functions for plotting the photometric system
+
+def photometric_system ( obj, colors = None, ax = None, ax_kwargs = {} ) :
+    """ Generates a visualisation of the photometric system bandpass transmissions.
+    
+    Parameters
+    ----------
+    obj : object
+        An instance of ``galapy.PhotometricSystem.PMS`` or any other object with a 
+        ``pms`` attribute which is an instance of ``galapy.PhotometricSystem.PMS``
+        (e.g. ``galapy.Galaxy.GXY`` or ``galapy.Observation.OBS``)
+    colors : iterable
+        (Optional) a list or iterable of valid colors. One color per bandpass is necessary
+    ax : matplotlib.axes.Axes
+        (Optional) an instance of matplotlib axes
+    ax_kwargs : dictionary
+        (Optional) the eventual keyword arguments to pass to the ``set`` function
+        of ``ax``.
+
+    Returns
+    -------
+    : matplotlib.axes.Axes
+    an instance of matplotlib axes
+    """
+    from galapy.PhotometricSystem import PMS
+    
+    # Check input object (it should be or contain a PMS instance)
+    if not isinstance(obj, PMS) :
+        if hasattr(obj, 'pms') and isinstance( obj.pms, PMS ) :
+            pms = obj.pms
+        else :
+            raise AttributeError( 'Input object ``obj`` must be an instance of '
+                                  'either ``galapy.PhotometricSystem.PMS``, '
+                                  'or any other object with a ``pms`` attribute '
+                                  'which an instance of ``galapy.PhotometricSystem.PMS`` '
+                                  '(e.g. ``galapy.Galaxy.GXY`` or ``galapy.Observation.OBS``)' )
+    else :
+        pms = obj
+    
+    # generate or check color iterable
+    if colors is None :
+        colors = plt.cm.plasma(numpy.linspace(0.,1.,len(pms.keys)))
+    elif len(colors) != len(pms) :
+        raise AttributeError( 'Attribute ``color`` must be a list or iterable of valid colors '
+                              'with the same lenght of the photometric system' )
+            
+    # If not passed, attach to the latest axis or generate new one
+    if ax is None :
+        ax = plt.gca()
+        
+    # Set axes properties
+    default_ax_kw = dict( _specs_default['pms_ax_kw'] )
+    default_ax_kw.update(ax_kwargs)
+    _ = ax.set(**default_ax_kw)
+    xax2 = ax.secondary_xaxis('top', functions=(lambda x : x, lambda x : x))
+    _ = xax2.set( xscale = default_ax_kw['xscale'], xlabel = 'wavelength $[\\AA]$' )
+
+    # Set background color
+    ax.set_facecolor('white')
+    
+    # Plot
+    xticks = []
+    xticklabels = []
+    for k, c in zip( pms.keys, colors ) :
+        v = pms.bpt[k]
+        xticks += [v.get_lpiv()]
+        xticklabels += [k[:10]]
+        ax.plot( v.get_xaxis(), v.get_xaxis()*v.get_yaxis(), color = c)
+        ax.axvline( v.get_lpiv(), color = c, ls = '--', lw = 2.)
+    _ = ax.set_xticks(xticks)
+    _ = ax.set_xticklabels(xticklabels, rotation=90, fontsize = 11)
+
+    return ax
+
+######################################################################################
+# Functions for plotting posteriors
+
+def corner_res ( res, handler = None, which_params = None, getdist_settings = None,
+                 param_limits = 'auto', plot_titles = True, mark = 'bestfit',
+                 titles_kw = {}, triangle_kw = {}, marker_kw = {} ) :
+    """ Plot the triangle plot with the 2D posteriors of a sampling run 
+    and 1D marginals on the diagonal.
     
     Parameters
     ----------
@@ -393,10 +582,10 @@ def plot_corner_res ( res, handler = None, which_params = None, getdist_settings
     ############################################################################
     # Set default kwarg-dictionaries
     
-    default_getdist_settings = _plot_specs_default['getdist_settings']
-    default_titles_kw = _plot_specs_default['titles_kw']
-    default_marker_kw = _plot_specs_default['marker_kw']
-    default_triangle_kw = _plot_specs_default['triangle_kw']
+    default_getdist_settings = dict( _specs_default['getdist_settings'] )
+    default_titles_kw        = dict( _specs_default['titles_kw'] )
+    default_marker_kw        = dict( _specs_default['marker_kw'] )
+    default_triangle_kw      = dict( _specs_default['triangle_kw'] )
     
     ############################################################################
     # Check inputs
