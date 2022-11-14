@@ -9,7 +9,7 @@ def simple_uplim ( data, error, model ) :
     model = numpy.asarray( model )
     
     if numpy.any( model > data ) :
-        return numpy.inf
+        return -numpy.inf
     return 0.
 
 #############################################################################################
