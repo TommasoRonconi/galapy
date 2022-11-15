@@ -39,8 +39,8 @@ gxy_params_defaults = {
                     [0., 4.], True, '\\psi_0' ),
     'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
                     [6., 14.], True, 'M_\\mathrm{dust}' ),
-    'sfh.Zgs'   : ( 'Characteristic timescale',
-                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
     
     # Delayed-Exponential model
     'sfh.psi_norm' : ( 'Normalisation',
@@ -51,8 +51,8 @@ gxy_params_defaults = {
                        [6., 11.], True, '\\tau_\\star' ),
     'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
                     [6., 14.], True, 'M_\\mathrm{dust}' ),
-    'sfh.Zgs'   : ( 'Metallicity of all phases in galaxy at the given age',
-                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
     
     # Log-Normal model
     'sfh.psi_norm'   : ( 'Normalisation',
@@ -63,8 +63,8 @@ gxy_params_defaults = {
                          [6., 11.], True, '\\tau_\\star' ),
     'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
                     [6., 14.], True, 'M_\\mathrm{dust}' ),
-    'sfh.Zgs'   : ( 'Metallicity of all phases in galaxy at the given age',
-                    [0., 2.], False, 'Z_\\mathrm{gxy}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
 
     ########################
     # Inter-Stellar Medium #
@@ -107,7 +107,7 @@ gxy_params_defaults = {
     # Nebular Free-Free #
     #####################
 
-    'nff.Zgas' : ( '', [0., 2.], False, 'Z_\\mathrm{gas}' ),
+    'nff.Zgas' : ( '', [0., 1.], False, 'Z_\\mathrm{gas}' ),
     'nff.Zi'   : ( '', [0., 10.], False, '\\mathcal{Z}^i'),
 
     ###########################
