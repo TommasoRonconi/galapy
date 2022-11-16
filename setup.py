@@ -5,6 +5,26 @@ import numpy as np
 
 from setuptools import setup, find_packages, Extension
 
+################################################################################
+# Functions for reading the version 
+
+def read( rel_path ):
+    here = os.path.abspath( os.path.dirname( __file__ ) )
+    with open( os.path.join( here, rel_path ), 'r' ) as fp :
+        return fp.read()
+
+def get_version( rel_path ):
+    for line in read( rel_path ).splitlines() :
+        if line.startswith( '__version__' ) :
+            delim = '"' if '"' in line else "'"
+            return line.split( delim )[ 1 ]
+    else:
+        raise RuntimeError( "Unable to find version string." )
+
+
+################################################################################
+# Global variables for compiler
+
 # extra_compile_args = []
 # # extra_compile_args = [ el
 # #                        for el
@@ -24,14 +44,7 @@ extra_compile_args = [ "-DNDEBUG", "-O3" ]
 def main():
 
     os.environ["CC"] = "g++"
-    os.environ["CXX"] = "g++"
-    # os.environ["LDSHARED"] = ' '.join([ 'g++'
-    #                                     if el == 'gcc'
-    #                                     else el
-    #                                     for el
-    #                                     in sysconfig.get_config_var('BLDSHARED').split() ])
-    # # print( extra_compile_args )
-    
+    os.environ["CXX"] = "g++"    
 
     #############################################################################
     # C++ implementation of the interpolation class
@@ -159,15 +172,20 @@ def main():
     # Call setup
     
     setup( name        = "galapy",
-           version     = "0.0.1",
+           version     = get_version( os.path.join('galapy', '__init__.py') ),
            description = "GalaPy - Galactic spectral analysis tools in Python",
            package_dir = {
                'galapy' : 'galapy',
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
                'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
-               'galapy.internal' : os.path.join( 'galapy', 'internal' )
+               'galapy.internal' : os.path.join( 'galapy', 'internal' ),
+               'galapy.analysis' : os.path.join( 'galapy', 'analysis' )
            },
-           packages = [ 'galapy', 'galapy.configuration', 'galapy.internal', 'galapy.sampling' ],
+           packages = [ 'galapy',
+                        'galapy.configuration',
+                        'galapy.internal',
+                        'galapy.sampling',
+                        'galapy.analysis' ],
            ext_modules = [
                ext_intp,
                ext_sfh,
@@ -178,6 +196,21 @@ def main():
                ext_bpt
            ],
            include_package_data = True,
+           entry_points = {
+               'console_scripts' : [
+                   'galapy-fit = galapy.sampling.Run:run',
+                   'galapy-genparams = galapy.sampling.Run:generate_parameter_file',
+                   'galapy-download-database = galapy.internal.data:_entrypoint_download_database',
+               ]
+           },
+           install_requires = [
+               'numpy',
+               'scipy',
+               'emcee',
+               'dynesty',
+               'matplotlib',
+               'getdist',
+           ]
     )
 
 if __name__ == "__main__":

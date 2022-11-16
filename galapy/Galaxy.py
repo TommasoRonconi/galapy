@@ -38,6 +38,22 @@ class GXY () :
 
         # Define a dictionary for parameters storage
         self.params = {}
+        # _ = {
+        #     'lstep'    : lstep,
+        #     'cosmo'    : cosmo,
+        #     'do_Xray'  : do_Xray,
+        #     'do_Radio' : do_Radio,
+        #     'do_AGN'   : do_AGN,
+        #     'csp'      : csp,
+        # }
+
+        # Define a dictionary to store components
+        self.components = {
+            'stellar' : None,
+            'extinct' : None,
+            'MC' : None,
+            'DD' : None,
+        }
 
         if age is None :
             self.age = 1.e+6
@@ -79,7 +95,11 @@ class GXY () :
         
         # tell the CSP constructor to build with
         # SN support if Radio support is requested
-        csp[ 'CCSN' ] = do_Radio 
+        csp[ 'CCSN' ] = do_Radio
+        # NOTE THAT a more consistent implementation would be
+        # to also set the parameter to false if synchrotron
+        # is already included in the SSPs, left for future development:
+        # csp[ 'CCSN' ] = do_Radio and 'br22.NT' not in csp['ssp_lib']
 
         self.csp = CSP( **csp )
         self.csp.set_parameters( self.age, self.sfh )
@@ -97,49 +117,47 @@ class GXY () :
                             psi = self.sfh( self.age ),
                             Mstar = self.sfh.Mstar( self.age ),
                             Zstar = self.sfh.Zstar( self.age ) )
-            self.params[ 'xrb' ] = self.xrb.params
+            self.components['XRB'] = None
+            # self.params[ 'xrb' ] = self.xrb.params
             
         self.agn = None
         if do_AGN :
             if agn is None :
                 agn = {}
-                self.agn = AGN( lmin = self.csp.l.min(),
-                                lmax = self.csp.l.max(),
-                                Xray = Xray,
-                                **agn )
-                self.params[ 'agn' ] = self.agn.params
+            self.agn = AGN( lmin = self.csp.l.min(),
+                            lmax = self.csp.l.max(),
+                            do_Xray = do_Xray,
+                            **agn )
+            self.params[ 'agn' ] = self.agn.params
+            self.components['AGN'] = None
 
         self.nff   = None
         self.snsyn = None
-        if do_Radio :
-            # Build the Nebular-Free support only if
+        # Build the Nebular-Free support only if
+        # it is not already included in the SSP library
+        if do_Radio and 'br22.NTL' not in self.csp.ssp_lib :
+            if nff is None :
+                nff = {}
+            self.nff = NFF( self.csp.l, **nff )
+            self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
+            self.w912 = self.csp.l <= 912.
+            self.params[ 'nff' ] = self.nff.params
+            self.components['nebular'] = None
+
+            # Build the Synchrotron support only if
             # it is not already included in the SSP library
             if 'br22.NT' not in self.csp.ssp_lib :
-                if nff is None :
-                    nff = {}
-                    self.nff = NFF( self.csp.l, **nff )
-                    self.Q_H_fact = 1. / clight['A/s'] / hP['erg*s']
-                    self.w912 = self.csp.l <= 912.
-                    self.params[ 'nff' ] = self.nff.params
-
-            if syn is None :
-                syn = {}
+                if syn is None :
+                    syn = {}
                 syn[ 'RCCSN' ] = self.csp.core.RCCSN()
                 self.snsyn = SNSYN( self.csp.l, **syn )
                 self.params[ 'syn' ] = self.snsyn.params
+                self.components['synchrotron'] = None
                 
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
-
-        # Build the redshift-dependent constant for lum->flux conversion
-        zz = numpy.ascontiguousarray(self.cosmo.DL.get_x())
-        TF = numpy.ascontiguousarray(
-            1.e+26 * (1 + zz) * Lsun /
-            ( 4 * numpy.pi * clight['A/s'] * self.cosmo.DL.get_y()**2 * Mpc_to_cm**2 )
-        )
-        self._to_flux = lin_interp( zz, TF )
         
     def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
@@ -184,6 +202,7 @@ class GXY () :
             self.redshift = redshift
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
+            self.params['redshift'] = self.redshift
             
         if age is not None :
             # if the provided age is larger than the age of the Universe,
@@ -191,11 +210,13 @@ class GXY () :
             self.age = numpy.min( [ age, self.UA ] )
             reset_csp = True
             reset_ism = True
+            self.params['age'] = self.age
 
         if sfh is not None :
             self.sfh.set_parameters(**sfh)
             reset_csp = True
             reset_ism = True
+            self.params['sfh'].update(self.sfh.params)
 
         if reset_csp :
             self.csp.set_parameters( self.age, self.sfh )
@@ -211,11 +232,15 @@ class GXY () :
                               'Mgas'  : self.sfh.core.Mgas(self.age),
                               'Mdust' : self.sfh.core.Mdust(self.age) } )
                 self.ism.set_parameters(**ism)
+                self.params['ism'].update(self.ism.mc.params)
+                self.params['ism'].update(self.ism.dd.params)
         elif reset_ism :
             ism = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
                     'Mgas'  : self.sfh.core.Mgas(self.age),
                     'Mdust' : self.sfh.core.Mdust(self.age) }
             self.ism.set_parameters(**ism)
+            self.params['ism'].update(self.ism.mc.params)
+            self.params['ism'].update(self.ism.dd.params)
 
         # This one here should also be set only when either age or sfh changes:
         if self.xrb is not None :
@@ -227,6 +252,7 @@ class GXY () :
         if agn is not None :
             try :
                 self.agn.set_parameters(**agn)
+                self.params['agn'].update(self.agn.params)
             except AttributeError :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
@@ -235,6 +261,7 @@ class GXY () :
             try :
                 nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
                 self.nff.set_parameters( **nff )
+                self.params['nff'].update(self.nff.params)
             except AttributeError :
                 raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
                                       'without an NFF component is not allowed.' )
@@ -242,6 +269,7 @@ class GXY () :
         if syn is not None:
             try :
                 self.snsyn.set_parameters( **syn )
+                self.params['syn'].update(self.snsyn.params)
             except AttributeError :
                 raise AttributeError( 'Passing SYN-parameters to a GXY-class built '
                                       'without an SNSYN component is not allowed.' )
@@ -278,6 +306,8 @@ class GXY () :
         Lunatt = self.csp.core.emission( self.lgrid )
         LattMC = self.csp.core.emission( self.lgrid, attTotMC )
         Ltot   = self.csp.core.emission( self.lgrid, attTot )
+        self.components['stellar'] = Lunatt
+        self.components['extinct'] = numpy.array(Ltot)
 
         if store_attenuation or self.nff is not None :
             wn0 = Lunatt > 0.
@@ -295,29 +325,34 @@ class GXY () :
         _ = self.ism.mc.temperature( EMC )
          
         # emission from ISM
-        Ltot += self.ism.mc.emission( self.wl() )
-        Ltot += self.ism.dd.emission( self.wl() )
+        self.components['MC'] = self.ism.mc.emission( self.wl() )
+        self.components['DD'] = self.ism.dd.emission( self.wl() )
+        Ltot += self.components['MC'] + self.components['DD']
 
         # OPTIONAL COMPONENTS:
 
         # emission from AGN
         if self.agn is not None :
-            Ltot += self.agn.emission( self.wl(), (EDD+EMC) * sunL )
+            self.components['AGN'] = self.agn.emission( self.wl(), (EDD+EMC) * sunL )
+            Ltot += self.components['AGN']
 
         # emission from X-Ray binaries
         if self.xrb is not None :
-            Ltot += self.xrb.emission( self.wl() )
+            self.components['XRB'] = self.xrb.emission( self.wl() )
+            Ltot += self.components['XRB']
 
         # Free-free emission from Nebulae
         if self.nff is not None :
             Q_H = trap_int( self.wl()[ self.w912 ],
                             Lunatt[ self.w912[ self.lgrid ] ] *
                             self.wl()[ self.w912 ] * self.Q_H_fact )
-            Ltot += self.Aavg * self.nff.emission( Q_H, il = self.lgrid )
+            self.components['nebular'] = self.Aavg * self.nff.emission( Q_H, il = self.lgrid )
+            Ltot += self.components['nebular']
 
         # Synchrotron emission from SN-shocks
         if self.snsyn is not None :
-            Ltot += self.snsyn.emission( self.lgrid ) * sunL
+            self.components['synchrotron'] = self.snsyn.emission( self.lgrid ) * sunL
+            Ltot += self.components['synchrotron']
         
         return Ltot
 
@@ -325,7 +360,13 @@ class GXY () :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
-        return self.get_emission() * self.wl()**2 * self._to_flux( self.redshift )
+        return self.cosmo.to_flux( self.redshift, self.wl(), self.get_emission() )
+
+    def components_to_flux ( self ) :
+        return {
+            k : self.cosmo.to_flux( self.redshift, self.wl(), c ) 
+            for k, c in self.components.items()
+        }
     
 
 class PhotoGXY ( GXY ) :

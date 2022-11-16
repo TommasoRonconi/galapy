@@ -102,14 +102,14 @@ class ismPhase ():
         return;
     
     def set_slopes ( self, lower, upper ) :
-        """ Manually set the slopes of the ISM phase extinction
+        r""" Manually set the slopes of the ISM phase extinction
         
         Parameters
         ----------
         lower : float
-          slope of extinction at wavelenghts <= 100 :math:`mu`m
+          slope of extinction at wavelenghts <= 100 :math:`\mu m`
         lower : float
-          slope of extinction at wavelenghts > 100 :math:`mu`m
+          slope of extinction at wavelenghts > 100 :math:`\mu m`
           
         """
         self.params[ism_tunables[self.phase][-2]] = lower 

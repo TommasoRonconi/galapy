@@ -14,14 +14,10 @@ import subprocess
 import glob
 import os
 import sys
-# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages' ) )
-# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy' ) )
-# sys.path.insert( 0, os.path.abspath( '/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy/internal' ) )
 import galapy
+import galapy.sampling
+import galapy.configuration
 import galapy.internal
-import galapy.SFH_core
-import galapy.CSP_core
-import galapy.ISM_core
 
 # -- Configuration for ReadTheDocs setup -------------------------------------
 
@@ -45,7 +41,7 @@ for fn in glob.glob("../notebooks/*.ipynb"):
 # -- Project information -----------------------------------------------------
 
 project = 'GaLapy'
-copyright = '2021, Tommaso Ronconi'
+copyright = '2022, Tommaso Ronconi'
 author = 'Tommaso Ronconi'
 
 # -- General configuration ---------------------------------------------------
@@ -85,12 +81,12 @@ autodoc_default_options = {
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-# import sphinx_pdj_theme
-# html_theme = 'sphinx_pdj_theme'
-# html_theme_path = [sphinx_pdj_theme.get_html_theme_path()]
+#import sphinx_pdj_theme
+#html_theme = 'sphinx_pdj_theme'
+#html_theme_path = [sphinx_pdj_theme.get_html_theme_path()]
 
-html_theme = 'sphinx_rtd_theme'
-# html_theme = 'karma_sphinx_theme'
+# html_theme = 'sphinx_rtd_theme'
+html_theme = 'karma_sphinx_theme'
 # html_theme = 'insegel'
 # html_theme = 'sphinx_material'
 

@@ -1,11 +1,14 @@
 import os
+# from galapy.configuration import rcParams
 
 ################################################################
 #                      DATA DIRECTORY:                         #
 # contains binary and ASCII files to be used along the library #
 ################################################################
 
-DATA_URL = "https://github.com/TommasoRonconi/galapy_data/blob/main/{:s}?raw=true"
+DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_data/releases/'
+DATA_VERSION = '0.0.1'
+DATA_URL = 'https://github.com/TommasoRonconi/galapy_data/blob/main/{:s}?raw=true'
 DATA_DIR = 'data'
 
 ################################################################
@@ -32,16 +35,18 @@ bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
 # directory
 Br22 = ( DATA_DIR, 'SSP', 'Br22' )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission
 br22_NT = ( 'Bressan_NT_formatted.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
 br22_NTL = ( 'Bressan_NTL_formatted.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
 br22_NT_refined = ( 'Bressan_NT_formatted_refined.dat', Br22  )
 
-# 
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
 br22_NTL_refined = ( 'Bressan_NTL_formatted_refined.dat', Br22  )
 
 ################################################################

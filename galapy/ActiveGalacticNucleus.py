@@ -1,4 +1,51 @@
-""" The ActiveGalacticNucleus module implements the AGN contribution by loading templates from Fritz et al., 2006
+r""" The ActiveGalacticNucleus module implements the AGN contribution by loading templates from Fritz et al., 2006.
+
+Templated emission is divided into 3 components:
+
+- Accretion disk around the central SMBH (accessible through the instance variable :code:`AGN().disk`)
+- Scattered emission by the surrounding dusty torus (accessible through the instance variable :code:`AGN().scat`)
+- Thermal dust emission associated to the dusty torus (accessible through the instance variable :code:`AGN().ther`)
+
+The templates are computed accounting for the variation of 6 structural parameters:
+
+- the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane:
+
+  .. math ::
+
+    \Theta = 90^\circ - \dfrac{\Gamma}{2}
+
+- the dust density distribution in spherical coordinates:
+
+  .. math ::
+
+    \rho \propto r^\beta e^{- \alpha|\cos\theta|}
+
+  parameterized in terms of :math:`\alpha` and :math:`\beta`;
+- the ratio :math:`R^\text{AGN}_\text{torus}` between the maximum to minimum radii of the dusty torus;
+- the optical depth :math:`\tau^\text{AGN}_{9.7}` at :math:`9.7\ \mu m`;
+- the viewing angle :math:`\Psi^\text{AGN}_\text{los}`, i.e. the angle between the rotation axis and the line-of-sight.
+  (note that by assuming the unifed AGN model, with :math:`\Psi^\text{AGN}_\text{los} = 90^\circ` the geometry of 
+  the object corresponds to a type 1 AGN, while :math:`\Psi^\text{AGN}_\text{los} = 0^\circ` to a type 2 AGN)
+  
+The above parameters in our implementation are controlled through the above parameters following the original naming schema used by the authors and summarized in the following table:
+
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| Parameter                          | Key        | :math:`N_\text{values}` | Values                                                         |
++====================================+============+=========================+================================================================+
+| :math:`\Theta`                     | :code:`ct` | 3                       | (:math:`20^\circ,\ 40^\circ,\ 60^\circ`)                       |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+ 
+| :math:`\alpha`                     | :code:`al` | 4                       | (:math:`0,\ 2,\ 4,\ 6`)                                        |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\beta`                      | :code:`be` | 5                       | (:math:`-1,\ -0.75,\ -0.5,\ -0.25,\ 0`)                        |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`R^\text{AGN}_\text{torus}`  | :code:`rm` | 5                       | (:math:`10,\ 30,\ 60,\ 100,\ 150`)                             |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\tau^\text{AGN}_{9.7}`      | :code:`ta` | 8                       | (:math:`0.1,\ 0.3,\ 0.6,\ 1,\ 2,\ 3,\ 6,\ 10`)                 |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+| :math:`\Psi^\text{AGN}_\text{los}` | :code:`ia` | 10                      | :math:`0^\circ` to :math:`90^\circ` with step :math:`10^\circ` |
++------------------------------------+------------+-------------------------+----------------------------------------------------------------+
+
+Which results in 24000 available templates. The user can nevertheless set the parameters to whatever value and the template whose parameters are closer to the selection is chosen.
 """
 
 # External imports
@@ -23,12 +70,17 @@ _template_pars = {
 }
 
 def find_template_par ( key, value ) :
+    """ Given a key-value pair returns the parameter corresponding to `key`
+    included in the template-library and closest to `value`
+    """
     try :
         return _template_pars[ key ][ find_nearest( _template_pars[ key ], value ) ]
     except KeyError :
         raise AttributeError( f"Parameter '{key}' is not a valid template parameter." )
 
 def agn_build_params ( fAGN, **kwargs ) :
+    """ Standard function for building the parameters dictionary of class AGN()
+    """
     out = {
         'fAGN' : fAGN,
         'template' : {
@@ -50,7 +102,7 @@ def agn_build_params ( fAGN, **kwargs ) :
 #################################################################################
 
 class AGN () :
-    """ AGN component class
+    r""" AGN component class
     This class implements the templated emission from an Active Galactic Nucleus
     within the galaxy.
     We use templates from Fritz et al., 2006 to model the AGN emission normalized
@@ -78,25 +130,36 @@ class AGN () :
       number of padding values to match the requested wavelenght domain
     fAGN : float
       fraction of the total reference emission
+    do_Xray : bool
+      If :code:`True` compute the X-ray template along with the closest template for
+      the lower energy part of the spectrum (default is :code:`True`)
 
     Keyword Arguments
     -----------------
     ct : scalar
+      the covering angle of the torus :math:`\Gamma`, expressed in terms of half the aperture-angle with respect to the equatorial plane
     al : scalar
+      parameter regulating the dust density distribution in spherical coordinates, corresponds to :math:`\alpha`
     be : scalar
+      parameter regulating the dust density distribution in spherical coordinates, corresponds to :math:`\beta`
     ta : scalar
+      the optical depth at :math:`9.7\ \mu m`
     rm : scalar
-    ia : scalar   
+      the ratio between the maximum to minimum radii of the dusty torus      
+    ia : scalar
+      the inclination angle between the rotation axis of the AGN torus and the line of sight.
+      Note that by assuming the unifed AGN model, with :code:`ia = 90` the geometry of the object corresponds to a type 1 AGN, 
+      while :code:`ia = 0` to a type 2 AGN.
     """
     
-    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, Xray = True, **kwargs ) :
+    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, do_Xray = True, **kwargs ) :
         import galapy.internal.globs as GP_GBL
         import os
 
         # store the argument variables
         self.lmin, self.lmax = lmin, lmax
         self._pad = pad
-        self._Xray = Xray
+        self.do_Xray = do_Xray
         
         # common name of all template files
         self._filebase = GP_GBL.AGN_FILE
@@ -108,10 +171,12 @@ class AGN () :
         self.load_template()
 
         # also compute the X-ray template if requested (default=True)
-        if self._Xray :
+        if self.do_Xray :
             self.compute_X_template()
 
     def load_template ( self ) :
+        """ Loads the template corresponding to the current parameters (mostly intended for internal usage).
+        """
 
         # load template from closest file to the parameters chosen
         filename = self._filebase.format( *( self.params[ 'template' ][k]
@@ -144,6 +209,8 @@ class AGN () :
         return;
 
     def compute_X_template ( self ) :
+        """ Pre-computes the not-normalized and not-bolometric-corrected X-ray spectrum. 
+        """
 
         # generate wavelenght grid
         ll = numpy.logspace( numpy.log10( self.lmin ),
@@ -179,11 +246,39 @@ class AGN () :
         
 
     def X_bolometric_correction ( self, Lref ) :
-        """ Duras et al., 2020
+        r""" Computes the bolometric correction from Duras et al., 2020 (Eq. 2):
+        
+        .. math ::
+        
+          \dfrac{L_\text{bol}^\text{AGN}}{L_\text{X}^\text{AGN}} \approx 10.96\;\biggl[1 + \biggl(\dfrac{\log L_\text{bol}^\text{AGN}/L_\odot}{11.93}\biggr)^17.79\biggr]
+
+        Parameters
+        ----------
+        Lref : scalar
+          Bolometric luminosity of the AGN in units of solar luminosities :math:`L_\odot`
+        
+        Returns
+        -------
+        : scalar
+          Value of the bolometric correction.
         """
         return 10.96 * ( 1. + ( numpy.log10( Lref ) / 11.93 )**17.79 )
         
     def set_parameters ( self, fAGN = None, **kwargs ) :
+        r""" Sets the internal parameters defining the emission coming from the AGN.
+        All the parameters that are not passed to this function will be left to the
+        value they already have.
+        
+        Parameters
+        ----------
+        fAGN : scalar
+          sets the normalization of the templated emission. The parameters fAGN 
+          provides the amount of energy radiated by the AGN in units of some other
+          emission contributor, typically the energy radiated by dust in the same band.
+        **kwargs 
+          These are the parameters passed to function :code:`find_template_par`. Used
+          to find the nearest AGN emission template in the Fritz et al. (2006) library.
+        """
 
         if fAGN is not None :
             self.params.update( fAGN = fAGN )
@@ -194,9 +289,26 @@ class AGN () :
         return;
 
     def emission ( self, ll, Lref ) :
+        """ Computes the emission coming from the AGN adding the X-ray part 
+        if the internal variable do_Xray has been set to :code:`True` at build time
+        
+        Parameters
+        ----------
+        ll : sequence
+          wavelenght list or array or iterable
+        Lref : float
+          bolometric reference luminosity used to compute the bolometric correction
+          of the high-energy part of the spectrum
+        
+        Returns
+        -------
+        : numpy-array
+          Luminosity per unit wavelenght in units of solar luminosities emitted by
+          the AGN.
+        """
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
-        if self._Xray :
+        if self.do_Xray :
             return fact * Lref * ( self.f_norm_tot( ll ) +
                                    self.f_norm_X( ll ) *
                                    self.X_bolometric_correction( Lref ) )

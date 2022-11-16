@@ -26,12 +26,12 @@ def chi2_uplim ( data, error, model ) :
     
     # check if there are values less than/equal to zero
     if numpy.any( ~( value > 0. ) ) :
-        return -numpy.inf
+        return numpy.inf
 
     # compute logarithm
     chi = numpy.log( value )
 
-    return 2 * numpy.sum( chi )
+    return -2 * numpy.sum( chi )
 
 #############################################################################################
 
@@ -42,17 +42,30 @@ def chi2 ( data, error, model ) :
 
 #############################################################################################
 
-def gaussian_loglikelihood ( data, error, model, uplims ) :
+f_uplims = { 'simple' : simple_uplim, 'chi2' : chi2, 'S12' : chi2_uplim }
 
-    uplims = numpy.asarray( uplims )
+#############################################################################################
+
+def gaussian_loglikelihood ( data, error, model, uplims, method_uplims = 'simple' ) :
+    """
+    Uplim methods are:
+    - 'simple' : 
+    - 'chi2' :
+    - 'S12' :
+    """
+
+    try :
+        uplims = numpy.asarray( uplims )
+    except KeyError as ke :
+        raise RuntimeError( f"the method '{method_uplim}' is not valid, valid methods are {list(f_uplim.keys())}" )
     c2 = chi2( data[~uplims], error[~uplims], model[~uplims] )
-    u2 = simple_uplim( data[uplims], error[uplims], model[uplims] )
+    u2 = f_uplims[method_uplims]( data[uplims], error[uplims], model[uplims] )
     if numpy.isnan( c2 ) :
         return -numpy.inf
     if numpy.isnan( u2 ) :
         return -numpy.inf
         
-    return -0.5 * ( c2 - u2 )
+    return -0.5 * ( c2 + u2 )
 
 #############################################################################################
 
