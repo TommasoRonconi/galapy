@@ -56,9 +56,6 @@ double sed::ism::temperature ( const double Etot ) noexcept {
     _Temp = utl::line_from_2points( 0.,
 				    Et[ idx ], Tvec[ idx ],
 				    Et[ idx + 1 ], Tvec[ idx + 1 ] );
-    //auto idx = utl::find_interval_naive( 0., Et );
-    // _Temp = utl::line_from_2points( 0., { Et[ idx.first ], Tvec[ idx.first ] },
-    // 				    { Et[ idx.second ], Tvec[ idx.second ] } );
   
     return _Temp;
   }
@@ -112,7 +109,7 @@ double sed::cloud::_A_Vband ( const double * const param ) const noexcept {
 
   return 2.56e-4 *                         // ( 16 * 16 / 10^6 )
     param[ 1 ] *	                   // N_V^MC
-    param[ 4 ] / 0.014 *                   // Z_gas / Z_sol
+    param[ 4 ] * sed::cnst::solZ *         // Z_gas / Z_sol
     param[ 0 ] * param[ 6 ] /              // M_MC = f_MC * M_gas
     ( param[ 2 ] + 1.e-7 ) /               //        / ( N_MC + 1.e-7 ) 
     ( param[ 3 ] * param[ 3 ] );           // ( R_MC )^{-2}

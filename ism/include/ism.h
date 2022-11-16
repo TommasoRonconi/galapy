@@ -258,7 +258,7 @@ namespace sed {
     // param[ 1 ] = N_V^MC
     // param[ 2 ] = N_MC
     // param[ 3 ] = R_MC [ pc ]
-    // param[ 4 ] = Z_gas / Z_sol
+    // param[ 4 ] = Z_gas
     // param[ 5 ] = tau_esc
     // param[ 6 ] = M_gas
     // param[ 7 ] = delta_low

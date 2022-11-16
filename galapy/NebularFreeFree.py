@@ -12,7 +12,7 @@ nff_tunables = ( 'Zgas', 'Zi' )
 def nff_build_params ( **kwargs ) :
     
     out = {
-        'Zgas' : 0.02,
+        'Zgas' : 0.01,
         'Zi'   : 1.,
     }
     for k in set( out.keys() ).intersection( kwargs.keys() ) :

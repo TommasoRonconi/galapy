@@ -447,21 +447,21 @@ parameters = {{
     # Constant model
     'sfh.psi'   : ( [0., 4.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
     
     # Delayed-Exponential model
     'sfh.psi_norm' : ( [0., 4.], True ),
     'sfh.k_shape'  : ( [0., 5.], False ),
     'sfh.tau_star' : ( [6., 11.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
     
     # Log-Normal model
     'sfh.psi_norm'   : ( [0., 4.], True ),
     'sfh.sigma_star' : ( [0., 5.], False ),
     'sfh.tau_star'   : ( [6., 11.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
 
     ########################
     # Inter-Stellar Medium #

@@ -28,8 +28,8 @@ namespace sed {
     // Private variables
     
     // average # of protons in iones (set to 1 for a pure Hydrogen plasma)
-    double _Zi = 1;
-    double _Zgas = 0.02;
+    double _lnZi = std::log( 1 );
+    double _Zgas = 0.01;
 
     //
     std::vector< double > _paramsrc;
@@ -83,7 +83,7 @@ namespace sed {
 
       return
 	std::log( std::exp( 5.96 - sed::cnst::ip * 1.732050808 *
-			    ( _fact_gff[ il ] + _Zi - 1.5 * lnTe4 ) )
+			    ( _fact_gff[ il ] + _lnZi - 1.5 * lnTe4 ) )
 		  + sed::cnst::e_1 );
       
     }
@@ -97,10 +97,10 @@ namespace sed {
     void set_params ( const double * const params ) noexcept {
 
       _Zgas = params[ 0 ];
-      _Zi   = params[ 1 ];
+      _lnZi = std::log( params[ 1 ] );
       double lnTe = lTe( std::log10( 50 * _Zgas ) );
       _paramsrc = { lnTe - 4 * sed::cnst::ln_10,
-			  std::exp( -lnTe ) };
+		    std::exp( -lnTe ) };
 
     }
 
@@ -118,7 +118,7 @@ namespace sed {
     virtual std::size_t serialize_size () const {
 
       return
-	SerialPOD< double >::serialize_size( _Zi ) +
+	SerialPOD< double >::serialize_size( _lnZi ) +
 	SerialPOD< double >::serialize_size( _Zgas ) +
 	SerialVecPOD< double >::serialize_size( _paramsrc ) +
 	SerialVecPOD< double >::serialize_size( _nu ) +
@@ -129,7 +129,7 @@ namespace sed {
 
     virtual char * serialize ( char * data ) const {
       
-      data = SerialPOD< double >::serialize( data, _Zi );
+      data = SerialPOD< double >::serialize( data, _lnZi );
       data = SerialPOD< double >::serialize( data, _Zgas );
       data = SerialVecPOD< double >::serialize( data, _paramsrc );
       data = SerialVecPOD< double >::serialize( data, _nu );
@@ -141,7 +141,7 @@ namespace sed {
 
     virtual const char * deserialize ( const char * data ) {
       
-      data = SerialPOD< double >::deserialize( data, _Zi );
+      data = SerialPOD< double >::deserialize( data, _lnZi );
       data = SerialPOD< double >::deserialize( data, _Zgas );
       data = SerialVecPOD< double >::deserialize( data, _paramsrc );
       data = SerialVecPOD< double >::deserialize( data, _nu );
