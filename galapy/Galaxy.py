@@ -122,6 +122,8 @@ class GXY () :
                             Mstar = self.sfh.Mstar( self.age ),
                             Zstar = self.sfh.Zstar( self.age ) )
             self.components['XRB'] = None
+            # This here below not really necessary as there is
+            # no freedom in setting the X-ray Binaries parameters:
             # self.params[ 'xrb' ] = self.xrb.params
             
         self.agn = None
@@ -383,6 +385,21 @@ class GXY () :
             Ltot += self.components['synchrotron']
         
         return Ltot
+
+    def get_avgAtt ( self ) :
+        """ Returns the average attenuation in absolute magnitudes 
+        """
+        if self.components['stellar'] is None or self.components['extinct'] is None :
+            raise RuntimeError(
+                "Cannot compute average attenuation if the components dictionary "
+                "has not been computed. First run function GXY.get_emission()"
+            )
+        wn0 = self.components['stellar'] > 0
+        AA = numpy.zeros_like( gxy.wl() )
+        AA[wn0] = -2.5 * numpy.log10(
+            gxy.components[ 'extinct' ][ wn0 ] / gxy.components[ 'stellar' ][ wn0 ]
+        )
+        return AA
 
     def get_SED ( self ) :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
