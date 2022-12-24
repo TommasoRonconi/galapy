@@ -84,8 +84,8 @@ gxy_params_defaults = {
                       [0., 5.], True, 'R_\\mathrm{MC}' ),
     'ism.tau_esc' : ( 'Time required by stars to start escaping their MC',
                       [4., 8.], True, '\\tau_\\mathrm{esc}' ),
-    'ism.dMClow'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
-    'ism.dMCupp'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
+    'ism.dMClow'  : ( 'Molecular clouds extinction power-law index at wavelenght < 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
+    'ism.dMCupp'  : ( 'Molecular clouds extinction power-law index at wavelenght > 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
     
     ##############
     # Diffuse Dust
@@ -93,8 +93,8 @@ gxy_params_defaults = {
     'ism.norm_DD' : ( '', [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{DD}}' ),
     'ism.Rdust'   : ( '', [0., 5.], True, 'R_\\mathrm{DD}' ),
     'ism.f_PAH'   : ( '', [0., 1.], False, 'f_\\mathrm{PAH}' ),
-    'ism.dDDlow'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
-    'ism.dDDupp'  : ( '', [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
+    'ism.dDDlow'  : ( 'Diffuse dust extinction power-law index at wavelenght < 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
+    'ism.dDDupp'  : ( 'Diffuse dust extinction power-law index at wavelenght > 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
 
     ###############
     # Synchrotorn #

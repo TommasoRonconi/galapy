@@ -385,6 +385,103 @@ def now_string () :
 
 ###################################################################################
 
+def filter_strings ( inlist, fields ) :
+    """Function for filtering a list of strings (uses ``fnmatch``)
+    
+    Paramters
+    ---------
+    inlist : sequence of str
+        A list of strings to filter
+    fields : str or sequence of str
+        Either a single string or a sequence of strings. 
+        Also accepts wildcards (e.g. ``which_params = 'sfh*'`` will show all the
+        entries in ``inlist`` that contain the sub-string ``sfh``).
+        
+    Returns
+    -------
+    : str or sequence of str    
+    
+    Raises
+    ------
+    ValueError
+    """
+    
+    import fnmatch
+    
+    if isinstance(fields, str) :
+        fields = fnmatch.filter(inlist, fields)
+    elif isinstance(fields, (list,tuple)) :
+        fields = [item for sublist in [fnmatch.filter(inlist, s) for s in fields] for item in sublist]
+    else :
+        raise ValueError( 'fields argument should be either a string or a list of strings' )
+        
+    return fields
+
+###################################################################################
+
+def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) :
+    """Converts a Topcat-like catalogue into a 2-levels dictionary.
+    The 1st order dictionary contains a 2nd order dictionary for each entry in the catalogue.
+    Each 2nd order dictionary contains data and meta-data about the named entry. 
+    
+    Parameters
+    ----------
+    infile : str
+        Path to the csv file
+    id_field : str
+        (Optional, default='id') header name of the field containing the sources' ID
+    meta_fields : str or sequence of str
+        (Optional, default empty list) which fields to consider meta-data
+        Either a single string or a sequence of strings. 
+        Also accepts wildcards (e.g. ``meta_fields = 'R*'`` will
+        consider all the fields in header that start with ``R`` as meta-data).
+    skip_fields : str or sequence of str
+        (Optional, default empty list) which fields to skip
+        Either a single string or a sequence of strings. 
+        Also accepts wildcards (e.g. ``skip_fields = 'R*'`` will
+        ignore all the fields in header that start with ``R``).
+        
+    
+    Returns
+    -------
+    : dict
+    """
+    
+    with open(infile, 'r') as f :
+        lines = f.readlines()
+    content = [ re.split( '\t+| +', line.rstrip() ) for line in lines ]
+    
+    gxydict = {}
+    names = []
+    for head, *gxys in zip(*content) :
+        
+        if head in filter_strings(content[0],skip_fields) :
+            continue
+        if head==id_field :
+            names = gxys
+            for name in names :
+                gxydict[name] = {'bands':[], 'fluxes':[], 'errors':[]}
+            continue
+        for key, gxy in zip(names,gxys) :
+            if np.any( [head==what 
+                        for what in filter_strings(content[0], meta_fields)] ) :
+                gxydict[key][head] = gxy
+            elif '_err' in head :
+                try :
+                    gxydict[key]['errors'].append(float(gxy))
+                except ValueError :
+                    continue
+            else :
+                try :
+                    gxydict[key]['fluxes'].append(float(gxy))
+                except ValueError :
+                    continue
+                gxydict[key]['bands'].append(head)
+    
+    return gxydict
+
+###################################################################################
+
 # def recurrent_return ( dd, keylist ) :
 #     if len( keylist ) > 1 and isinstance( dd, MM ) :
 #         return recurrent_return( dd[ keylist.pop( 0 ) ], keylist )
