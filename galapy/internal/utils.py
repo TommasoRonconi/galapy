@@ -447,6 +447,7 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
     : dict
     """
     import re
+    import warnings
     
     with open(infile, 'r') as f :
         lines = f.readlines()
@@ -464,9 +465,13 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
                 gxydict[name] = {'bands':[], 'fluxes':[], 'errors':[]}
             continue
         for key, gxy in zip(names,gxys) :
-            if np.any( [head==what 
-                        for what in filter_strings(content[0], meta_fields)] ) :
-                gxydict[key][head] = gxy
+            if numpy.any( [head==what 
+                           for what in filter_strings(content[0], meta_fields)] ) :
+                try :
+                    gxydict[key][head] = float(gxy)
+                except ValueError :
+                    warnings.warn( f'{head} value {gxy} cannot be cast to float, skipping' )
+                    continue
             elif '_err' in head :
                 try :
                     gxydict[key]['errors'].append(float(gxy))
