@@ -446,6 +446,7 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
     -------
     : dict
     """
+    import re
     
     with open(infile, 'r') as f :
         lines = f.readlines()
