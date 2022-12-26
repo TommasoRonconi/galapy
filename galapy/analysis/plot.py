@@ -29,6 +29,7 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 # Internal imports
 
 import galapy as gp
+from galapy.internal.utils import filter_strings
 from galapy.GalaxyParameters import gxy_params_defaults as gpdefault
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
@@ -623,18 +624,13 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
     if which_params is None :
         which_params = handler.par_free
     else :
-        if isinstance(which_params, str) :
-            which_params = fnmatch.filter(handler.par_free, which_params)
-        elif isinstance(which_params, (list,tuple)) :
-            which_params = [item for sublist in 
-                            [fnmatch.filter(handler.par_free, s) 
-                             for s in which_params] 
-                            for item in sublist]
-        else :
+        try :
+            which_params = filter_strings( handler.par_free, which_params )
+        except ValueError :
             raise TypeError(
                 "Argument ``which_params`` must be a string, a list of strings or tuple of strings"
-            )
-    
+           )
+        
     if getdist_settings is None :
         getdist_settings = {}
     default_getdist_settings.update(getdist_settings)
