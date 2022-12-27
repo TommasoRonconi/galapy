@@ -483,6 +483,11 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
                 except ValueError :
                     continue
                 gxydict[key]['bands'].append(head)
+
+    for gxy in gxydict.values() :
+        gxy['bands']  = numpy.asarray(gxy['bands'])
+        gxy['fluxes'] = numpy.asarray(gxy['fluxes'])
+        gxy['errors'] = numpy.asarray(gxy['errors'])
     
     return gxydict
 
