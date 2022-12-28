@@ -15,11 +15,12 @@
 PyObject * _Create_SFHmodelDict () {
 
   PyObject * dict = PyDict_New();
-  if ( PyDict_SetItemString( dict, "insitu",     PyLong_FromLong( 1 ) ) < 0 ) return NULL;
-  if ( PyDict_SetItemString( dict, "constant",   PyLong_FromLong( 2 ) ) < 0 ) return NULL;
-  if ( PyDict_SetItemString( dict, "delayedexp", PyLong_FromLong( 3 ) ) < 0 ) return NULL;
-  if ( PyDict_SetItemString( dict, "lognormal",  PyLong_FromLong( 4 ) ) < 0 ) return NULL;
-  if ( PyDict_SetItemString( dict, "burst",      PyLong_FromLong( 5 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "insitu",       PyLong_FromLong( 1 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "constant",     PyLong_FromLong( 2 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "delayedexp",   PyLong_FromLong( 3 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "lognormal",    PyLong_FromLong( 4 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "interpolated", PyLong_FromLong( 5 ) ) < 0 ) return NULL;
+  if ( PyDict_SetItemString( dict, "burst",        PyLong_FromLong( 6 ) ) < 0 ) return NULL;
   return dict;
   
 }
@@ -48,7 +49,11 @@ sed::sfh_base * set_sfh_model ( const int modelID ) {
     ptrObj = new sed::sfh_lognorm{};
     break;
 
-    // case 5 :
+  case 5 :
+    ptrObj = new sed::sfh_interpolated{};
+    break;
+
+    // case 6 :
     //   self->ptrObj = new sed::sfh_burst{};
     //   break;
 
@@ -58,6 +63,7 @@ sed::sfh_base * set_sfh_model ( const int modelID ) {
 		     "Valid models are: "
 		     "'insitu', 'constant', "
 		     "'delayedexp', 'lognormal', "
+		     "'interpolated', "
 		     "'burst'" );
     return NULL;
 
@@ -97,6 +103,7 @@ extern "C" {
     "#. 'constant'\n"
     "#. 'delayedexp'\n"
     "#. 'lognormal'\n"
+    "#. 'interpolated'\n"
     "#. 'burst'\n"
     "\nParameters"
     "\n----------"
@@ -104,7 +111,7 @@ extern "C" {
     "\tEventual abrupt quenching time for star formation.\n"
     "\tShould be expressed in years. Refers to the age of the galaxy.\n"
     "\nmodel : string\n"
-    "\tOne among ('insitu', 'constant', 'delayedexp', 'lognormal', 'burst').\n"
+    "\tOne among ('insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated', 'burst').\n"
     "\tDefault is 'insitu'.\n";
   static int CPySFH_init ( CPySFH *self, PyObject *args, PyObject *kwds ) {
     
@@ -128,6 +135,7 @@ extern "C" {
     		       "Valid models are: "
     		       "'insitu', 'constant', "
     		       "'delayedexp', 'lognormal', "
+		       "'interpolated', "
     		       "'burst'" );
       return -1;
     }
@@ -284,6 +292,62 @@ extern "C" {
     Py_RETURN_NONE;
     
   }
+
+  // ========================================================================================
+  
+  static const char DocString_set_interpolator[] =
+    "set_params( self, tau, sfr )\n"
+    "--\n\n"
+    "Function for building the interpolator object.\n"
+    "\nParameters"
+    "\n----------"
+    "\ntau : 1d-array\n"
+    "\tarray containing the tau-values\n"
+    "\nsfr : 1d-array\n"
+    "\tarray containing the sfr-values\n"
+    "\nReturns"
+    "\n-------"
+    "\n: None"; 
+  static PyObject * CPySFH_set_interpolator ( CPySFH * self, PyObject * args ) {
+
+    /* Check that the requested operation is allowed */
+    if ( self->model !=
+	 (int) PyLong_AsLong( PyDict_GetItemString( sfh_model, "interpolated" ) ) ) {
+      PyErr_SetString( PyExc_TypeError,
+		       "Setting the interpolator is possible only"
+		       "for an 'interpolated' SFH" );
+      return NULL;
+    }
+
+    /* Allocate memory */
+    PyArrayObject * NPyTau = NULL;
+    PyArrayObject * NPySFR = NULL;
+    std::vector< double > tau, sfr;
+
+    /* Parse arguments */
+    if ( !PyArg_ParseTuple( args, "O!O!",
+			    &PyArray_Type, &NPyTau,
+			    &PyArray_Type, &NPySFR ) ) return NULL;
+
+    /* Convert NumPy-arrays to C++ vectors */
+    if ( NPyArrayToCxxVector1D< double >( NPyTau, tau ) == -1 ) return NULL;
+    if ( NPyArrayToCxxVector1D< double >( NPySFR, sfr ) == -1 ) return NULL;
+
+    /* Check that the requested operation is allowed */
+    if ( tau.size() != sfr.size() ) {
+      PyErr_SetString( PyExc_ValueError,
+		       "Input arrays tau & sfr should have same size." );
+      return NULL;
+    }
+
+    /* Call C++ member function */
+    self->ptrObj->set_interpolator( tau, sfr );
+
+    // equivalent to return None
+    Py_RETURN_NONE;
+
+  }
+
 
   // ========================================================================================
   
@@ -635,6 +699,10 @@ extern "C" {
        (PyCFunction) CPySFH_set_tau_quench,
        METH_VARARGS,
        DocString_set_tau_quench },
+     { "set_interpolator",
+       (PyCFunction) CPySFH_set_interpolator,
+       METH_VARARGS,
+       DocString_set_interpolator },
      { "Mstar",
        (PyCFunction) CPySFH_Mstar,
        METH_VARARGS | METH_KEYWORDS,
