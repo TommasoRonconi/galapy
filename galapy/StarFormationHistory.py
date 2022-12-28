@@ -19,7 +19,10 @@ sfh_tunables = {
     'delayedexp' : ['psi_norm', 'k_shape', 'tau_star', 'Mdust', 'Zgxy' ],
     
     # Log-Normal model
-    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgxy' ]
+    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgxy' ],
+    
+    # Interpolated model
+    'interpolated' : ['Mdust', 'Zgxy' ]
 }
 """ Dictionary of tunable parameters
 """
@@ -74,6 +77,11 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
             'tau_star'   : 3.e+8,
             'Mdust'      : 1.e+8,
             'Zgxy'       : 0.01,
+        },
+        # Interpolated model
+        'interpolated' : {
+            'Mdust'      : 1.e+8,
+            'Zgxy'       : 0.01,
         }
     }
     out = { 'tau_quench' : tau_quench, 'model' : model }
@@ -93,17 +101,23 @@ class SFH () :
     #. 'constant'
     #. 'delayedexp'
     #. 'lognormal'
+    #. 'interpolated'
     #. 'burst'
 
     Parameters
     ----------
+    *args :
+      positional arguments are optional, if passed they should be the two-iterables 
+      corresponding to gridded values of time and SFR to interpolate over: args = (tau, sfr)
+      with len(tau)==len(sfr). Note that in this case the 'model' argument will be overridden
+      and fixed to 'interpolated'
     tau_quench : float
       Eventual abrupt quenching time for star formation. 
       Should be expressed in years. It refers to the age of the galaxy,
       i.e. it has to be intended as the time passed from the formation of the galaxy.
 
     model : string
-      One among ( 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst' ).
+      One among ( 'insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated', 'burst' ).
       Default is 'insitu'.
 
     Note
@@ -111,12 +125,22 @@ class SFH () :
     Not for SED fitting, use the galaxy class
     """
 
-    def __init__ ( self, tau_quench = 2.e+20, model = 'insitu', **kwargs ) :
-        
+    def __init__ ( self, *args, tau_quench = 2.e+20, model = 'insitu', **kwargs ) :
+
+        if len(args) == 2 :
+            try :
+                tau = numpy.ascontiguousarray(args[0])
+                sfr = numpy.ascontiguousarray(args[1])
+                model = 'interpolated'
+            except :
+                raise;
+            
         self.core = CSFH( tau_quench, model )
         self.params = sfh_build_params( tau_quench, model, **kwargs )
         self.tunable = set( self.params.keys() )
         self.tunable.remove('model')
+        if model == 'interpolated' :
+            self.core.set_interpolator(tau, sfr)
         self.set_parameters()
 
     def __call__ ( self, tau ) :
