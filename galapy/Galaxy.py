@@ -326,6 +326,7 @@ class GXY () :
             the emission on the selected wavelenght grid 
             in units of solar luminosities (:math:`[L_\odot]`)
         """
+        # This here below should be removed as it is now authomatic with set_parameters()
         # set derived stellar properties
         # self.csp.set_parameters( self.age, self.sfh )
         
@@ -395,9 +396,9 @@ class GXY () :
                 "has not been computed. First run function GXY.get_emission()"
             )
         wn0 = self.components['stellar'] > 0
-        AA = numpy.zeros_like( gxy.wl() )
+        AA = numpy.zeros_like( self.wl() )
         AA[wn0] = -2.5 * numpy.log10(
-            gxy.components[ 'extinct' ][ wn0 ] / gxy.components[ 'stellar' ][ wn0 ]
+            self.components[ 'extinct' ][ wn0 ] / self.components[ 'stellar' ][ wn0 ]
         )
         return AA
 
