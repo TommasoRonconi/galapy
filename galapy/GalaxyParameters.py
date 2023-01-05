@@ -76,7 +76,7 @@ gxy_params_defaults = {
     ##################
     # Molecular Clouds
     
-    'ism.norm_MC' : ( 'Normalisation of the MC attenuation in the visible band',
+    'ism.norm_MC' : ( 'Normalisation of the MC extinction in the visible band',
                       [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{MC}}' ),
     'ism.N_MC'    : ( 'Number of MCs in the galaxy',
                       [0., 5.], True, 'N_\\mathrm{MC}' ),
@@ -84,44 +84,55 @@ gxy_params_defaults = {
                       [0., 5.], True, 'R_\\mathrm{MC}' ),
     'ism.tau_esc' : ( 'Time required by stars to start escaping their MC',
                       [4., 8.], True, '\\tau_\\mathrm{esc}' ),
-    'ism.dMClow'  : ( 'Molecular clouds extinction power-law index at wavelenght < 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
-    'ism.dMCupp'  : ( 'Molecular clouds extinction power-law index at wavelenght > 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
+    'ism.dMClow'  : ( 'Molecular clouds extinction index at wavelength < 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
+    'ism.dMCupp'  : ( 'Molecular clouds extinction index at wavelength > 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
     
     ##############
     # Diffuse Dust
     
-    'ism.norm_DD' : ( '', [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{DD}}' ),
-    'ism.Rdust'   : ( '', [0., 5.], True, 'R_\\mathrm{DD}' ),
-    'ism.f_PAH'   : ( '', [0., 1.], False, 'f_\\mathrm{PAH}' ),
-    'ism.dDDlow'  : ( 'Diffuse dust extinction power-law index at wavelenght < 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
-    'ism.dDDupp'  : ( 'Diffuse dust extinction power-law index at wavelenght > 100 mum (10^6 Ang)', [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
+    'ism.norm_DD' : ( 'Normalisation of the DD extinction in the visible band',
+                      [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{DD}}' ),
+    'ism.Rdust'   : ( 'Radius of the diffuse dust region embedding stars and MCs',
+                      [0., 5.], True, 'R_\\mathrm{DD}' ),
+    'ism.f_PAH'   : ( 'Fraction of the total DD luminosity radiated by PAH',
+                      [0., 1.], False, 'f_\\mathrm{PAH}' ),
+    'ism.dDDlow'  : ( 'Diffuse dust extinction index at wavelength < 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
+    'ism.dDDupp'  : ( 'Diffuse dust extinction index at wavelength > 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
 
     ###############
     # Synchrotorn #
     ###############
 
-    'syn.alpha_syn'   : ( '', [0., 5.], False, '\\alpha_\\mathrm{syn}' ), 
-    'syn.nu_self_syn' : ( '', [0., 1.], False, '\\nu_\\mathrm{syn}^\\mathrm{self}'),
+    'syn.alpha_syn'   : ( 'SN synchrotron spectral index',
+                          [0., 5.], False, '\\alpha_\\mathrm{syn}' ), 
+    'syn.nu_self_syn' : ( 'Self-absorption frequency of the SN synchrotron',
+                          [0., 1.], False, '\\nu_\\mathrm{syn}^\\mathrm{self}'),
 
     #####################
     # Nebular Free-Free #
     #####################
 
-    'nff.Zgas' : ( '', [0., 1.], False, 'Z_\\mathrm{gas}' ),
-    'nff.Zi'   : ( '', [0., 10.], False, '\\mathcal{Z}^i'),
+    'nff.Zgas' : ( 'Metallicity of the ionised gas of nebular regions',
+                   [0., 1.], False, 'Z_\\mathrm{gas}' ),
+    'nff.Zi'   : ( 'Average atomic number of ions', [0., 10.], False, '\\mathcal{Z}^i'),
 
     ###########################
     # Active Galactic Nucleus #
     ###########################
 
-    'agn.fAGN' : ( '', [-3., 3.], True, 'f_\\mathrm{AGN}' ),
+    'agn.fAGN' : ( 'Fraction with respect to the total dust IR luminosity contributed by the AGN',
+                   [-3., 3.], True, 'f_\\mathrm{AGN}' ),
     
-    'agn.ct' : 40,
-    'agn.al' : 0.,
-    'agn.be' : -0.5,
-    'agn.ta' : 6.,
-    'agn.rm' : 60,
-    'agn.ia' : 0.001,
+    'agn.ct' : ( 'Torus half-aperture angle', 40, None, '\\Theta' ),
+    'agn.al' : ( 'Density parameter (exponential part)', 0., None, '\\alpha' ),
+    'agn.be' : ( 'Density parameter (power-law part)', -0.5, None, '\\beta' ),
+    'agn.ta' : ( 'Optical depth at 9.7 mum', 6., None, '\\tau_{9.7}^\\mathrm{AGN}' ),
+    'agn.rm' : ( 'Radial ratio of the torus', 60, None, 'R_\\mathrm{torus}^\\mathrm{AGN}' ),
+    'agn.ia' : ( 'Inclination angle', 0.001, None, '\\Psi_\\mathrm{los}^\\mathrm{AGN}' ),
 
 }
 
