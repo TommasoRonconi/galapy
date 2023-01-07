@@ -40,7 +40,7 @@ for fn in glob.glob("../notebooks/*.ipynb"):
 
 # -- Project information -----------------------------------------------------
 
-project = 'GaLapy'
+project = 'GalaPy'
 copyright = '2022, Tommaso Ronconi'
 author = 'Tommaso Ronconi'
 
@@ -85,8 +85,8 @@ autodoc_default_options = {
 #html_theme = 'sphinx_pdj_theme'
 #html_theme_path = [sphinx_pdj_theme.get_html_theme_path()]
 
-# html_theme = 'sphinx_rtd_theme'
-html_theme = 'karma_sphinx_theme'
+html_theme = 'sphinx_rtd_theme'
+#html_theme = 'karma_sphinx_theme'
 # html_theme = 'insegel'
 # html_theme = 'sphinx_material'
 
@@ -101,7 +101,7 @@ def setup(app):
     app.add_css_file("theme_overrides.css")  # path relative to static
 
 # Define position of the logo
-# html_logo = '../images/SAD.png'
+html_logo = '../logo/galapy_logo_noback.png'
 
 # -- Options for LaTeX output ---------------------------------------------
 
