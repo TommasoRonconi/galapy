@@ -35,7 +35,7 @@ namespace sed {
 
     // tunable parameters
     double _Mdust = 1.e+8; // [ Msol ]
-    double _Zgs = 0.01;    // [ percent / 100 ]
+    double _Zgxy = 0.01;    // [ percent / 100 ]
 
   public :
 
@@ -50,13 +50,13 @@ namespace sed {
     double get_Mgas  ( const double tau )
       const noexcept override { return _Mdust * _gas_to_dust( tau ); }
     double get_Zgas  ( __attribute__((unused)) const double tau )
-      const noexcept override { return _Zgs; }
+      const noexcept override { return _Zgxy; }
     double get_Zstar ( __attribute__((unused)) const double tau )
-      const noexcept override { return _Zgs; }
+      const noexcept override { return _Zgxy; }
 
     // Tunable parameter setters
     void set_Mdust ( const double Mdust ) { _Mdust = Mdust; return; }
-    void set_Zgs ( const double Zgs ) { _Zgs = Zgs; return; }
+    void set_Zgxy ( const double Zgxy ) { _Zgxy = Zgxy; return; }
 
     // =============================================================
     // Serialize Object:
@@ -66,7 +66,7 @@ namespace sed {
       return
 	sfh_base::serialize_size() +
 	SerialPOD< double >::serialize_size( _Mdust ) +
-	SerialPOD< double >::serialize_size( _Zgs );
+	SerialPOD< double >::serialize_size( _Zgxy );
 
     }
 
@@ -74,7 +74,7 @@ namespace sed {
 
       data = sfh_base::serialize( data );
       data = SerialPOD< double >::serialize( data, _Mdust );
-      data = SerialPOD< double >::serialize( data, _Zgs );
+      data = SerialPOD< double >::serialize( data, _Zgxy );
       return data;
 
     }
@@ -83,7 +83,7 @@ namespace sed {
 
       data = sfh_base::deserialize( data );
       data = SerialPOD< double >::deserialize( data, _Mdust );
-      data = SerialPOD< double >::deserialize( data, _Zgs );
+      data = SerialPOD< double >::deserialize( data, _Zgxy );
       return data;
 
     }
@@ -120,18 +120,22 @@ namespace sed {
       set_params();
       
     }
-    
+
+    // In:
+    // param[ 0 ] = Psi
+    // param[ 1 ] = M_dust
+    // param[ 2 ] = Z_gxy
     void set_params ( const double * const param = nullptr ) noexcept override {
 
       if ( param ) {
 	this->set_Psi( param[ 0 ] );
 	this->set_Mdust( param[ 1 ] );
-	this->set_Zgs( param[ 2 ] );
+	this->set_Zgxy( param[ 2 ] );
       }
       else {
 	this->set_Psi( _Psi );
 	this->set_Mdust( _Mdust );
-	this->set_Zgs( _Zgs );
+	this->set_Zgxy( _Zgxy );
       }
       return;
       
@@ -212,6 +216,8 @@ namespace sed {
     // param[ 0 ] = Psi_norm
     // param[ 1 ] = k
     // param[ 2 ] = tau_star
+    // param[ 3 ] = M_dust
+    // param[ 4 ] = Z_gxy
     // Out:
     // idx_0 = Psi_norm
     // idx_1 = k
@@ -223,14 +229,14 @@ namespace sed {
 	this->set_k_shape( param[ 1 ] );
 	this->set_tau_star( param[ 2 ] );
 	this->set_Mdust( param[ 3 ] );
-	this->set_Zgs( param[ 4 ] );
+	this->set_Zgxy( param[ 4 ] );
       }
       else {
 	this->set_Psi_norm( _Psi_norm );
 	this->set_k_shape( _k_shape );
 	this->set_tau_star( _tau_star );
 	this->set_Mdust( _Mdust );
-	this->set_Zgs( _Zgs );
+	this->set_Zgxy( _Zgxy );
       }
       return;
       
@@ -331,6 +337,8 @@ namespace sed {
     // param[ 0 ] = Psi_norm
     // param[ 1 ] = sigma_star
     // param[ 2 ] = tau_star
+    // param[ 3 ] = M_dust
+    // param[ 4 ] = Z_gxy
     // Out:
     // idx_0 = Psi_norm
     // idx_1 = 1 / ( 2 * sigma_star^2 )
@@ -342,14 +350,14 @@ namespace sed {
 	this->set_sigma_star( param[ 1 ] );
 	this->set_tau_star( param[ 2 ] );
 	this->set_Mdust( param[ 3 ] );
-	this->set_Zgs( param[ 4 ] );
+	this->set_Zgxy( param[ 4 ] );
       }
       else {
 	this->set_Psi_norm( _Psi_norm );
 	this->set_sigma_star( _sigma_star );
 	this->set_tau_star( _tau_star );
 	this->set_Mdust( _Mdust );
-	this->set_Zgs( _Zgs );
+	this->set_Zgxy( _Zgxy );
       }
       return;
       

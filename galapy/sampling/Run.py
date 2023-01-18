@@ -16,7 +16,8 @@ from galapy.internal.utils import set_nested
 ################################################################################
 
 def initialize ( bands, fluxes, errors, uplims, filters, params,
-                 ssp_lib = 'br22.NT', do_Radio = False, do_Xray = False, do_AGN = False,
+                 sfh_model = 'insitu', ssp_lib = 'br22.NT',
+                 do_Radio = False, do_Xray = False, do_AGN = False,
                  model_kwargs = {} ) :
 
     #########################################################################
@@ -28,6 +29,7 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
     # Build photometric galaxy
 
     model = PhotoGXY( pms = data.pms,
+                      sfh = { 'model' : sfh_model },
                       csp = { 'ssp_lib' : ssp_lib },
                       do_Radio = do_Radio,
                       do_Xray = do_Xray,
@@ -93,6 +95,7 @@ def sample_serial ( hyperpar ) :
                                                   uplims = hyperpar.uplims,
                                                   filters = hyperpar.filters,
                                                   params = hyperpar.parameters,
+                                                  sfh_model = hyperpar.sfh_model,
                                                   ssp_lib = hyperpar.ssp_lib,
                                                   do_Radio = hyperpar.do_Radio,
                                                   do_Xray = hyperpar.do_Xray,
@@ -265,19 +268,26 @@ def run () :
         global gxy_data
         global gxy_model
         global gxy_params
-        
-        init_args = ( hyperpar.bands,
-                      hyperpar.fluxes,
-                      hyperpar.errors,
-                      hyperpar.uplims,
-                      hyperpar.filters,
-                      hyperpar.parameters,
-                      hyperpar.ssp_lib,
-                      hyperpar.do_Radio,
-                      hyperpar.do_Xray,
-                      hyperpar.do_AGN,
-                      { 'lstep' : hyperpar.lstep } )
-        gxy_data, gxy_model, gxy_params = initialize( *init_args )
+    
+        init_args = (
+            hyperpar.bands,
+            hyperpar.fluxes,
+            hyperpar.errors,
+            hyperpar.uplims,
+            hyperpar.filters,
+            hyperpar.parameters,
+        )
+        init_kwargs = dict(
+            sfh_model = hyperpar.sfh_model,
+            ssp_lib   = hyperpar.ssp_lib,
+            do_Radio  = hyperpar.do_Radio,
+            do_Xray   = hyperpar.do_Xray,
+            do_AGN    = hyperpar.do_AGN,
+            model_kwargs = {
+                'lstep' : hyperpar.lstep
+            },
+        )
+        gxy_data, gxy_model, gxy_params = initialize( *init_args, **init_kwargs )
         sample_parallel( hyperpar, Ncpu = args.Ncpu )
 
     return;    
@@ -447,21 +457,21 @@ parameters = {{
     # Constant model
     'sfh.psi'   : ( [0., 4.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
     
     # Delayed-Exponential model
     'sfh.psi_norm' : ( [0., 4.], True ),
     'sfh.k_shape'  : ( [0., 5.], False ),
     'sfh.tau_star' : ( [6., 11.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
     
     # Log-Normal model
     'sfh.psi_norm'   : ( [0., 4.], True ),
     'sfh.sigma_star' : ( [0., 5.], False ),
     'sfh.tau_star'   : ( [6., 11.], True ),
     'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgs'   : ( [0., 2.], False ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
 
     ########################
     # Inter-Stellar Medium #

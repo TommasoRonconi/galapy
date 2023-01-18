@@ -22,6 +22,10 @@ from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
 
+# gxy_tunables = ( 'age', 'redshift' )
+# def gxy_build_params () :
+#     pass
+
 class GXY () :
     """ Wrapping everything up
     * It has some own parameters (e.g. the age and redshift)
@@ -118,6 +122,8 @@ class GXY () :
                             Mstar = self.sfh.Mstar( self.age ),
                             Zstar = self.sfh.Zstar( self.age ) )
             self.components['XRB'] = None
+            # This here below not really necessary as there is
+            # no freedom in setting the X-ray Binaries parameters:
             # self.params[ 'xrb' ] = self.xrb.params
             
         self.agn = None
@@ -221,34 +227,49 @@ class GXY () :
         if reset_csp :
             self.csp.set_parameters( self.age, self.sfh )
             if self.snsyn is not None :
-                rccsn = self.csp.core.RCCSN()
                 if syn is None :
                     syn = {}
-                    syn['RCCSN'] = rccsn
+                syn['RCCSN'] = self.csp.core.RCCSN()
 
+        ############################################################################
+        # ISM:
+        # --------------
+        # None  | Reset 
+        # ------+-------
+        # True  | True
+        # True  | False
+        # False | True
+        # False | False
+        # ______|_______
+        # --------------
+        # This should cover all the possibilities:
         if ism is not None :
             if reset_ism :
                 ism.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
                               'Mgas'  : self.sfh.core.Mgas(self.age),
                               'Mdust' : self.sfh.core.Mdust(self.age) } )
-                self.ism.set_parameters(**ism)
-                self.params['ism'].update(self.ism.mc.params)
-                self.params['ism'].update(self.ism.dd.params)
-        elif reset_ism :
-            ism = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
-                    'Mgas'  : self.sfh.core.Mgas(self.age),
-                    'Mdust' : self.sfh.core.Mdust(self.age) }
             self.ism.set_parameters(**ism)
             self.params['ism'].update(self.ism.mc.params)
             self.params['ism'].update(self.ism.dd.params)
+        else :
+            if reset_ism :
+                ism = { 'Zgas'  : self.sfh.core.Zgas(self.age), 
+                        'Mgas'  : self.sfh.core.Mgas(self.age),
+                        'Mdust' : self.sfh.core.Mdust(self.age) }
+                self.ism.set_parameters(**ism)
+                self.params['ism'].update(self.ism.mc.params)
+                self.params['ism'].update(self.ism.dd.params)
 
+        ############################################################################
         # This one here should also be set only when either age or sfh changes:
         if self.xrb is not None :
             self.xrb.set_parameters( age = self.age,
                                      psi = self.sfh( self.age ),
-                                     Mstar = self.sfh.Mstar( self.age ),
-                                     Zstar = self.sfh.Zstar( self.age ) )
+                                     Mstar = self.sfh.core.Mstar( self.age ),
+                                     Zstar = self.sfh.core.Zstar( self.age ) )
 
+        ############################################################################
+        # AGN varies only if some new parameters are passed
         if agn is not None :
             try :
                 self.agn.set_parameters(**agn)
@@ -257,15 +278,27 @@ class GXY () :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
 
-        if nff is not None :
-            try :
-                nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
-                self.nff.set_parameters( **nff )
-                self.params['nff'].update(self.nff.params)
-            except AttributeError :
-                raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
-                                      'without an NFF component is not allowed.' )
+        ############################################################################
+        # NFF varies both whether some new parameters are passed or if some
+        # of the other components above which they do depend changes
+        if self.nff is not None :
+            if nff is None :
+                nff = {}
+            nff.update( { 'Zgas' : self.sfh.core.Zgas(self.age) } )
+            self.nff.set_parameters( **nff )
+            self.params['nff'].update(self.nff.params)
+            # try :
+            #     nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
+            #     self.nff.set_parameters( **nff )
+            #     self.params['nff'].update(self.nff.params)
+            # except AttributeError :
+            #     raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
+            #                           'without an NFF component is not allowed.' )
 
+        ############################################################################
+        # If the object exists and CCSN varied for some reason, csp has already
+        # taken care of modifying the syn-dictionary, otherwise this enters only
+        # when some new parameter has been set.
         if syn is not None:
             try :
                 self.snsyn.set_parameters( **syn )
@@ -277,9 +310,6 @@ class GXY () :
         return;
     
     def Lstellar ( self ) :
-        
-        # set derived stellar properties
-        # self.csp.set_parameters( self.age, self.sfh )
         
         # emission from stars (using directly the core function for performance)  
         return self.csp.core.emission( self.lgrid )
@@ -296,6 +326,7 @@ class GXY () :
             the emission on the selected wavelenght grid 
             in units of solar luminosities (:math:`[L_\odot]`)
         """
+        # This here below should be removed as it is now authomatic with set_parameters()
         # set derived stellar properties
         # self.csp.set_parameters( self.age, self.sfh )
         
@@ -355,6 +386,21 @@ class GXY () :
             Ltot += self.components['synchrotron']
         
         return Ltot
+
+    def get_avgAtt ( self ) :
+        """ Returns the average attenuation in absolute magnitudes 
+        """
+        if self.components['stellar'] is None or self.components['extinct'] is None :
+            raise RuntimeError(
+                "Cannot compute average attenuation if the components dictionary "
+                "has not been computed. First run function GXY.get_emission()"
+            )
+        wn0 = self.components['stellar'] > 0
+        AA = numpy.zeros_like( self.wl() )
+        AA[wn0] = -2.5 * numpy.log10(
+            self.components[ 'extinct' ][ wn0 ] / self.components[ 'stellar' ][ wn0 ]
+        )
+        return AA
 
     def get_SED ( self ) :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].

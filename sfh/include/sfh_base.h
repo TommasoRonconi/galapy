@@ -49,6 +49,10 @@ namespace sed {
 
     virtual void set_params ( const double * const param ) noexcept = 0;
     void set_tau_quench ( const double tau_q ) { _tau_quench = tau_q; };
+    virtual void set_interpolator ( __attribute__((unused)) const std::vector< double > &,
+				    __attribute__((unused)) const std::vector< double > & )
+      noexcept { return; };
+    
     double get_tau_quench () { return _tau_quench; };
     
     std::vector< double > get_params () { return _paramsrc; }

@@ -36,7 +36,7 @@ def ism_build_params ( phase, **kwargs ) :
             'norm_MC' : 1.e+02,
             'N_MC'    : 1.e+03,
             'R_MC'    : 10.,
-            'Zgas'    : 0.5,
+            'Zgas'    : 0.01,
             'tau_esc' : 1.e+07,
             'Mgas'    : 1.e+09,
             'dMClow'  : 1.3,

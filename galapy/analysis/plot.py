@@ -29,6 +29,7 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 # Internal imports
 
 import galapy as gp
+from galapy.internal.utils import filter_strings
 from galapy.GalaxyParameters import gxy_params_defaults as gpdefault
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
@@ -53,6 +54,13 @@ _specs_default = {
         'xlabel' : '$\\lambda\\ [\\,\\AA\\,]$',
         'ylabel' : '$S_\\lambda\\ [\\mathrm{mJy}]$',
     },
+    'sed_legend_kw' : {
+        'l1' : { 'loc' : 'upper right',
+                 'fontsize' : 12 },
+        'l2' : { 'loc' : 'upper left',
+                 'ncol' : 2,
+                 'fontsize' : 12 },
+    },
     'pms_ax_kw' : {
         'xscale' : 'log',
         'yscale' : 'log',
@@ -75,7 +83,7 @@ _specs_default = {
             'bbox' : {
                 'boxstyle' : 'round',
                 'facecolor' : 'white',
-                'alpha' : 0.5
+                'alpha' : 0.7
             },
         },
     },
@@ -220,9 +228,11 @@ def sed_flux_res ( res,
                    plot_observation = False,
                    plot_components = False, 
                    plot_contours = True,
-                   frame = 'both', 
+                   frame = 'both',
+                   show_legend = True,
+                   legend_kwargs = {},
                    ax = None, 
-                   ax_kwargs = {} ) :
+                   ax_kwargs = {}) :
     """ Plots the formatted SED flux from a galapy.sampling.Results instance.
     Optional specs that can be activated or de-activated are the observed points,
     1- and 2-sigma contours around the mean of the sampled SEDs and the different
@@ -247,6 +257,10 @@ def sed_flux_res ( res,
     frame : string
         One among {``'rest'``, ``'obs'``, ``'both'``}, choose the frame, observed- or rest-frame,
         to plot the wavelenght-axis (default is ``'both'``)
+    show_legend : bool
+        (Optional)
+    legend_kwargs : dict
+        (Optional)
     ax : matplotlib.axes.Axes
         (Optional) an instance of matplotlib axes
     ax_kwargs : dict
@@ -304,6 +318,10 @@ def sed_flux_res ( res,
     
     legend_primary   = []
     legend_secondary = []
+    if show_legend :
+        legend_kw = dict( _specs_default['sed_legend_kw'] )
+        legend_kw.update( legend_kwargs )
+        
     
     # Plot the observational dataset
     if plot_observation :
@@ -350,12 +368,12 @@ def sed_flux_res ( res,
     # Finalise and return
     
     # LEGEND:
-    lpri = ax.legend(handles = legend_primary, loc = 'upper right', fontsize=12)
-    ax.add_artist(lpri)
-    if len(legend_secondary)>0 :
-        lsec = ax.legend(handles = legend_secondary, 
-                         loc = 'upper left', ncol = 2, fontsize=12)
-        ax.add_artist(lsec)
+    if show_legend :
+        lpri = ax.legend(handles = legend_primary, **legend_kw['l1'] )
+        ax.add_artist(lpri)
+        if len(legend_secondary)>0 :
+            lsec = ax.legend(handles = legend_secondary, **legend_kw['l2'] )
+            ax.add_artist(lsec)
         
     return(ax)
 
@@ -400,7 +418,7 @@ def sed_residuals_res ( res,
     pbest = res.get_bestfit('params')
     pgxy = res.get_model()
     pgxy.set_parameters(**pbest)
-    redshift = pbest['redshift']
+    redshift = pgxy.redshift
 
     # Get reference observation
     obs = res.get_observation()
@@ -411,7 +429,7 @@ def sed_residuals_res ( res,
     lsed = pgxy.wl(obs=(frame != 'rest'))
 
     # compute residuals
-    chi = (pgxy.photoSED()-ff)/ee
+    chi = (ff - pgxy.photoSED())/ee
     
     # Set axes
     ax_kw = dict(_specs_default['residuals_ax_kw'])
@@ -606,18 +624,13 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
     if which_params is None :
         which_params = handler.par_free
     else :
-        if isinstance(which_params, str) :
-            which_params = fnmatch.filter(handler.par_free, which_params)
-        elif isinstance(which_params, (list,tuple)) :
-            which_params = [item for sublist in 
-                            [fnmatch.filter(handler.par_free, s) 
-                             for s in which_params] 
-                            for item in sublist]
-        else :
+        try :
+            which_params = filter_strings( handler.par_free, which_params )
+        except ValueError :
             raise TypeError(
                 "Argument ``which_params`` must be a string, a list of strings or tuple of strings"
-            )
-    
+           )
+        
     if getdist_settings is None :
         getdist_settings = {}
     default_getdist_settings.update(getdist_settings)
