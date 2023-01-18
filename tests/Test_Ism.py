@@ -173,7 +173,7 @@ def test_ism_mc_parameters ( ism ) :
                                                       'norm_MC': 100.0,
                                                       'N_MC': 1000.0,
                                                       'R_MC': 10.0,
-                                                      'Zgas': 0.5,
+                                                      'Zgas': 0.01,
                                                       'tau_esc': 10000000.0,
                                                        'Mgas': 1000000000.0,
                                                        'dMClow': 1.3,
@@ -188,9 +188,9 @@ def test_ism_mc_temperature ( ism ) :
     
     """
     
-    ism.set_parameters(Zgas = 0.0134)
+    ism.set_parameters( Zgas = 0.0134 )
     E_tot = 4.e+43
-    assert ism.mc.temperature( E_tot ) == pytest.approx( 27.56889923186195 )
+    assert ism.mc.temperature( E_tot ) == pytest.approx( 27.381094065189018 )
     
 #------------------------------------------------------------------------------#
 
@@ -207,9 +207,9 @@ def test_ism_mc_emission ( ism ) :
     ism.mc.set_temperature( 30. )
     assert np.all ( ism.mc.emission( ll ) == pytest.approx( [ 0.,
                                                               0.,
-                                                              1.27697403e+3,
-                                                              5.44098854e+2,
-                                                              9.72190108e-5 ] )
+                                                              4.65817437e+2,
+                                                              1.31598377e+1,
+                                                              2.03449423e-6 ] )
                     )
 
 #------------------------------------------------------------------------------#
@@ -223,12 +223,11 @@ def test_ism_mc_attenuation ( ism ) :
 
     ll = np.logspace( 3, 8, 5 )
     ism.mc.set_temperature( 30. )
-    print()
     assert np.all ( ism.mc.attenuation( ll ) == pytest.approx( [0.,
-                                                                0.,
-                                                                3.70203465e-10,
-                                                                7.35827016e-01,
-                                                                9.96937098e-01 ]
+                                                                4.89009895e-09,
+                                                                6.35217767e-01,
+                                                                9.93610585e-01,
+                                                                9.99935903e-01]
     ) )
 #------------------------------------------------------------------------------#
 
@@ -241,11 +240,11 @@ def test_ism_mc_extinction (ism) :
     
     ll = np.logspace( 3, 8, 5 )
     ism.mc.set_temperature( 30. )
-    assert np.all ( ism.mc.extinction( ll ) == pytest.approx( [ 4.19298587e+04,
-                                                                9.94313781e+02,
-                                                                2.35788988e+01,
-                                                                3.33060677e-01,
-                                                                3.33060654e-03 ]
+    assert np.all ( ism.mc.extinction( ll ) == pytest.approx( [8.76146302e+02,
+                                                               2.07767059e+01,
+                                                               4.92693408e-01,
+                                                               6.95947684e-03,
+                                                               6.95947636e-05]
     ) )
 #------------------------------------------------------------------------------#
 
@@ -257,7 +256,7 @@ def test_ism_mc_A_V (ism) :
     """
     
     ism.mc.set_temperature( 30. )
-    assert ism.mc.A_V() == pytest.approx( 4571.428570971428 )
+    assert ism.mc.A_V() == pytest.approx( 95.52238805014926 )
 
 #------------------------------------------------------------------------------#
 
@@ -301,7 +300,7 @@ def test_ism_total_attenuation (ism) :
     attTot = ism.total_attenuation( ll, tt )[ 1 ]
     assert np.all ( attTot == pytest.approx( [ 0.        ,
                                                0.73803851,
-                                               0.99693686,
+                                               0.99993566,
                                                0.99999976 ] ) )
 
 

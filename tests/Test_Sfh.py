@@ -58,7 +58,7 @@ def test_sfh_init_models () :
  
     """
     
-    with pytest.raises( TypeError, match = "SFH model not valid. Valid models are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'burst'" ):
+    with pytest.raises( TypeError, match = "SFH model not valid. Valid models are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated', 'burst'" ):
         sfh = gpsfh.SFH( model = '' )
         
 #------------------------------------------------------------------------------#
@@ -207,7 +207,7 @@ def test_sfh_insitu_Zgas ( sfh_insitu ) :
 #Chosen values for Mdust and Zgs for empirical SFH models:
 
 md = 1.e+7
-zz = 0.02
+zz = 0.01
 
 ################################################################################
 ############################## SFH MODEL = CONSTANT ############################
@@ -249,7 +249,7 @@ def test_sfh_const_parameters( ):
     
     sfh_const = gpsfh.SFH( model = 'constant' )
     assert sfh_const.params == { 'tau_quench': 2e+20, 'model': 'constant',
-                                 'psi': 1.0, 'Mdust': 100000000.0, 'Zgs': 0.1 }
+                                 'psi': 1.0, 'Mdust': 100000000.0, 'Zgxy': 0.01 }
 
 #------------------------------------------------------------------------------#
 
@@ -307,7 +307,7 @@ def test_sfh_const_Mgas ( sfh_const ) :
     Check the value of total gas content at present time .
     
     """
-    assert sfh_const.Mgas( 1.e+9 ) == pytest.approx( 1405518018.9671905 )
+    assert sfh_const.Mgas( 1.e+9 ) == pytest.approx( 779759943.1436344 )
     
 #------------------------------------------------------------------------------#
 
@@ -379,7 +379,7 @@ def test_sfh_dexp_parameters () :
     assert sfh_dexp.params == { 'tau_quench': 2e+20, 'model': 'delayedexp',
                                 'psi_norm': 1.0, 'k_shape': 0.2,
                                 'tau_star': 100000000.0, 'Mdust': 100000000.0,
-                                'Zgs': 0.1 }
+                                'Zgxy': 0.01 }
 
 #------------------------------------------------------------------------------#
 
@@ -437,7 +437,7 @@ def test_sfh_dexp_Mgas ( sfh_dexp ) :
     Check the value of total gas content at present time .
     
     """
-    assert sfh_dexp.Mgas( 1.e+9 ) == pytest.approx( 1405518018.9671905 )
+    assert sfh_dexp.Mgas( 1.e+9 ) == pytest.approx( 779759943.1436344 )
     
 #------------------------------------------------------------------------------#
 
@@ -485,7 +485,7 @@ def test_sfh_dexp_Zgas ( sfh_dexp ) :
 def sfh_lnorm ():
     
      sfh_lnorm = gpsfh.SFH( tau_quench = tau_quench, model = 'lognormal',
-                            Mdust = md, Zgs = zz )
+                            Mdust = md, Zgxy = zz )
      return sfh_lnorm
  
 
@@ -510,7 +510,7 @@ def test_sfh_lnorm_parameters () :
     assert sfh_lnorm.params == { 'tau_quench': 2e+20, 'model': 'lognormal',
                                  'psi_norm': 100.0, 'sigma_star': 2.0,
                                  'tau_star': 300000000.0, 'Mdust': 100000000.0,
-                                 'Zgs': 0.1 }
+                                 'Zgxy': 0.01 }
 
 
 #------------------------------------------------------------------------------#
@@ -569,7 +569,7 @@ def test_sfh_lnorm_Mgas ( sfh_lnorm ) :
     Check the value of total gas content at present time .
     
     """
-    assert sfh_lnorm.Mgas( 1.e+9 ) == pytest.approx( 1405518018.9671905 )
+    assert sfh_lnorm.Mgas( 1.e+9 ) == pytest.approx( 779759943.1436344 )
     
 #------------------------------------------------------------------------------#
 
