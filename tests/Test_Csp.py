@@ -53,6 +53,7 @@ def test_csp_lib () :
     class CSP .
 
     """
+    
     lib = 'other_lib'
     with pytest.raises( ValueError, match = f'SSP library "{lib}" '
                         'not available; you can see the list of available '
