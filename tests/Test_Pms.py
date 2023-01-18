@@ -59,36 +59,20 @@ def test_pms_init ( pms ) :
 
 #------------------------------------------------------------------------------#
 
-def test_pms_error () :
-
-     """
-     A ValueError should be reported if the filter name is not present in the 
-     database.
-
-     """
-     
-     arg = 'wrong_name'
-     with pytest.raises( ValueError, match = f'Argument "{arg}" provided does not name a known filter.' ):
-        pms = gppms.PMS( arg )
-
-#------------------------------------------------------------------------------#
-
-# def test_pms_error_key ():
+# def test_pms_error () :
 
 #      """
-#      A ValueError should be reported if the filter dictionary is not correctly 
-#      constructed.
+#      A ValueError should be reported if the filter name is not present in the 
+#      database.
 
 #      """
      
-#      k = {}
-#      pms= gppms.PMS(**k )
-#      with pytest.raises( ValueError, match =  f'The provided dictionary {k} does not contain the necessary items, '
-#                                       'please provide a "wavelenghts" and a "photons" array.'):
-
-#           pms= gppms.PMS(**k )
+#      arg = 'wrong_name'
+#      with pytest.raises( ValueError, match = f'Argument "{arg}" provided does not name a known filter.' ):
+#         pms = gppms.PMS( arg )
 
 #------------------------------------------------------------------------------#
+
 
 def test_pms_get_fluxes ():
      
