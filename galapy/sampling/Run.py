@@ -1,12 +1,14 @@
 import numpy
 import os
+import warnings
 os.environ["OMP_NUM_THREADS"] = "1"
 
 import argparse
 import importlib.util
 
 from galapy.Galaxy import PhotoGXY
-from galapy.GalaxyParameters import GXYParameters
+from galapy.Noise import CalibrationError
+from galapy.Handlers import ModelParameters
 from galapy.sampling.Statistics import gaussian_loglikelihood
 from galapy.sampling.Sampler import Sampler
 from galapy.sampling.Observation import Observation
@@ -18,7 +20,8 @@ from galapy.internal.utils import set_nested
 def initialize ( bands, fluxes, errors, uplims, filters, params,
                  sfh_model = 'insitu', ssp_lib = 'br22.NT',
                  do_Radio = False, do_Xray = False, do_AGN = False,
-                 model_kwargs = {} ) :
+                 noise_model = None, noise_params = {},
+                 gxy_kwargs = {}, noise_kwargs = {} ) :
 
     #########################################################################
     # Build observation
@@ -34,12 +37,23 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
                       do_Radio = do_Radio,
                       do_Xray = do_Xray,
                       do_AGN = do_AGN,
-                      **model_kwargs )
+                      **gxy_kwargs )
+    noise = None
+    if noise_model is not None :
+        if noise_model == 'calibration_error' :
+            noise = CalibrationError( **noise_kwargs )
+        else :
+            warnings.warn( 'The noise model chosen is not valid, noise will be ignored' )
     
     #########################################################################
     # Build parameters handler
 
-    handler = GXYParameters( model, params )
+    sample_params = { '.'.join( ['galaxy', key] ) : value for key, value in params.items() }
+    if noise is not None :
+        sample_params.update( { '.'.join( ['noise', key] ) : value
+                                for key, value in noise_params.items() } )
+    handler = ModelParameters( model, noise,
+                               sample_params = sample_params )
 
     #########################################################################
     # Set fixed parameters and initial values for free parameters
@@ -47,20 +61,33 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
     init = {}
     for klist, v in handler.parameters.items() :
         set_nested( init, klist.split('.'), v )
-    model.set_parameters( **init )
+    model.set_parameters( **init['galaxy'] )
+    if noise is not None : noise.set_parameters( **init['noise'] )
 
-    return data, model, handler
+    return data, model, noise, handler
 
 ################################################################################
 
-def loglikelihood ( par, data, model, handler, **kwargs ) :
+def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
 
+    nested = handler.return_nested( par )
     try :
-        model.set_parameters( **handler.return_nested( par ) )
+        model.set_parameters( **nested['galaxy'] )
         flux_model = numpy.asarray( model.photoSED() )
     except RuntimeError :
         return -numpy.inf
-        
+
+    if noise is not None :
+        noise.set_parameters( **nested['noise'] )
+        errors = noise.apply( data.errors, flux_model )
+        return (
+            gaussian_loglikelihood( data   = data.fluxes,
+                                    error  = errors,
+                                    model  = flux_model,
+                                    uplims = data.uplims,
+                                    **kwargs ) -
+            0.5 * numpy.log( 2 * numpy.pi * errors**2 ).sum()
+        )
     return gaussian_loglikelihood( data   = data.fluxes,
                                    error  = data.errors,
                                    model  = flux_model,
@@ -68,41 +95,46 @@ def loglikelihood ( par, data, model, handler, **kwargs ) :
                                    **kwargs )
 
 def loglikelihood_globals ( par, **kwargs ) :
-    return loglikelihood( par, gxy_data, gxy_model, gxy_params, **kwargs )
+    return loglikelihood( par, *global_args, **kwargs )
 
 ################################################################################
 
 # Include prior in likelihood (here uniform prior)
-def logprob ( par, data, model, handler, **kwargs ) :
+def logprob ( par, data, model, noise, handler, **kwargs ) :
     
     pmin, pmax = handler.par_prior.T
     if all( ( pmin < par ) & ( par < pmax ) ) :
-        return loglikelihood( par, data, model, handler, **kwargs )
+        return loglikelihood( par, data, model, noise, handler, **kwargs )
     
     return -numpy.inf
 
 def logprob_globals ( par, **kwargs ) :
-    return logprob( par, gxy_data, gxy_model, gxy_params, **kwargs )
+    return logprob( par, *global_args, **kwargs )
 
 ################################################################################
         
 def sample_serial ( hyperpar ) :
 
     # Run the initializer, it populates the scope with global variables:
-    gxy_data, gxy_model, gxy_params = initialize( bands = hyperpar.bands,
-                                                  fluxes = hyperpar.fluxes,
-                                                  errors = hyperpar.errors,
-                                                  uplims = hyperpar.uplims,
-                                                  filters = hyperpar.filters,
-                                                  params = hyperpar.parameters,
-                                                  sfh_model = hyperpar.sfh_model,
-                                                  ssp_lib = hyperpar.ssp_lib,
-                                                  do_Radio = hyperpar.do_Radio,
-                                                  do_Xray = hyperpar.do_Xray,
-                                                  do_AGN = hyperpar.do_AGN,
-                                                  model_kwargs = {
-                                                      'lstep' : hyperpar.lstep
-                                                  } )
+    gxy_data, gxy_model, gxy_noise, gxy_params = initialize(
+        bands        = hyperpar.bands,
+        fluxes       = hyperpar.fluxes,
+        errors       = hyperpar.errors,
+        uplims       = hyperpar.uplims,
+        filters      = hyperpar.filters,
+        params       = hyperpar.galaxy_parameters,
+        sfh_model    = hyperpar.sfh_model,
+        ssp_lib      = hyperpar.ssp_lib,
+        do_Radio     = hyperpar.do_Radio,
+        do_Xray      = hyperpar.do_Xray,
+        do_AGN       = hyperpar.do_AGN,
+        noise_model  = hyperpar.noise_model,
+        noise_params = hyperpar.noise_parameters,
+        gxy_kwargs = {
+            'lstep' : hyperpar.lstep
+        },
+        noise_kwargs = hyperpar.noise_kwargs
+    )
 
     # It's run-time!
     sampler = None
@@ -114,7 +146,7 @@ def sample_serial ( hyperpar ) :
         # Build sampler
         kw = hyperpar.sampler_kw
         kw.update(
-            { 'logl_args' : ( gxy_data, gxy_model, gxy_params ),
+            { 'logl_args' : ( gxy_data, gxy_model, gxy_noise, gxy_params ),
               'logl_kwargs' : { 'method_uplims' : hyperpar.method_uplims },
               'ptform_args' : (gxy_params.par_prior,)
             }
@@ -133,7 +165,7 @@ def sample_serial ( hyperpar ) :
         # Build sampler
         kw = hyperpar.sampler_kw
         kw.update(
-            { 'args' : ( gxy_data, gxy_model, gxy_params ),
+            { 'args' : ( gxy_data, gxy_model, gxy_noise, gxy_params ),
               'kwargs' : { 'method_uplims' : hyperpar.method_uplims }
             }
         ) 
@@ -147,7 +179,7 @@ def sample_serial ( hyperpar ) :
         pos_init = gxy_params.rng.uniform(*gxy_params.par_prior.T,
                                           size=(hyperpar.nwalkers,
                                                 len(gxy_params.par_free)))
-
+        
         # Run sampling
         sampler.run_sampling( pos_init, hyperpar.nsamples,
                               emcee_sampling_kw = hyperpar.sampling_kw )
@@ -156,7 +188,7 @@ def sample_serial ( hyperpar ) :
     outbase = generate_output_base( out_dir = hyperpar.output_directory,
                                     name = hyperpar.run_id )
     _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
-                      sampler = sampler, outbase = outbase )
+                      sampler = sampler, noise = gxy_noise,outbase = outbase )
     sampler.save_results( outbase = outbase,
                           pickle_sampler = hyperpar.pickle_sampler,
                           pickle_raw = hyperpar.pickle_raw )
@@ -168,12 +200,14 @@ def sample_serial ( hyperpar ) :
 def sample_parallel ( hyperpar, Ncpu = None ) :
     import multiprocessing as mp
 
+    
     # Use all available CPUs if no specific number is provided.
     if Ncpu is None :
         Ncpu = mp.cpu_count()
         
     with mp.Pool( Ncpu ) as pool :
 
+        gxy_data, gxy_model, gxy_noise, gxy_params = global_args
         # It's run-time!
         sampler = None
         if hyperpar.sampler == 'dynesty' :
@@ -195,7 +229,7 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
                                prior_transform = transform_to_prior_unit_cube,
                                pool = pool,
                                dynesty_sampler_kw = kw )
-            
+
             # Run sampling
             sampler.run_sampling( dynesty_sampling_kw = hyperpar.sampling_kw )
         
@@ -224,7 +258,7 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
     outbase = generate_output_base( out_dir = hyperpar.output_directory,
                                     name = hyperpar.run_id )
     _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
-                      sampler = sampler, outbase = outbase )
+                      sampler = sampler, noise = gxy_noise, outbase = outbase )
     sampler.save_results( outbase = outbase,
                           pickle_sampler = hyperpar.pickle_sampler,
                           pickle_raw = hyperpar.pickle_raw )
@@ -265,9 +299,11 @@ def run () :
     if args.serial :
         sample_serial( hyperpar )
     else :
-        global gxy_data
-        global gxy_model
-        global gxy_params
+        global global_args
+        # global gxy_data
+        # global gxy_model
+        # global gxy_noise
+        # global gxy_params
     
         init_args = (
             hyperpar.bands,
@@ -275,19 +311,23 @@ def run () :
             hyperpar.errors,
             hyperpar.uplims,
             hyperpar.filters,
-            hyperpar.parameters,
+            hyperpar.galaxy_parameters,
         )
         init_kwargs = dict(
-            sfh_model = hyperpar.sfh_model,
-            ssp_lib   = hyperpar.ssp_lib,
-            do_Radio  = hyperpar.do_Radio,
-            do_Xray   = hyperpar.do_Xray,
-            do_AGN    = hyperpar.do_AGN,
-            model_kwargs = {
+            sfh_model    = hyperpar.sfh_model,
+            ssp_lib      = hyperpar.ssp_lib,
+            do_Radio     = hyperpar.do_Radio,
+            do_Xray      = hyperpar.do_Xray,
+            do_AGN       = hyperpar.do_AGN,
+            noise_model  = hyperpar.noise_model,
+            noise_params = hyperpar.noise_parameters,
+            gxy_kwargs = {
                 'lstep' : hyperpar.lstep
             },
+            noise_kwargs = hyperpar.noise_kwargs,
         )
-        gxy_data, gxy_model, gxy_params = initialize( *init_args, **init_kwargs )
+        # gxy_data, gxy_model, gxy_params = initialize( *init_args, **init_kwargs )
+        global_args = initialize( *init_args, **init_kwargs )
         sample_parallel( hyperpar, Ncpu = args.Ncpu )
 
     return;    
@@ -404,6 +444,19 @@ do_AGN = False
 # If None, it will consider the whole wavelenght grid (safest choice)
 lstep = None
 
+# Eventual noise model to add. The default is ``None``, i.e. no noise will be added.
+# Valid choices for the noise are:
+# - 'calibration_error' : accounts for eventual systematics in the calibration of
+#                         the errors in the observations.
+#
+# If this is set to ``None`` all the other hyper-parameters in this file
+# related to noise will be ignored.
+noise_model = None
+
+# Eventual keyword arguments to be passed to the noise model of choice 
+# (leave empty for no keyword arguments)
+noise_kwargs = {{}}
+
 #############################################
 # Here define the fixed and free parameters #
 #############################################
@@ -435,7 +488,7 @@ lstep = None
 #   * linear: `a_bool = False`, therefore samples will be drawn from the interval
 #             min(a_list) < 'free_parameter' < max(a_list)
 
-parameters = {{
+galaxy_parameters = {{
     
     ##########
     # Galaxy #
@@ -525,6 +578,18 @@ parameters = {{
     'agn.rm' : 60,
     'agn.ia' : 0.001,
     
+}}
+
+noise_parameters = {{
+
+    #########
+    # Noise #
+    #########
+
+    ###################
+    # Calibration Error
+    
+    'f_cal' : ( [-10., 1.], True ),
 }}
 
 ##############################

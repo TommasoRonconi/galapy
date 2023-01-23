@@ -12,7 +12,8 @@ import pickle
 # Internal imports
 
 from galapy.Galaxy import GXY
-from galapy.GalaxyParameters import GXYParameters
+from galapy.Noise import Noise
+from galapy.Handlers import ModelParameters, GXYParameters, NoiseParameters
 from galapy.sampling.Observation import Observation
 from galapy.sampling.Sampler import Sampler
 from galapy.internal.utils import now_string, func_scalar_or_array, quantile_weighted
@@ -57,7 +58,7 @@ def generate_output_base ( out_dir = '', name = '' ) :
 
     return outbase
 
-def dump_results ( model, handler, data, sampler, outbase = '' ) :
+def dump_results ( model, handler, data, sampler, noise = None, outbase = '' ) :
     from time import time
 
     if len(outbase) == 0 :
@@ -70,18 +71,22 @@ def dump_results ( model, handler, data, sampler, outbase = '' ) :
     if not isinstance( model, GXY ) :
         raise ValueError( "Argument ``model`` should be an instance of type GXY" )
 
-    if not isinstance( handler, GXYParameters ) :
-        raise ValueError( "Argument ``handler`` should be an instance of type GXYParameters" )
+    if not isinstance( handler, ModelParameters ) :
+        raise ValueError( "Argument ``handler`` should be an instance of type ModelParameters" )
 
     if not isinstance( data, Observation ) :
         raise ValueError( "Argument ``data`` should be an instance of type Observation" )
+
+    if noise is not None :
+        if not isinstance( noise, Noise ) :
+            raise ValueError( "Argument ``noise`` should be an instance of type Noise" )
         
     print( 'Now processing the sampling results, this might require some time ...' )
     tstart = time()
     results = Results( model, handler,
                        sample_res, sample_logl,
                        sample_weights = sample_weights,
-                       data = data,
+                       data = data, noise = noise,
                        sampler_name = sampler.which_sampler )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
@@ -99,7 +104,8 @@ def dump_results ( model, handler, data, sampler, outbase = '' ) :
 
 class Results () :
     def __init__ ( self, model, handler, sample_res, sample_logl,
-                   sample_weights = None, data = None, sampler_name = 'dynesty' ) :
+                   sample_weights = None, data = None, noise = None,
+                   sampler_name = 'dynesty' ) :
         """ A class for storing the results of a sampling run.
         
         Parameters
@@ -107,8 +113,8 @@ class Results () :
         model : galapy.Galaxy.GXY
             An instance of type GXY (or derived). It stores the model's architecture
             used for running sampling.
-        handler : galapy.GalaxyParameters.GXYParameters 
-            An instance ot type GXYParameters with the parameterisation used in
+        handler : galapy.Handlers.ModelParameters 
+            An instance ot type ModelParameters with the parameterisation used in
             the sampling run.
         sample_res : numpy.ndarray
             the matrix containing all the samples of the run
@@ -121,36 +127,50 @@ class Results () :
         data : galapy.sampling.Observation.Observation
             (Optional) An instance of type ``Observation`` with the fluxes 
             measurements used in the sampling run
+        noise : galapy.Noise.Noise
+            (Optional) An instance of type ``Noise`` with
+            the eventual noise model used in the sampling run
         sampler_name : str
             Which sampler has been used in the sampling run (i.e. 'dynesty' or 'emcee', 
             default is 'dynesty')
         """
         
-        # Storing the model architecture
+        # Store the model architecture
         if not isinstance(model, GXY) :
             raise AttributeError( 
                 'Attribute "model" should be an instance of type ``GXY``'
             )
         self._mod = pickle.dumps(model)
         
-        # Storing the parameters specs
-        if not isinstance(handler, GXYParameters) :
+        # Store the parameters specs
+        if not isinstance(handler, ModelParameters) :
             raise AttributeError( 
-                'Attribute "handler" should be an instance of type ``GXYParameters``'
+                'Attribute "handler" should be an instance of type ``ModelParameters``'
             )
         self._han = pickle.dumps(handler)
 
         if sample_weights is None :
             sample_weights = numpy.ones_like( sample_logl )
         
-        # Storing the observation
+        # Store the observation
+        self.Ndof = 1
         self._obs = None
         if data is not None :
             if not isinstance(data,Observation) :
                 raise AttributeError( 
-                    'Attribute "handler" should be an instance of type ``Observation``'
+                    'Attribute "data" should be an instance of type ``Observation``'
                 )
             self._obs = pickle.dumps(data)
+            self.Ndof = len(data.pms) - len(handler.par_free)
+
+        # Store the noise model    
+        self._noise = None
+        if noise is not None :
+            if not isinstance( noise, Noise ) :
+                raise AttributeError( 
+                    'Attribute "noise" should be an instance of type ``Noise``'
+                )
+            self._noise = pickle.dumps(noise)
 
         # Store the sampler's name and specs
         self.sampler = sampler_name
@@ -178,7 +198,7 @@ class Results () :
         self.TDD    = numpy.empty(shape=(self.size,))
         
         for i, par in enumerate(sample_res) :
-            self.params += [handler.return_nested(par)]
+            self.params += [handler.return_nested(par)['galaxy']]
             model.set_parameters( **self.params[-1] )
             age = model.age
             self.SED[i]   = model.get_SED()
@@ -195,6 +215,49 @@ class Results () :
         """ Returns a list with all the quantities stored in the instance
         """
         return list( self.__dict__.keys() )
+
+    def get_residuals ( self, which_model = 'bestfit', standardised = True ) :
+        """
+        """
+        _gxy = pickle.loads( self._mod )
+        _obs = pickle.loads( self._obs )
+        _han = pickle.loads( self._han )
+        if which_model == 'bestfit' :
+            params = self.get_bestfit( 'samples' )
+        elif which_model == 'mean' :
+            params = self.get_mean( 'samples' )
+        elif which_model == 'median' :
+            params = self.get_quantile( 'samples' )
+        else :
+            warnings.warn( 'Choice invalid, falling back to default choice (="bestfit")' )
+            params = self.get_bestfit( 'samples' )
+            
+        nested = _han.return_nested(params)
+        _gxy.set_parameters( **nested['galaxy'] )
+        # if isinstance( _han, GXYParameters ) :
+        #     _gxy.set_parameters( **nested )
+        # else :
+        #     _gxy.set_parameters( **nested['galaxy'] )
+        
+        model = _gxy.photoSED()
+        data  = _obs.fluxes
+        if standardised :
+            error = _obs.errors
+            if self._noise is not None :
+                _noi = pickle.loads( self._noise )
+                _noi.set_parameters( **nested['noise'] )
+                error = _noi.apply( error, model )
+            return ( data - model ) / error
+        return data - model
+
+    def get_chi2 ( self, which_model = 'bestfit', reduced = True ) :
+        """
+        """
+        chi = self.get_residuals( which_model, standardised = True )
+        redfact = 1.
+        if reduced :
+            redfact /= self.Ndof
+        return numpy.sum( chi**2 ) * redfact
     
     def get_bestfit ( self, key ) :
         """ Returns the bestfit value of the stored quantity corresponding 
@@ -318,6 +381,19 @@ class Results () :
             return pickle.loads( self._obs )
         else :
             warnings.warn( "The current instance has no Observation stored, passing None" )
+            return None
+    
+    def get_noise ( self ) :
+        """ Instantiates a noise model corresponding to the one used for sampling.
+        
+        Returns
+        -------
+        : galapy.sampling.Noise.Noise
+        """
+        if self._noise is not None :
+            return pickle.loads( self._noise )
+        else :
+            warnings.warn( "The current instance has no Noise stored, passing None" )
             return None
 
 #############################################################################################
