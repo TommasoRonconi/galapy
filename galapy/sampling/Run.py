@@ -80,14 +80,14 @@ def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
     if noise is not None :
         noise.set_parameters( **nested['noise'] )
         errors = noise.apply( data.errors, flux_model )
-        return (
-            gaussian_loglikelihood( data   = data.fluxes,
-                                    error  = errors,
-                                    model  = flux_model,
-                                    uplims = data.uplims,
-                                    **kwargs ) -
-            0.5 * numpy.log( 2 * numpy.pi * errors**2 ).sum()
-        )
+        noise_llike = numpy.log( 2 * numpy.pi * errors**2 ).sum()
+        if numpy.isnan( noise_llike ) :
+            return - numpy.inf
+        return gaussian_loglikelihood( data   = data.fluxes,
+                                       error  = errors,
+                                       model  = flux_model,
+                                       uplims = data.uplims,
+                                       **kwargs ) - 0.5 * noise_llike
     return gaussian_loglikelihood( data   = data.fluxes,
                                    error  = data.errors,
                                    model  = flux_model,
