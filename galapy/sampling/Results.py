@@ -243,7 +243,7 @@ class Results () :
         data  = _obs.fluxes
         if standardised :
             error = _obs.errors
-            if self._noise is not None :
+            if hasattr(self, '_noise') and self._noise is not None :
                 _noi = pickle.loads( self._noise )
                 _noi.set_parameters( **nested['noise'] )
                 error = _noi.apply( error, model )
@@ -390,7 +390,7 @@ class Results () :
         -------
         : galapy.sampling.Noise.Noise
         """
-        if self._noise is not None :
+        if hasattr(self, '_noise') and self._noise is not None :
             return pickle.loads( self._noise )
         else :
             warnings.warn( "The current instance has no Noise stored, passing None" )
