@@ -166,15 +166,19 @@ namespace utl {
     }
 
     double integrate ( const double aa, const double bb ) const noexcept override {
-
-      // find iterator to interval containing the lower integral limit
+      
+      // find iterators to intervals containing
+      // the lower and upper integral limits
       auto it = _T.find( aa );
-
+      auto stop = _T.find( bb );
+      // If the limits belong to the same interval
+      // perform integration and return
+      if ( it == stop ) 
+	return it->value().integrate( aa, bb );
       // initialize return value to integral in first interval [aa, x_j)
       double integral = it->value().integrate( aa, it->key().upp() );
 
       // traverse the tree adding up integral in each interval visited
-      auto stop = _T.find( bb );
       while ( ++it != stop ) {
 	integral += it->value().integral;
       }
