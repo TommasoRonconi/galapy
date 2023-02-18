@@ -16,6 +16,7 @@ from galapy.NebularFreeFree import NFF
 from galapy.PhotometricSystem import PMS
 from galapy.Synchrotron import SNSYN
 from galapy.Cosmology import CSM
+from galapy.InterGalacticMedium import IGM
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
@@ -167,20 +168,13 @@ class GXY ( Model ) :
     
     def __init__ ( self, age = None, redshift = None,
                    cosmo = 'Planck18', lstep = None,
-                   do_Xray = False, do_Radio = False, do_AGN = False,
+                   do_Xray = False, do_Radio = False,
+                   do_AGN = False, do_IGM = False,
                    sfh = None, csp = None, ism = None,
                    agn = None, nff = None, syn = None ) :
 
         # Define a dictionary for parameters storage
         self.params = {}
-        # _ = {
-        #     'lstep'    : lstep,
-        #     'cosmo'    : cosmo,
-        #     'do_Xray'  : do_Xray,
-        #     'do_Radio' : do_Radio,
-        #     'do_AGN'   : do_AGN,
-        #     'csp'      : csp,
-        # }
 
         # Define a dictionary to store components
         self.components = {
@@ -290,11 +284,25 @@ class GXY ( Model ) :
                 self.snsyn = SNSYN( self.csp.l, **syn )
                 self.params[ 'syn' ] = self.snsyn.params
                 self.components['synchrotron'] = None
-                
+
+        # If sub-gridding is required, build subgrid
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
+
+        # If IGM transmission is required, build it
+        # and compute transmission.
+        self.igm = None
+        self.igm_trans = numpy.ones_like(
+            self.wl( obs = True )
+        )
+        if do_IGM :
+            self.igm = IGM()
+            self.igm_trans = self.igm.transmission(
+                self.wl( obs = True ),
+                self.redshift
+            )
         
     def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
@@ -340,6 +348,10 @@ class GXY ( Model ) :
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
             self.params['redshift'] = self.redshift
+            self.igm_trans = self.igm.transmission(
+                self.wl( obs = True ),
+                self.redshift
+            )
             
         if age is not None :
             # if the provided age is larger than the age of the Universe,
@@ -537,7 +549,9 @@ class GXY ( Model ) :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
-        return self.cosmo.to_flux( self.redshift, self.wl(), self.get_emission() )
+        return self.cosmo.to_flux(
+            self.redshift, self.wl(), self.get_emission()
+        ) * self.igm_trans
 
     def components_to_flux ( self ) :
         return {

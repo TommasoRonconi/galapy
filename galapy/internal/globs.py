@@ -66,3 +66,9 @@ AGN_DIR = ( DATA_DIR, 'AGN_templates' )
 AGN_FILE = 'ct{0:d}al{1:.1f}be{2:.2f}ta{3:.1f}rm{4:d}ia{5:.3f}'
 
 ################################################################
+# IGM Fitting values (Inoue et al., 2014)
+
+IGM_DIR = ( DATA_DIR, 'IGM' )
+IGM_Inoue14 = ( 'Inoue+2014.txt', IGM_DIR )
+
+################################################################
