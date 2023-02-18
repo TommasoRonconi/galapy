@@ -348,10 +348,11 @@ class GXY ( Model ) :
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
             self.params['redshift'] = self.redshift
-            self.igm_trans = self.igm.transmission(
-                self.wl( obs = True ),
-                self.redshift
-            )
+            if self.igm is not None :
+                self.igm_trans = self.igm.transmission(
+                    self.wl( obs = True ),
+                    self.redshift
+                )
             
         if age is not None :
             # if the provided age is larger than the age of the Universe,
