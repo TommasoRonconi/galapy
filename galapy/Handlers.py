@@ -15,7 +15,7 @@ from galapy.internal.utils import set_nested, unwrap_items
 class ModelParameters () :
 
     def __init__ ( self, *args, sample_params = {}, rng_kw = {} ) :
-        
+
         # Set the default random engine 
         self.rng = numpy.random.default_rng(**rng_kw)
         
@@ -129,8 +129,9 @@ class ModelParameters () :
 
 class GXYParameters ( ModelParameters ) :
     def __init__ ( self, gxy_model, sample_params, rng_kw = {} ) :
+
         super().__init__( gxy_model,
-                          sample_params = { '.'.join(['galaxy',k])
+                          sample_params = { '.'.join(['galaxy',k]) : v
                                             for k,v in sample_params.items() },
                           rng_kw = rng_kw )
 
@@ -142,8 +143,10 @@ class GXYParameters ( ModelParameters ) :
 
 class NoiseParameters ( ModelParameters ) :
     def __init__ ( self, noise_model, sample_params, rng_kw = {} ) :
+
         super().__init__( noise_model,
-                          sample_params = sample_params,
+                          sample_params = { '.'.join(['noise',k]) : v
+                                            for k,v in sample_params.items() },
                           rng_kw = rng_kw )
 
     def return_nested ( self, par ) :

@@ -62,20 +62,20 @@ def test_gxp_invalid_model () :
 def test_gxp_invalid_value ( recwarn ) :
 
     value = 'string'
-    gxp =  gpgxp.GXYParameters( GXY(), { 'galaxy.age' : value } )
+    gxp =  gpgxp.GXYParameters( GXY(), { 'age' : value } )
     assert gxp.parameters['galaxy.age'] == 1.e+6
 
 
 def test_gxp_invalid_key () :
 
     key= 'wrong_key'
-    with pytest.warns( UserWarning, match = f'Parameter "{key}" is not present in the model requested and will be ignored.' ):
+    with pytest.warns( UserWarning, match = f'Parameter "galaxy.{key}" is not present in the model requested and will be ignored.' ):
         gxp = gpgxp.GXYParameters( GXY(), { key : 1. } )
 
 
 def test_gxp_params_fixed () :
 
-    gxp =  gpgxp.GXYParameters( GXY(), { 'galaxy.age' : 1.e+8 , 'galaxy.ism.f_MC' : 0.6 } )
+    gxp =  gpgxp.GXYParameters( GXY(), { 'age' : 1.e+8 , 'ism.f_MC' : 0.6 } )
     assert gxp.parameters[ 'galaxy.age' ] == 1.e+8
     assert gxp.parameters[ 'galaxy.ism.f_MC' ] == 0.6 
     
@@ -83,7 +83,7 @@ def test_gxp_params_free () :
 
     value_age = ( [5., 9.] , True )
     value_fMC = ( [0., 1.] , False )
-    gxp =  gpgxp.GXYParameters( GXY(), { 'galaxy.age' : value_age, 'galaxy.ism.f_MC' : value_fMC } )
+    gxp =  gpgxp.GXYParameters( GXY(), { 'age' : value_age, 'ism.f_MC' : value_fMC } )
     assert 1.e+5 <= gxp.parameters[ 'galaxy.age' ] <= 1.e+9
     assert 0. <= gxp.parameters[ 'galaxy.ism.f_MC' ] <= 1.
     assert np.all( gxp.par_free == [ 'galaxy.age', 'galaxy.ism.f_MC' ] )
@@ -94,7 +94,7 @@ def test_gxp_return_nested_err () :
 
      value_fMC = ( [0., 1.] , False )
      par = ['galaxy.age', 'galaxy.ism.f_MC']
-     gxp =  gpgxp.GXYParameters( GXY(), { 'galaxy.age' : 1.e+8 , 'galaxy.ism.f_MC' : value_fMC } )
+     gxp =  gpgxp.GXYParameters( GXY(), { 'age' : 1.e+8 , 'ism.f_MC' : value_fMC } )
      with pytest.raises( RuntimeError, match = f'Provided {len(par)} but there are exactly '
                                 f'{len(gxp.par_free)} free parameters to set.' ):
          
@@ -104,6 +104,6 @@ def test_gxp_return_nested () :
 
      value_fMC = ( [0., 1.] , False )
      par = np.array([0.1])
-     gxp =  gpgxp.GXYParameters( GXY(), { 'galaxy.age' : 1.e+8 , 'galaxy.ism.f_MC' : value_fMC } )
+     gxp =  gpgxp.GXYParameters( GXY(), { 'age' : 1.e+8 , 'ism.f_MC' : value_fMC } )
      print( gxp.return_nested( par ))
         
