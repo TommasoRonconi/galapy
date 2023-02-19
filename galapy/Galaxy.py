@@ -16,17 +16,149 @@ from galapy.NebularFreeFree import NFF
 from galapy.PhotometricSystem import PMS
 from galapy.Synchrotron import SNSYN
 from galapy.Cosmology import CSM
+from galapy.InterGalacticMedium import IGM
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
+from galapy.internal.abc import Model
+
+########################################################################################
+
+gxy_params_defaults = {
+
+    ##########
+    # Galaxy #
+    ##########
+
+    'age'      : ( 'Age of the galaxy',
+                   [6., 11.], True, 'age' ),
+    'redshift' : ( 'Redshift of the galaxy',
+                   [0., 10.], False, 'redshift' ),
+
+    ##########################
+    # Star Formation History #
+    ##########################
+    
+    'sfh.tau_quench' : ( 'Age of the abrupt quenching',
+                         [6., 11.], True, '\\tau_\\mathrm{quench}' ),
+
+    # In-Situ model
+    'sfh.psi_max' : ( 'Normalisation',
+                      [0., 4.], True, '\\psi_\\mathrm{max}' ),
+    'sfh.tau_star' : ( 'Characteristic timescale',
+                       [6., 11.], True, '\\tau_\\star' ),
+
+    # Constant model
+    'sfh.psi'   : ( 'Value of the constant SFR',
+                    [0., 4.], True, '\\psi_0' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
+    
+    # Delayed-Exponential model
+    'sfh.psi_norm' : ( 'Normalisation',
+                       [0., 4.], True, '\\psi_\\mathrm{norm}' ),
+    'sfh.k_shape'  : ( 'Shape parameter of the early evolution',
+                       [0., 5.], False, '\\kappa' ),
+    'sfh.tau_star' : ( 'Characteristic timescale',
+                       [6., 11.], True, '\\tau_\\star' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
+    
+    # Log-Normal model
+    'sfh.psi_norm'   : ( 'Normalisation',
+                         [0., 4.], True, '\\psi_\\mathrm{norm}' ),
+    'sfh.sigma_star' : ( 'Characteristic width',
+                         [0., 5.], False, '\\sigma_\\star' ),
+    'sfh.tau_star'   : ( 'Peak age',
+                         [6., 11.], True, '\\tau_\\star' ),
+    'sfh.Mdust' : ( 'Total dust mass in galaxy at the given age',
+                    [6., 14.], True, 'M_\\mathrm{dust}' ),
+    'sfh.Zgxy'   : ( 'Metallicity of all phases in galaxy at the given age',
+                     [0., 1.], False, 'Z_\\mathrm{gxy}' ),
+
+    ########################
+    # Inter-Stellar Medium #
+    ########################
+
+    'ism.f_MC' : ( 'Fraction of dust in the MC phase',
+                   [0., 1.], False, 'f_\\mathrm{MC}' ),
+
+    ##################
+    # Molecular Clouds
+    
+    'ism.norm_MC' : ( 'Normalisation of the MC extinction in the visible band',
+                      [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{MC}}' ),
+    'ism.N_MC'    : ( 'Number of MCs in the galaxy',
+                      [0., 5.], True, 'N_\\mathrm{MC}' ),
+    'ism.R_MC'    : ( 'Average radius of a MC',
+                      [0., 5.], True, 'R_\\mathrm{MC}' ),
+    'ism.tau_esc' : ( 'Time required by stars to start escaping their MC',
+                      [4., 8.], True, '\\tau_\\mathrm{esc}' ),
+    'ism.dMClow'  : ( 'Molecular clouds extinction index at wavelength < 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{MC}~l}' ),
+    'ism.dMCupp'  : ( 'Molecular clouds extinction index at wavelength > 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{MC}~u}' ),
+    
+    ##############
+    # Diffuse Dust
+    
+    'ism.norm_DD' : ( 'Normalisation of the DD extinction in the visible band',
+                      [-1., 4.], True, '\\mathcal{C}_{V~\\mathrm{DD}}' ),
+    'ism.Rdust'   : ( 'Radius of the diffuse dust region embedding stars and MCs',
+                      [0., 5.], True, 'R_\\mathrm{DD}' ),
+    'ism.f_PAH'   : ( 'Fraction of the total DD luminosity radiated by PAH',
+                      [0., 1.], False, 'f_\\mathrm{PAH}' ),
+    'ism.dDDlow'  : ( 'Diffuse dust extinction index at wavelength < 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{DD}~l}' ),
+    'ism.dDDupp'  : ( 'Diffuse dust extinction index at wavelength > 100 mum (10^6 Ang)',
+                      [0., 5.], False, '\\delta_{\\mathrm{DD}~u}' ),
+
+    ###############
+    # Synchrotorn #
+    ###############
+
+    'syn.alpha_syn'   : ( 'SN synchrotron spectral index',
+                          [0., 5.], False, '\\alpha_\\mathrm{syn}' ), 
+    'syn.nu_self_syn' : ( 'Self-absorption frequency of the SN synchrotron',
+                          [0., 1.], False, '\\nu_\\mathrm{syn}^\\mathrm{self}'),
+
+    #####################
+    # Nebular Free-Free #
+    #####################
+
+    'nff.Zgas' : ( 'Metallicity of the ionised gas of nebular regions',
+                   [0., 1.], False, 'Z_\\mathrm{gas}' ),
+    'nff.Zi'   : ( 'Average atomic number of ions', [0., 10.], False, '\\mathcal{Z}^i'),
+
+    ###########################
+    # Active Galactic Nucleus #
+    ###########################
+
+    'agn.fAGN' : ( 'Fraction with respect to the total dust IR luminosity contributed by the AGN',
+                   [-3., 3.], True, 'f_\\mathrm{AGN}' ),
+    
+    'agn.ct' : ( 'Torus half-aperture angle', 40, None, '\\Theta' ),
+    'agn.al' : ( 'Density parameter (exponential part)', 0., None, '\\alpha' ),
+    'agn.be' : ( 'Density parameter (power-law part)', -0.5, None, '\\beta' ),
+    'agn.ta' : ( 'Optical depth at 9.7 mum', 6., None, '\\tau_{9.7}^\\mathrm{AGN}' ),
+    'agn.rm' : ( 'Radial ratio of the torus', 60, None, 'R_\\mathrm{torus}^\\mathrm{AGN}' ),
+    'agn.ia' : ( 'Inclination angle', 0.001, None, '\\Psi_\\mathrm{los}^\\mathrm{AGN}' ),
+
+}
 
 # gxy_tunables = ( 'age', 'redshift' )
 # def gxy_build_params () :
 #     pass
 
-class GXY () :
+########################################################################################
+
+class GXY ( Model ) :
     """ Wrapping everything up
     * It has some own parameters (e.g. the age and redshift)
     * It shall give the possibility of selecting which components to consider
@@ -36,20 +168,13 @@ class GXY () :
     
     def __init__ ( self, age = None, redshift = None,
                    cosmo = 'Planck18', lstep = None,
-                   do_Xray = False, do_Radio = False, do_AGN = False,
+                   do_Xray = False, do_Radio = False,
+                   do_AGN = False, do_IGM = False,
                    sfh = None, csp = None, ism = None,
                    agn = None, nff = None, syn = None ) :
 
         # Define a dictionary for parameters storage
         self.params = {}
-        # _ = {
-        #     'lstep'    : lstep,
-        #     'cosmo'    : cosmo,
-        #     'do_Xray'  : do_Xray,
-        #     'do_Radio' : do_Radio,
-        #     'do_AGN'   : do_AGN,
-        #     'csp'      : csp,
-        # }
 
         # Define a dictionary to store components
         self.components = {
@@ -159,11 +284,25 @@ class GXY () :
                 self.snsyn = SNSYN( self.csp.l, **syn )
                 self.params[ 'syn' ] = self.snsyn.params
                 self.components['synchrotron'] = None
-                
+
+        # If sub-gridding is required, build subgrid
         if lstep is not None :
             self.lgrid = self.get_wavelenght_grid(lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
+
+        # If IGM transmission is required, build it
+        # and compute transmission.
+        self.igm = None
+        self.igm_trans = numpy.ones_like(
+            self.wl( obs = True )
+        )
+        if do_IGM :
+            self.igm = IGM()
+            self.igm_trans = self.igm.transmission(
+                self.wl( obs = True ),
+                self.redshift
+            )
         
     def wl ( self, obs = False ) :
         """ Wavelenght grid with mask applied
@@ -209,6 +348,11 @@ class GXY () :
             self._z = 1. / ( 1 + self.redshift )
             self.UA = self.cosmo.age( self.redshift )
             self.params['redshift'] = self.redshift
+            if self.igm is not None :
+                self.igm_trans = self.igm.transmission(
+                    self.wl( obs = True ),
+                    self.redshift
+                )
             
         if age is not None :
             # if the provided age is larger than the age of the Universe,
@@ -406,7 +550,9 @@ class GXY () :
         """ Returns the flux at given distance in units of milli-Jansky [mJy].
         lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
         """
-        return self.cosmo.to_flux( self.redshift, self.wl(), self.get_emission() )
+        return self.cosmo.to_flux(
+            self.redshift, self.wl(), self.get_emission()
+        ) * self.igm_trans
 
     def components_to_flux ( self ) :
         return {
@@ -432,9 +578,10 @@ class PhotoGXY ( GXY ) :
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
                              "Call function build_photometric_system() before." )
-        return self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
+        return numpy.asarray(
+            self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
+        )
         
-
 
 class SpectralGXY ( GXY ) :
     pass

@@ -7,7 +7,11 @@ import numpy
 # Internal imports
 
 from galapy.sampling.Results import Results
-from galapy.GalaxyParameters import gxy_params_defaults, GXYParameters 
+from galapy.Handlers import ModelParameters 
+from galapy.Galaxy import gxy_params_defaults 
+from galapy.Noise import noise_params_defaults
+param_defaults = dict( **{'.'.join(['galaxy',k]):v for k,v in gxy_params_defaults.items()},
+                       **{'.'.join(['noise',k]):v for k,v in noise_params_defaults.items()} )
 
 ######################################################################################
 
@@ -96,8 +100,8 @@ def get_parameters_label_strings ( handler ) :
     
     Parameters
     ----------
-    handler : galapy.GalaxyParameters.GXYParameters
-        an instance of type ``GXYParameters``
+    handler : galapy.Handlers.ModelParameters
+        an instance of type ``ModelParameters``
     
     Returns
     -------
@@ -106,12 +110,14 @@ def get_parameters_label_strings ( handler ) :
         and the values are the TeX-formatted strings
     """
 
-    if not isinstance( handler, GXYParameters ) :
-        raise ValueError( "Attribute ``handler`` should be an instance of type ``GXYParameters``" )
+    if not isinstance( handler, ModelParameters ) :
+        raise ValueError(
+            "Attribute ``handler`` should be an instance of type ``ModelParameters``"
+        )
     
     labels = { 
-        key : gxy_params_defaults[key][3] 
-        if not log else '\\log~'+gxy_params_defaults[key][3]
+        key : param_defaults[key][3] 
+        if not log else '\\log~'+param_defaults[key][3]
         for key, log in zip(handler.par_free, 
                             handler.par_log) 
     }

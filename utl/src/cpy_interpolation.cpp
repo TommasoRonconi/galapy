@@ -200,7 +200,7 @@ extern "C" {
     PyObject * ret = CPy___getstate__< PyLinInterp >( self, NULL );
     if ( !ret ) {
       PyErr_SetString( PyExc_TypeError,
-		       "Unable to get state from CPySYN object" );
+		       "Unable to get state from CPyLinInterp object" );
       return NULL;
     }
 

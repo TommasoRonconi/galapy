@@ -30,7 +30,10 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 import galapy as gp
 from galapy.internal.utils import filter_strings
-from galapy.GalaxyParameters import gxy_params_defaults as gpdefault
+# from galapy.Galaxy import gxy_params_defaults as gpdefault
+# from galapy.Galaxy import gxy_params_defaults 
+# from galapy.Noise import noise_params_defaults
+# gpdefault = dict( **gxy_params_defaults, **noise_params_defaults )
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
 
@@ -429,7 +432,8 @@ def sed_residuals_res ( res,
     lsed = pgxy.wl(obs=(frame != 'rest'))
 
     # compute residuals
-    chi = (ff - pgxy.photoSED())/ee
+    chi = res.get_residuals()
+    # chi = (ff - pgxy.photoSED())/ee
     
     # Set axes
     ax_kw = dict(_specs_default['residuals_ax_kw'])
@@ -547,8 +551,8 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
     ----------
     res :  Results instance
         A ``Results`` instance from a sampling run.
-    handler : GXYParameters instance
-        (Optional) The ``GXYParameters`` corresponding to the given sampling run
+    handler : ModelParameters instance
+        (Optional) The ``ModelParameters`` corresponding to the given sampling run
     which_params : str or sequence of str
         Either a single string or a sequence of strings. Name of the parameters to show on the 
         triangle plot. Also accepts wildcards (e.g. ``which_params = 'sfh*'`` will show all the
@@ -616,9 +620,9 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
     if handler is None :
         handler = res.get_sampling_params()
     else :
-        if not isinstance( handler, gp.GalaxyParameters.GXYParameters ) :
+        if not isinstance( handler, gp.Handlers.ModelParameters ) :
             raise AttributeError(
-                'Attribute "handler" should be an instance of type ``GXYParameters``'
+                'Attribute "handler" should be an instance of type ``ModelParameters``'
             )
     
     if which_params is None :
