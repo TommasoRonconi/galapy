@@ -210,7 +210,8 @@ def main():
                'dynesty',
                'matplotlib',
                'getdist',
-               'requests'
+               'requests',
+               'pytest'
            ]
     )
 
