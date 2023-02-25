@@ -2,9 +2,7 @@ SOURCEDIR=./
 
 LOC=/tmp
 
-OUTPUTDIR=$(LOC)/galapy_doc/
-
-FILEDIR=/home/tomi/.venvs/test_setups/lib/python3.8/site-packages/galapy
+OUTPUTDIR=$(LOC)/galapy_doc
 
 all: docs_html docs_latex
 

@@ -4,82 +4,148 @@ Welcome to GalaPy!
 GalaPy is an extensible API for modelling Galactic emission.
 It provides an easy-to-use Python user interface while the number-crunching is done with compiled, high-performance, object-oriented C++.
 
-It is intended for researchers in the fields of Galaxy Formation and Evolution, Observational Astrophysics and Cosmology but also for theoretical and computational researchers interested in a lightning fast Galactic spectra simulator.
+It is intended for researchers in the fields of Galaxy Formation and Evolution, Observational Astrophysics and Cosmology
+but also for theoretical and computational researchers interested in a lightning fast Galactic spectra simulator.
 Galapy enables instantiating multi-component parameterized galaxy objects with a high level of customization.
 It produces Spectral Energy Distributions (SED) in a matter of milliseconds on a single core with a minimal memory consumption. 
 
-Even though the library is optimized for fitting photometric datasets, its simulation capabilities are way more flexible than this, as it allows for the extraction of many other physical properties of galaxies, such as attenuation curves, matter content evolution histories (divided by component), metallicity evolution, star formation histories and more.
+Even though the library is optimized for fitting photometric datasets, its simulation capabilities are way more flexible than this,
+as it allows for the extraction of many other physical properties of galaxies, such as attenuation curves, matter content evolution histories (divided by component),
+metallicity evolution, star formation histories and more.
 
-* **Free software**: GPLv3 license;
-* **GitHub repository**: https://github.com/TommasoRonconi/galapy
-* **Python versions**: >=3.6
++-----------------------+-------------------------------------------+
+| **Free software**     | GPLv3 license                             |
++-----------------------+-------------------------------------------+
+| **GitHub repository** | https://github.com/TommasoRonconi/galapy  |
++-----------------------+-------------------------------------------+
+| **Python versions**   | >=3.6                                     |
++-----------------------+-------------------------------------------+
+| **Dependencies**      | ``setuptools``, ``numpy``, ``scipy``,     |
+|                       | ``emcee``, ``dynesty``, ``matplotlib``,   |
+|                       | ``getdist``, ``requests``                 |
++-----------------------+-------------------------------------------+
 
-The only external dependency required is NumPy which is summoned both from the Python interface and from the C-Wrapping layer.
+TL;DR
+-----
 
-The build system tool used is Setuptools, which is also not part of the Python standard contrary to its ancestor, Distutils, but still ...
+Galaxies are extremely complex astrophysical objects resulting from the interaction of baryonic matter which has collapsed within a Dark Matter halo.
+Their formation and evolution strongly depend on the interplay of several factors, including their matter reservoir and accretion history,
+the environment they reside and the interactions with their neighbouring objects and, ultimately,
+the large scale structure of the Universe and the physics regulating it on cosmological scales.
+By studying the properties of individual galaxies, such as their luminosity, chemical composition, and star formation rate,
+we can learn about how galaxies form and evolve over time as well as the cosmological conditions that lead to their assembly.
 
-Lift-off TL;DR
---------------
+The Spectral Energy Distribution (SED) of a galaxy describes the distribution of its light across different wavelengths, from gamma rays to radio waves,
+literally shedding light over the baryonic components and processes that contribute to the overall emission.
+Modelling this emission is one of the primary tools of extra-galactic astronomy to constrain models of galaxy formation and evolution,
+which are an essential part of our understanding of the Universe as a whole.
 
-* Info about SED, GFE [TBA]
-* The preferred method to install the package is through :code:`pip` as it will install the most recent stable release:
+Install
+.......
+
+The preferred method to install the package is through :code:`pip` as it will install the most recent stable release:
   
-  .. code-block:: console
+.. code-block:: console
      
-     $ pip install galapy
+   $ pip install galapy
 
-  for further details, please refer to the `installation guide`_.
+for further details, please refer to the `installation guide`_.
 
-* Build a spectroscopic galaxy object, obtain SED
+Fitting through terminal commands
+.................................
 
-  .. code-block:: python
-
-     import galapy as gp
-     gxy = gp.Galaxy.GXY( age, redshift )
-     sed = gxy.SED()
-
-  Build a photometric galaxy object, obtain photo-SED
+Sampling the parameter space can be done from the command line in a terminal.
+The steps required for running the sampling are just two:
   
-  .. code-block:: python
+1. first we will have to generate a parameter file, this can be done by running
+   the utility command
 
-     import galapy as gp
-     pgxy = gp.Galaxy.PhotoGXY( age, redshift )
-     pgxy.build_photometric_system( 'filter1', 'filter2', 'filter3', ... )
-     psed = pgxy.photoSED()
+   .. code-block:: console
 
-  Link to `tutorials`_ here
+      $ galapy-genparams [--name/-n NAME]
 
-* Sampling the parameter space can be done from the command line in a terminal.
-
-  **[Provided that the database has been correctly installed]**
-
-  The steps required for running the sampling are just two:
+   The generated file should be self-explanatory and has to be
+   modified according to the fit the user has to perform.
   
-  - first we will have to generate a parameter file, this can be done by running
-    the utility command
+2. Once the parameter file has been generated and properly modified, we can run
 
-    .. code-block:: bash
+   .. code-block:: console
 
-       $ galapy-genparams [--name/-n NAME]
+      $ galapy-fit parameter_file.py [--serial/-s | --multiprocessing/-mp NCPU]
 
-    The generated file contains should be self-explanatory, this has to be
-    modified according to the fitting the user has to perform.
-    
-  - Once the parameter file has been generated and properly modified, we can run
+   which will run the sampling and authomatically store the results, as specified
+   by the user in the parameter file.
+   NOTE THAT the two optional arguments regulate whether to run the sampling
+   serially or using shared-memory parallelism.
+   The default behaviour is to run parallely on all the available CPUs.
 
-    .. code-block:: bash
+.. note::
+   GalaPy, in some of its components (e.g. SSP tables, PAH template), makes use of pre-computed functions that are
+   available in the official database (`galapy_data`_). When one of the files in the database is accessed for the
+   first time it will authomatically be downloaded into the user's filesystem
+   (in the default location :code:`$HOME/.galapy/data`).
+   This will of course require an internet connection and can partially slow down the computations.
+   We therefore suggest, prior to first run, to download all the database by running
 
-       $ galapy-fit parameter_file.py [--serial/-s | --multiprocessing/-mp NCPU]
+   .. code-block:: console
 
-    which will run the sampling and authomatically store the results, as specified
-    by the user in the parameter file.
-    NOTE THAT the two optional arguments regulate whether to run the sampling
-    serially or using shared-memory parallelism.
-    The default behaviour is to run parallely on all the available CPUs.
-     
-* Link to `API docs`_ here 
+	$ galapy-download-database
+   
+   
+Quick API hands-on
+..................
+
+The GalaPy API allows to directly access methods and classes modelling the different components
+that contribute to the overall emission of a galaxy.
+By the interplay of these components the final Spectral Energy Distribution (SED) emerges and
+travels towards the observer.
+
+In order to control the aforementioned interplay of components the module ``galapy.Galaxy`` implements classes of
+type ``GXY``, from which the intrinsic luminosity and the flux at given distance can be retrieved.
+An object of type ``GXY`` is built as follows
+
+.. code-block:: python
+
+   import galapy as gp
+   gxy = gp.Galaxy.GXY( age = 1.e+9, redshift = 1.0 )
+
+We have built a galaxy :math:`1 \text{Gyr}` old at redshift :math:`z = 1`.
+We can always change the parameters of the galaxy we have built by calling the method
+   
+.. code-block:: python
+
+   gxy.set_parameters( age = 5.e+9 )
+
+For a complete list of the tunable parameters check the relative documentation page: `Free parameters`_.
+To get the intrinsic emission from the galaxy and its flux as arriving at the observer we can call the
+following two functions
+   
+.. code-block:: python
+
+   # Intrinsic luminosity:
+   L = gxy.get_emission()
+
+   # Flux:
+   F = gxy.SED()
+
+Note that the function :code:`gxy.wl( obs = True/False )` returns the wavelength grid in the
+observer's frame (:code:`obs = True`) and at rest frame (:code:`obs = False`). 
+
+If, instead of the full spectrum, we want just the flux integrated within some transmission
+bands, we will build a photometric galaxy object, and obtain the photo-SED
+  
+.. code-block:: python
+
+   pgxy = gp.Galaxy.PhotoGXY( age = 5.e+9, redshift = 1.0 )
+   pgxy.build_photometric_system( 'filter1', 'filter2', 'filter3', ... )
+   pF = pgxy.photoSED()
+
+Further details on the usage of functions and classes of the API are provided in the `tutorials`_
+and in the `API documentation`_. 
 
 .. _installation guide: ...
 .. _tutorials: ...
-.. _API docs: ...
+.. _API documentation: ...
+.. _galapy_data: ...
+.. _Free parameters: ...
 
