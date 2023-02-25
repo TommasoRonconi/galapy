@@ -7,6 +7,7 @@ Each of the galactic component can be used independently and, eventually, extend
 .. autosummary::
    :toctree: _generated
 
+   galapy.Galaxy
    galapy.StarFormationHistory
    galapy.CompositeStellarPopulation
    galapy.InterStellarMedium

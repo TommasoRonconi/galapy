@@ -1,4 +1,12 @@
-""" Galaxy module
+"""
+Galaxy module
+-------------
+
+Implements galaxy classes wrapping up the interplay between the different components 
+contribution to the overall emission.
+By instantiating an object of class ``GXY`` or derived it is possible to set-up the
+different components, compute global and component-specific emission, compute the 
+derived quantities and modify the parameter setting.
 """
 
 # External imports
@@ -17,6 +25,7 @@ from galapy.PhotometricSystem import PMS
 from galapy.Synchrotron import SNSYN
 from galapy.Cosmology import CSM
 from galapy.InterGalacticMedium import IGM
+
 from galapy.internal.utils import trap_int
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
@@ -152,18 +161,87 @@ gxy_params_defaults = {
 
 }
 
-# gxy_tunables = ( 'age', 'redshift' )
-# def gxy_build_params () :
-#     pass
-
 ########################################################################################
 
 class GXY ( Model ) :
-    """ Wrapping everything up
-    * It has some own parameters (e.g. the age and redshift)
-    * It shall give the possibility of selecting which components to consider
-      (even though sfh, csp and maybe ism should be mandatory)
-    * Should figure out a smart way of passing arguments to constructor
+    """Base galaxy class. All other galaxy models derive from this object.
+    All the arguments are optional.
+    Whether a particular component is included or not (e.g. radio, x-ray) the wavelength 
+    grid will always span from 1 to :math:`10^{10}` angstroms.
+    Note that by default, the only components that will be built are 
+
+    1. star formation history (SFH): modelling the stellar mass growth     
+    2. composite stellar populations (CSP): modelling unattenuated stellar emission
+    3. inter-stellar medium (ISM): modelling the absorption/re-radiation due to 
+       inter-stellar dust. This is divided in two components: molecular clouds (MC)
+       and diffuse dust (DD)
+
+    All the other components are not strictly necessay to generate an SED and, for the
+    sake of performances, they should be built only if necessary. 
+    
+    Parameters
+    ----------
+    age : float
+        (``None`` defaults to ``1.e+6``) age in years of the galaxy at the time it is observed
+    redshift : float
+        (``None`` defaults to ``0.0``) redshift of the galaxy
+    cosmo : str or dict
+        (default = ``'Planck18'``) cosmological model of choice, takes the same arguments an object of type
+        galapy.Cosmology.CSM would take. 
+        If a string is passed, it should name one of the pre-computed cosmologies available in the
+        database. Available cosmologies are ``'WMAP7'``, ``'WMAP9'``, ``'Planck15'``, ``'Planck18'``.
+        If a dictionary is passed, the class expects to find 3 key-value couples:
+        key = ``'redshift'``, value = an array of redshift values;
+        key = ``'luminosity_distance'``, value = an array of luminosity distances corresponding to 
+        the redshift values of the first key-value couple;
+        key = ``'age'``, value = an array of ages of the Universe corresponding to the redshift 
+        values of the first key-value couple.
+        All these arrays should have the same length.
+    lstep :  scalar int or boolean mask
+        (default = ``None``) Reduces the granularity of the wavelength grid.
+        If the input is scalar, select one any `lstep` wavelenghts.
+        If the input is a boolean mask, only select the indexes of the
+        array masked with lstep.
+    do_Xray : bool
+        (default = ``False``) build the components modelling X-Ray emission, 
+        i.e. X-Ray binaries (low & high mass) and, if ``do_AGN=True``, the X-Ray
+        part of the spectrum from the eventual AGN.
+    do_Radio : bool
+        (default = ``False``) build the components modelling Radio emission if necessary.
+        If the chosen SSP library does not already include nebular and synchrotron emission,
+        ``do_Radio = True`` will build objects of type NFF (nebular free-free) and SNSYN 
+        (super-nova synchrotron). The eventual parameters of both components can be passed
+        through arguments ``nff`` and ``syn``, respectively.
+        Note that if ``do_Radio = False`` both ``nff`` and ``syn`` will be ignored.
+    do_AGN : bool
+        (default = ``False``) build AGN component. The AGN spectrum is modelled through 
+        templates from Fritz et al. (2006) in the UV to IR bands and with an attenuated
+        power-law in the X-ray band (only if also argument ``do_Xray`` is set to ``True``.
+        Tunable parameters can be set by passing them to the argument ``agn``.
+    do_IGM : bool
+        (default = ``False``) build attenuation due to inter-galactic hydrogen with
+        model from Inoue et al., (2014).
+    sfh : dict
+        (default = ``None``) arguments passed to the SFH object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.StarFormationHistory.SFH``
+    csp : dict
+        (default = ``None``) arguments passed to the CSP object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.CompositeStellarPopulation.CSP``
+    ism : dict
+        (default = ``None``) arguments passed to the ISM object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.InterStellarMedium.ISM``
+    agn : dict
+        (default = ``None``) arguments passed to the AGN object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.ActiveGalacticNucleus.AGN``. 
+        If ``do_AGN=False`` this argument is ignored.
+    nff : dict
+        (default = ``None``) arguments passed to the NFF object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.NebularFreeFree.NFF``. 
+        If ``do_Radio=False`` this argument is ignored.
+    syn : dict
+        (default = ``None``) arguments passed to the SNSYN object builder, if ``None`` is passed
+        uses the default parameter of class ``galapy.Synchrotron.SNSYN``. 
+        If ``do_Radio=False`` this argument is ignored.
     """
     
     def __init__ ( self, age = None, redshift = None,
@@ -184,12 +262,15 @@ class GXY ( Model ) :
             'DD' : None,
         }
 
+        # If no age is passed set it to the minimum
+        # possible age allowed by the time-integration grid
         if age is None :
             self.age = 1.e+6
         else :
             self.age = age
         self.params[ 'age' ] = self.age
 
+        # If no redshift is passed set it to zero
         if redshift is None :
             self.redshift = 0.
         else :
@@ -209,13 +290,17 @@ class GXY ( Model ) :
                                 f"at the given redshift ( z = {self.redshift:.3f} ),"
                                 f" is {self.UA:e} years." )
 
+        # Instantiate empty dictionaries for the
+        # mandatory components when None is passed.
         if sfh is None :
             sfh = {}
         if csp is None :
             csp = {}
         if ism is None :
             ism = {}
-            
+
+        # Build the SFH model and set the parameters of ISM
+        # to the values derived from SFH
         self.sfh = SFH( **sfh )
         self.params[ 'sfh' ] = self.sfh.params
         ism.update( { 'Zgas'  : self.sfh.core.Zgas(self.age), 
@@ -305,7 +390,20 @@ class GXY ( Model ) :
             )
         
     def wl ( self, obs = False ) :
-        """ Wavelenght grid with mask applied
+        """Returns the wavelenght grid with the mask applied.
+        
+        Parameters
+        ----------
+        obs : bool
+            (Optional, default = ``False``) if set to ``True``
+            returns the observer's frame wavelength grid, otherwise
+            the rest-frame grid is returned.
+        
+        Returns
+        -------
+        : 1d-array
+        wavelength grid in observer's frame (``obs = True``) or in 
+        rest frame (``obs = False``)
         """
         if obs :
             return ( 1 + self.redshift ) * self.csp.l[ self.lgrid ]
@@ -337,7 +435,45 @@ class GXY ( Model ) :
                          sfh = None, ism = None,
                          agn = None, nff = None,
                          syn = None ) :
-        """divided in nested dictionaries or not?"""
+        """Preferred method for changing the value of free-parameters. 
+        
+        Parameters
+        ----------
+        age : float
+            age of the galaxy
+        redshift : float
+            redshift of the galaxy
+        sfh : dict
+            (default = ``None``) arguments passed to SFH.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation 
+        csp : dict
+            (default = ``None``) arguments passed to the CSP.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation 
+        ism : dict
+            (default = ``None``) arguments passed to the ISM.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation 
+        agn : dict
+            (default = ``None``) arguments passed to the AGN.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation  
+            If the GXY object has been built without AGN component this argument is ignored.
+        nff : dict
+            (default = ``None``) arguments passed to the NFF.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation  
+            If the GXY object has been built without AGN component this argument is ignored.
+        syn : dict
+            (default = ``None``) arguments passed to the SNSYN.set_parameters method, 
+            if ``None`` is passed maintains the current parameterisation  
+            If the GXY object has been built without AGN component this argument is ignored.
+
+        Note
+        ----
+        The method is built to optimise the number of computations performed. 
+        Do not pass arguments that would not change the current parameterisation.
+        **e.g.1** passing ``sfh = {}`` is less performant than sticking to the default ``sfh = None``.
+        **e.g.2** passing the same value at each call is a waste of computational time: ``redshift = 2.0``
+        passed at each call will considerably slow down execution.
+        **Bottom line**: pass an argument only when necessary. 
+        """
 
         # if age of sfh change, reset the csp's timetuple
         reset_csp = False
@@ -454,25 +590,59 @@ class GXY ( Model ) :
         return;
     
     def Lstellar ( self ) :
+        """Unattenuated stellar emission in solar luminosities. 
+        Approximates the integral
+        
+        .. math::
+           
+           L_\\lambda^\\text{CSP}(\\tau') = 
+           \\int_0^{\\tau'}\\text{d}\\tau 
+           L_\\lambda^\\text{SSP}\\bigl[\\tau, Z_\\ast(\\tau'-\\tau)\\bigr]\\psi(\\tau'-\\tau)
+
+        where :math:`\\tau'` is the age of the galaxy, :math:`L_\\lambda^\\text{SSP}[\\tau, Z\\ast]`
+        is the luminosity of the Simple Stellar Population at given time :math:`\\tau` 
+        and at given stellar metallicity :math:`Z_\\ast`, :math:`\\psi(\\tau)` is the 
+        Star Formation History at time :math:`\\tau`
+        
+        Returns
+        -------
+        : 1-d array
+        stellar emission on the default wavelength grid
+        """
         
         # emission from stars (using directly the core function for performance)  
         return self.csp.core.emission( self.lgrid )
     
     def get_emission ( self, store_attenuation = False, **kwargs ) :
-        """ Temporary implementation, final should
-        * the keyword arguments are the free parameters, 
-          (so this should call self.set_parameters(**kwargs) ftf)
-        * what about the wavelenghts?
+        """Computes the overall emission coming from a galaxy with given parameterisation.
+        The resulting shape of the SED depends on the components the galaxy object has
+        been built with. This authomatically deals with the interplay among the different 
+        active components.
+
+        Parameters
+        ----------
+        store_attenuation : bool
+            (Optional, default = ``False``) if set to ``True``, stores the total,
+            wavelength dependent, attenuation due to ISM in an internal variable (``Aavg``)
+
+        Keyword Arguments
+        -----------------
+        **kwargs :
+            arguments passed to function ``set_parameters()``
         
         Returns
         -------
-        : array-like
+        : 1d-array
             the emission on the selected wavelenght grid 
             in units of solar luminosities (:math:`[L_\odot]`)
+        
+        Note
+        ----
+        Even though only the overall emission is returned, the contribution of each
+        component is stored in the internal dictionary attribute ``components``
         """
-        # This here below should be removed as it is now authomatic with set_parameters()
-        # set derived stellar properties
-        # self.csp.set_parameters( self.age, self.sfh )
+        if len( kwargs > 0 ) :
+            self.set_parameters( **kwargs )
         
         # attenuation from ISM
         attTotMC, attTot = self.ism.total_attenuation( self.wl(), self.csp.t )
@@ -532,7 +702,7 @@ class GXY ( Model ) :
         return Ltot
 
     def get_avgAtt ( self ) :
-        """ Returns the average attenuation in absolute magnitudes 
+        """Returns the average attenuation in absolute magnitudes 
         """
         if self.components['stellar'] is None or self.components['extinct'] is None :
             raise RuntimeError(
@@ -547,14 +717,37 @@ class GXY ( Model ) :
         return AA
 
     def get_SED ( self ) :
-        """ Returns the flux at given distance in units of milli-Jansky [mJy].
-        lambda_R^2 * L_tot(lambda_R) * (1+z)/(4 * pi * c * D_L^2 )
+        """Returns the flux at given distance in units of milli-Jansky [mJy].
+
+        .. math::
+            
+            S(\\lambda_O) = \\lambda_R^2 \cdot 
+            \\dfrac{L_\\text{tot}(\\lambda_R) (1 + z)}{4\\;\\pi\\;c\\;D_L^2(z)} \cdot
+            e^{-\\tau_\\text{IGM}(z)}
+
+        where :math:`\\lambda_R` and :math:`\\lambda_O` are the rest-frame and observer's frame
+        wavelength, respectively, :math:`L_\\text{tot}` is the total luminosity (as returned by
+        function ``get_emission()``), :math:`z` is the redshift, :math:`c` the light-speed,
+        :math:`D_L(z)` is the luminosity distance at observed redshift and, if it is included in 
+        the model, :math:`e^{-\\tau_\\text{IGM}(z)}` is the IGM transmission at observed redshift.
+        
+        Returns
+        -------
+        : 1d-array
+        SED flux in milli-Jansky
         """
         return self.cosmo.to_flux(
             self.redshift, self.wl(), self.get_emission()
         ) * self.igm_trans
 
     def components_to_flux ( self ) :
+        """Utility function converting emissions in the internal ``components`` dictionary to fluxes.
+        
+        Returns
+        -------
+        : dict
+        copy of the internal dictionary ``components`` with the emission conveted to fluxes in milli-Jansky.
+        """
         return {
             k : self.cosmo.to_flux( self.redshift, self.wl(), c ) 
             for k, c in self.components.items()

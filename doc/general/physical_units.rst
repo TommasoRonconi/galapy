@@ -12,13 +12,15 @@ Even though the assumed physical units are also reported throughout the `documen
 +-----------------+--------------------------------------------+
 | Time/Age        | Years :math:`[\text{yr}]`                  |
 +-----------------+--------------------------------------------+
-| Metallicity     | Metals/Total Fraction                      |
+| Metallicity     | Metals/total mass fraction                 |
 +-----------------+--------------------------------------------+
 | Temperature     | Kelvin degrees :math:`[K]`                 |
 +-----------------+--------------------------------------------+
-| Luminosity      | :math:`[\text{erg}\ s\ \mathring{A}^{-1}]` |
+| Luminosity      | Solar luminosities :math:`[L_\odot]`       |
 +-----------------+--------------------------------------------+
-| Energy          | :math:`[\text{erg}]`                       |
+| Energy          | :math:`[\text{erg}\cdot s]`                |
++-----------------+--------------------------------------------+
+| Energy Flux     | milli-Jansky :math:`[mJy]`                 |
 +-----------------+--------------------------------------------+
 
 .. note::
