@@ -627,7 +627,8 @@ class GXY ( Model ) :
 
         Keyword Arguments
         -----------------
-        Arguments passed to function set_parameters()
+        **kwargs :
+            arguments passed to function ``set_parameters()``
         
         Returns
         -------
