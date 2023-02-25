@@ -50,9 +50,9 @@ def main():
     # C++ implementation of the interpolation class
     
     ext_intp = Extension( "galapy.internal.interp",
-                          [ os.path.join( 'utl', 'src', 'cpy_interpolation.cpp' )
+                          [ os.path.join( 'c++', 'utl', 'src', 'cpy_interpolation.cpp' )
                           ],
-                          include_dirs = [ os.path.join( 'utl', 'include' ),
+                          include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
                                            np.get_include()
                           ],
                           extra_compile_args=extra_compile_args,
@@ -64,13 +64,13 @@ def main():
     # C++ implementation of SFH functions and types
     
     ext_sfh = Extension( "galapy.SFH_core",
-                         [ os.path.join( 'sfh', 'src', 'cpy_sfh.cpp' ),
-                           os.path.join( 'sfh', 'src', 'sfh_base.cpp' ),
-                           os.path.join( 'sfh', 'src', 'sfh_insitu.cpp')
+                         [ os.path.join( 'c++', 'sfh', 'src', 'cpy_sfh.cpp' ),
+                           os.path.join( 'c++', 'sfh', 'src', 'sfh_base.cpp' ),
+                           os.path.join( 'c++', 'sfh', 'src', 'sfh_insitu.cpp')
                          ],
-                         include_dirs = [ os.path.join( 'sfh', 'include'),
-                                          os.path.join( 'imf', 'include'),
-                                          os.path.join( 'utl', 'include'),
+                         include_dirs = [ os.path.join( 'c++', 'sfh', 'include'),
+                                          os.path.join( 'c++', 'imf', 'include'),
+                                          os.path.join( 'c++', 'utl', 'include'),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
@@ -82,11 +82,11 @@ def main():
     # C++ implementation of CSP functions and types
     
     ext_csp = Extension( "galapy.CSP_core",
-                         [ os.path.join( 'csp', 'src', 'cpy_csp.cpp' ),
-                           os.path.join( 'csp', 'src', 'csp.cpp' ),
+                         [ os.path.join( 'c++', 'csp', 'src', 'cpy_csp.cpp' ),
+                           os.path.join( 'c++', 'csp', 'src', 'csp.cpp' ),
                          ],
-                         include_dirs = [ os.path.join( 'csp', 'include' ),
-                                          os.path.join( 'utl', 'include' ),
+                         include_dirs = [ os.path.join( 'c++', 'csp', 'include' ),
+                                          os.path.join( 'c++', 'utl', 'include' ),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
@@ -98,11 +98,11 @@ def main():
     # C++ implementation of ISM functions and types
     
     ext_ism = Extension( "galapy.ISM_core",
-                         [ os.path.join( 'ism', 'src', 'cpy_ism.cpp' ),
-                           os.path.join( 'ism', 'src', 'ism.cpp' ),
+                         [ os.path.join( 'c++', 'ism', 'src', 'cpy_ism.cpp' ),
+                           os.path.join( 'c++', 'ism', 'src', 'ism.cpp' ),
                          ],
-                         include_dirs = [ os.path.join( 'ism', 'include' ),
-                                          os.path.join( 'utl', 'include' ),
+                         include_dirs = [ os.path.join( 'c++', 'ism', 'include' ),
+                                          os.path.join( 'c++', 'utl', 'include' ),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
@@ -114,10 +114,10 @@ def main():
     # C++ implementation of the Nebular Free-Free emission (Bremsstrahlung)
     
     ext_nff = Extension( "galapy.NFF_core",
-                         [ os.path.join( 'rad', 'src', 'cpy_nff.cpp' ),
+                         [ os.path.join( 'c++', 'rad', 'src', 'cpy_nff.cpp' ),
                          ],
-                         include_dirs = [ os.path.join( 'rad', 'include' ),
-                                          os.path.join( 'utl', 'include' ),
+                         include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
+                                          os.path.join( 'c++', 'utl', 'include' ),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
@@ -129,10 +129,10 @@ def main():
     # C++ implementation of the Synchrotron emission (generic parametric)
     
     ext_syn = Extension( "galapy.SYN_core",
-                         [ os.path.join( 'rad', 'src', 'cpy_syn.cpp' ),
+                         [ os.path.join( 'c++', 'rad', 'src', 'cpy_syn.cpp' ),
                          ],
-                         include_dirs = [ os.path.join( 'rad', 'include' ),
-                                          os.path.join( 'utl', 'include' ),
+                         include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
+                                          os.path.join( 'c++', 'utl', 'include' ),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
@@ -144,9 +144,9 @@ def main():
     # C++ implementation of BPT functions and types
     
     ext_bpt = Extension( "galapy.BandpassTransmission",
-                         [ os.path.join( 'utl', 'src', 'cpy_transmission.cpp' )
+                         [ os.path.join( 'c++', 'utl', 'src', 'cpy_transmission.cpp' )
                          ],
-                         include_dirs = [ os.path.join( 'utl', 'include' ),
+                         include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
                                           np.get_include()
                          ],
                          extra_compile_args=extra_compile_args,
