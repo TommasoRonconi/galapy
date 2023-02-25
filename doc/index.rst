@@ -1,4 +1,4 @@
-.. SADFit documentation master file.
+.. GalaPy documentation master file.
 
 .. include:: ../README.rst
 
@@ -8,10 +8,18 @@
 
    general/install_guide
    general/physical_units
+   general/free_parameters
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples 
+   :caption: Guides
+
+   guides/photometric_fit
+..   guides/results_analysis .. this will be a jupyter notebook
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorials 
 	     
    tutorials/SFH_tutorial
    tutorials/CSP_tutorial
