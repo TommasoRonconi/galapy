@@ -153,21 +153,7 @@ def main():
                          language="c++14",
                          libraries = [ "m", "stdc++" ]
     )
-
-    #############################################################################
-    # C++ implementation of IGM functions and types
-            
-    # ext_igm = Extension( "galapy.internal.PyIGM",
-    #                      [ "cpython/cpython_igm.cpp",
-    #                        "cpp_modules/igm/src/igm.cpp" ],
-    #                      include_dirs = [ "cpp_modules/igm/include",
-    #                                       "cpp_modules/utilities/include",
-    #                                       "cpython/include" ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "gsl", "gslcblas" ],
-    # )
-
+    
     #############################################################################
     # Call setup
     
