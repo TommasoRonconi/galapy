@@ -131,7 +131,7 @@ namespace utl {
     
     /// move constructor
     lin_interp ( lin_interp && ii )
-      : base_interface{ ii }, _T{ std::move( _T ) } {}
+      : base_interface{ ii }, _T{ std::move( ii._T ) } {}
     
     /// copy constructor
     lin_interp ( const lin_interp & ii )
