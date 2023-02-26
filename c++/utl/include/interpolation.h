@@ -4,7 +4,6 @@
 /// internal includes
 #include <utilities.h>
 #include <interp/base_interface.h>
-//#include <interp/gsl_interface.h>
 #include <interp/ibstree_interface.h>
 
 namespace utl {
@@ -36,6 +35,18 @@ namespace utl {
       return _interface.eval( xx );
   
     }
+
+    // move constructor
+    interpolator ( interpolator && ii ) = default;
+
+    // copy contructor
+    interpolator ( const interpolator & ii ) = default;
+
+    // move assignment
+    interpolator & operator= ( interpolator && ii ) = default;
+
+    // copy assignment
+    interpolator & operator= ( interpolator & ii ) = default;
 
     double integrate ( const double aa, const double bb ) const noexcept {
 
