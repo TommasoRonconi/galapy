@@ -53,7 +53,7 @@ namespace sed {
 
     CSFH ( const double tau_quench = 2.e+10,
 	   const std::string & model = "insitu" ) :
-      ptr{ set_sfh_model( model ) } {
+      ptr{ set_sfh_model( model ) }, model { model } {
 
       ptr->set_tau_quench( tau_quench );
 
@@ -135,11 +135,12 @@ PYBIND11_MODULE( SFH_core, m ) {
     		    []( const sed::CSFH &o ) { //__getstate__
 
 		      py::bytes b = utl::__getstate__< sed::CSFH >( o );
-		      return py::make_tuple( o.ptr->get_tau_quench(), o.model, b );
+		      return py::make_tuple( py::float_( o.ptr->get_tau_quench() ),
+					     py::str( o.model ), b );
 
 		    },
     		    []( const py::tuple t ) { //__setstate__
-		      
+
 		      sed::CSFH o { t[0].cast< double >(), t[1].cast< std::string >() };
 		      std::string strtmp { t[2].cast< std::string >() };
 		      o.deserialize( strtmp.c_str() );
