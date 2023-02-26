@@ -4,6 +4,7 @@ import sysconfig
 import numpy as np
 
 from setuptools import setup, find_packages, Extension
+from pybind11.setup_helpers import Pybind11Extension
 
 ################################################################################
 # Functions for reading the version 
@@ -48,17 +49,26 @@ def main():
 
     #############################################################################
     # C++ implementation of the interpolation class
-    
-    ext_intp = Extension( "galapy.internal.interp",
-                          [ os.path.join( 'c++', 'utl', 'src', 'cpy_interpolation.cpp' )
-                          ],
-                          include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
-                                           np.get_include()
-                          ],
-                          extra_compile_args=extra_compile_args,
-                          language="c++14",
-                          libraries = [ "m", "stdc++" ]
+
+    ext_intp = Pybind11Extension(
+        "galapy.internal.interp",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_interpolation.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
     )
+    # ext_intp = Extension( "galapy.internal.interp",
+    #                       [ os.path.join( 'c++', 'utl', 'src', 'cpy_interpolation.cpp' )
+    #                       ],
+    #                       include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
+    #                                        np.get_include()
+    #                       ],
+    #                       extra_compile_args=extra_compile_args,
+    #                       language="c++14",
+    #                       libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of SFH functions and types
@@ -190,6 +200,7 @@ def main():
                ]
            },
            install_requires = [
+               'pybind11',
                'numpy',
                'scipy',
                'emcee',
