@@ -62,6 +62,7 @@ void sed::sfh_base::eval ( const double * const tau,
 
 // =============================================================================
 
+// This is the version for CPython
 void sed::sfh_base::time_grid ( const double age,
 				const double * const tgrid,
 				const std::size_t tgrid_size,
@@ -72,6 +73,8 @@ void sed::sfh_base::time_grid ( const double age,
 			        std::size_t * const * const out_Zidx,
 				std::size_t * const out_last_idx ) {
 
+  for (std::size_t i = 0; i<Zgrid_size; ++i) std::cout << Zgrid[i] << "\n";
+  
   // 1) compute star formation history
   // 2) compute star-metal enrichment history
   // 3) find metallicity interval for interpolation  
@@ -88,6 +91,37 @@ void sed::sfh_base::time_grid ( const double age,
 							  Zgrid, Zgrid_size );
     ++( *out_last_idx ); // increment index
     time = age - tgrid[ *out_last_idx ]; // update time
+  }
+  
+  return;
+
+}
+
+// This is the version for PyBind11
+void sed::sfh_base::time_grid ( const double age,
+				const std::vector< double > & tgrid,
+				const std::vector< double > & Zgrid,
+				std::vector< double > & out_psigrid,
+				std::vector< double > & out_Zgrid,
+				std::vector< std::size_t > & out_Zidx,
+				std::size_t & out_last_idx ) {
+  
+  // 1) compute star formation history
+  // 2) compute star-metal enrichment history
+  // 3) find metallicity interval for interpolation  
+  std::fill( out_psigrid.begin(), out_psigrid.end(), 0. );
+  std::fill( out_Zgrid.begin(),   out_Zgrid.end(),   0. );
+  std::fill( out_Zidx.begin(),    out_Zidx.end(),    0  ); 
+  out_last_idx = 0;
+
+  double time = age - tgrid[ out_last_idx ];
+  while ( time > 0. ) {
+    /*(1)*/ out_psigrid[ out_last_idx ]  = ( *this )( time );
+    /*(2)*/ out_Zgrid[ out_last_idx ]    = ( *this ).get_Zstar( time );
+    /*(3)*/ out_Zidx[ out_last_idx ]     = utl::find_low( out_Zgrid[ out_last_idx ], Zgrid );
+    
+    ++out_last_idx; // increment index
+    time = age - tgrid[ out_last_idx ]; // update time
   }
   
   return;
