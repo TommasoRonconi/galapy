@@ -72,8 +72,6 @@ void sed::sfh_base::time_grid ( const double age,
 			        double * const * const out_Zgrid,
 			        std::size_t * const * const out_Zidx,
 				std::size_t * const out_last_idx ) {
-
-  for (std::size_t i = 0; i<Zgrid_size; ++i) std::cout << Zgrid[i] << "\n";
   
   // 1) compute star formation history
   // 2) compute star-metal enrichment history
