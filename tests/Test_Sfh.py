@@ -58,7 +58,7 @@ def test_sfh_init_models () :
  
     """
     
-    with pytest.raises( TypeError, match = "SFH model not valid. Valid models are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated', 'burst'" ):
+    with pytest.raises( ValueError, match = "SFH model not valid. Valid models are: 'insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated'" ):
         sfh = gpsfh.SFH( model = '' )
         
 #------------------------------------------------------------------------------#
