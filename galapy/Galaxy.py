@@ -641,7 +641,7 @@ class GXY ( Model ) :
         Even though only the overall emission is returned, the contribution of each
         component is stored in the internal dictionary attribute ``components``
         """
-        if len( kwargs > 0 ) :
+        if len( kwargs ) > 0 :
             self.set_parameters( **kwargs )
         
         # attenuation from ISM
