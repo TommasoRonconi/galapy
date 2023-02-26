@@ -1,13 +1,20 @@
+// External includes:
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+// STL includes
+#include <vector>
+// Internal includes
 #include <pyb11_serialize.h>
 #include <interpolation.h>
-#include <vector>
+
+// ==========================================================================================
 
 namespace py = pybind11;
 
 template class utl::interpolator< utl::lin_interp >;
+
+// ==========================================================================================
 
 PYBIND11_MODULE( interp, m ) {
   
@@ -39,3 +46,5 @@ PYBIND11_MODULE( interp, m ) {
 		    ) );
   
 }
+
+// ==========================================================================================
