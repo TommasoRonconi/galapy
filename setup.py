@@ -72,21 +72,35 @@ def main():
 
     #############################################################################
     # C++ implementation of SFH functions and types
-    
-    ext_sfh = Extension( "galapy.SFH_core",
-                         [ os.path.join( 'c++', 'sfh', 'src', 'cpy_sfh.cpp' ),
-                           os.path.join( 'c++', 'sfh', 'src', 'sfh_base.cpp' ),
-                           os.path.join( 'c++', 'sfh', 'src', 'sfh_insitu.cpp')
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'sfh', 'include'),
-                                          os.path.join( 'c++', 'imf', 'include'),
-                                          os.path.join( 'c++', 'utl', 'include'),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
+
+    ext_sfh = Pybind11Extension(
+        "galapy.SFH_core",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_CSFH.cpp' ),
+              os.path.join( 'c++', 'sfh', 'src', 'sfh_base.cpp' ),
+              os.path.join( 'c++', 'sfh', 'src', 'sfh_insitu.cpp') ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'sfh', 'include'),
+                                 os.path.join( 'c++', 'imf', 'include'),
+                                 os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
     )
+    
+    # ext_sfh = Extension( "galapy.SFH_core",
+    #                      [ os.path.join( 'c++', 'sfh', 'src', 'cpy_sfh.cpp' ),
+    #                        os.path.join( 'c++', 'sfh', 'src', 'sfh_base.cpp' ),
+    #                        os.path.join( 'c++', 'sfh', 'src', 'sfh_insitu.cpp')
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'sfh', 'include'),
+    #                                       os.path.join( 'c++', 'imf', 'include'),
+    #                                       os.path.join( 'c++', 'utl', 'include'),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of CSP functions and types
