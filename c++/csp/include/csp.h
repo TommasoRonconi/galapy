@@ -116,7 +116,11 @@ namespace sed {
       const noexcept { return _LltZ[ _Lidx( il, it, iz ) ]; }
 
     double emission ( const std::size_t il,
-		      const double * const Tfact ) const noexcept;
+    		      const double * const Tfact ) const noexcept;
+
+    // double emission ( const std::size_t il ) const noexcept;
+    // double emission ( const std::size_t il,
+    // 		      const std::vector< double > & Tfact ) const noexcept;
 
     double RCCSN () const noexcept {
 

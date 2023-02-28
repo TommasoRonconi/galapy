@@ -104,19 +104,30 @@ def main():
 
     #############################################################################
     # C++ implementation of CSP functions and types
-    
-    ext_csp = Extension( "galapy.CSP_core",
-                         [ os.path.join( 'c++', 'csp', 'src', 'cpy_csp.cpp' ),
-                           os.path.join( 'c++', 'csp', 'src', 'csp.cpp' ),
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'csp', 'include' ),
-                                          os.path.join( 'c++', 'utl', 'include' ),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
+
+    ext_csp = Pybind11Extension(
+        "galapy.CSP_core",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_CCSP.cpp' ),
+              os.path.join( 'c++', 'csp', 'src', 'csp.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'csp', 'include' ),
+                                 os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
     )
+    # ext_csp = Extension( "galapy.CSP_core",
+    #                      [ os.path.join( 'c++', 'csp', 'src', 'cpy_csp.cpp' ),
+    #                        os.path.join( 'c++', 'csp', 'src', 'csp.cpp' ),
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'csp', 'include' ),
+    #                                       os.path.join( 'c++', 'utl', 'include' ),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of ISM functions and types
@@ -183,7 +194,7 @@ def main():
     
     setup( name        = "galapy",
            version     = get_version( os.path.join('galapy', '__init__.py') ),
-           description = "GalaPy - Galactic spectral analysis tools in Python",
+           description = "GalaPy - Spectral analysis tools for galaxies in Python",
            package_dir = {
                'galapy' : 'galapy',
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
