@@ -45,6 +45,6 @@ PYBIND11_MODULE( interp, m ) {
     		      return utl::__setstate__< utl::interpolator< utl::lin_interp > >( b ); }
 		    ) );
   
-}
+} // end PYBIND11_MODULE( interp, m )
 
 // ==========================================================================================
