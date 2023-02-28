@@ -101,13 +101,13 @@ PYBIND11_MODULE( SFH_core, m ) {
     .def( "__call__", py::vectorize(&sed::CSFH::operator()),
 	  "Compute SFR at given time",
 	  py::arg("tau"))
-    .def( "set_params", &sed::CSFH::set_params )
-    .def( "set_tau_quench", &sed::CSFH::set_tau_quench )
+    .def( "set_params",       &sed::CSFH::set_params )
+    .def( "set_tau_quench",   &sed::CSFH::set_tau_quench )
     .def( "set_interpolator", &sed::CSFH::set_interpolator )
     .def( "Mstar", py::vectorize(&sed::CSFH::Mstar) )
     .def( "Mdust", py::vectorize(&sed::CSFH::Mdust) )
-    .def( "Mgas", py::vectorize(&sed::CSFH::Mgas) )
-    .def( "Zgas", py::vectorize(&sed::CSFH::Zgas) )
+    .def( "Mgas",  py::vectorize(&sed::CSFH::Mgas) )
+    .def( "Zgas",  py::vectorize(&sed::CSFH::Zgas) )
     .def( "Zstar", py::vectorize(&sed::CSFH::Zstar) )
     .def( "time_grid",
 	  []( const sed::CSFH & csfh,
@@ -149,6 +149,6 @@ PYBIND11_MODULE( SFH_core, m ) {
 		    }
     		    ) );
 
-}
+} // end PYBIND11_MODULE( SFH_core, m )
 
 // ==========================================================================================
