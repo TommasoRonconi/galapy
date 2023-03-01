@@ -87,9 +87,9 @@ namespace sed {
       
     }
     
-    std::vector< double > get_params () { return _paramsrc; }
+    std::vector< double > get_params () const { return _paramsrc; }
 
-    double extinction ( const double lambda ) const noexcept {
+    virtual double extinction ( const double lambda ) const noexcept {
 
       return _paramsrc[ 0 ] *
 	std::pow( lambda * 1.81818181818181818e-4, -_delta( lambda ) ) *
@@ -97,7 +97,7 @@ namespace sed {
 
     }
     
-    double attenuation ( const double lambda ) const noexcept {
+    virtual double attenuation ( const double lambda ) const noexcept {
 
       // double ret = std::pow( 10, -0.4 * this->extinction( lambda ) );
       // return ( ret < 1.0 ) ? ret : 0.99999;
@@ -196,6 +196,18 @@ namespace sed {
       
     }
 
+    double extinction ( const double lambda ) const noexcept override {
+
+      return ism::extinction( lambda );
+      
+    }
+
+    double attenuation ( const double lambda ) const noexcept override {
+
+      return ism::attenuation( lambda );
+      
+    }
+    
     double emission ( const double lambda ) const noexcept override;
 
     double temperature ( const double Etot ) noexcept override {
@@ -287,6 +299,18 @@ namespace sed {
     	( ( _paramsrc[ 2 ] < tau ) &
     	  ( tau <= 2 * _paramsrc[ 2 ] ) );
 
+    }
+
+    double extinction ( const double lambda ) const noexcept override {
+
+      return ism::extinction( lambda );
+      
+    }
+
+    double attenuation ( const double lambda ) const noexcept override {
+
+      return ism::attenuation( lambda );
+      
     }
 
     double emission ( const double lambda ) const noexcept override;

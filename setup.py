@@ -131,19 +131,31 @@ def main():
 
     #############################################################################
     # C++ implementation of ISM functions and types
-    
-    ext_ism = Extension( "galapy.ISM_core",
-                         [ os.path.join( 'c++', 'ism', 'src', 'cpy_ism.cpp' ),
-                           os.path.join( 'c++', 'ism', 'src', 'ism.cpp' ),
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'ism', 'include' ),
-                                          os.path.join( 'c++', 'utl', 'include' ),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
+
+    ext_ism = Pybind11Extension(
+        "galapy.ISM_core",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_CISM.cpp' ),
+              os.path.join( 'c++', 'ism', 'src', 'ism.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'ism', 'include' ),
+                                 os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
     )
+    
+    # ext_ism = Extension( "galapy.ISM_core",
+    #                      [ os.path.join( 'c++', 'ism', 'src', 'cpy_ism.cpp' ),
+    #                        os.path.join( 'c++', 'ism', 'src', 'ism.cpp' ),
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'ism', 'include' ),
+    #                                       os.path.join( 'c++', 'utl', 'include' ),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of the Nebular Free-Free emission (Bremsstrahlung)
