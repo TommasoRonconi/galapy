@@ -124,6 +124,6 @@ PYBIND11_MODULE( CSP_core, m ) {
 
   m.def( "loadSSP", &sed::loadSSP );
 
-} // end PYBIND11_MODULE( SFH_core, m )
+} // end PYBIND11_MODULE( CSP_core, m )
 
 // ==========================================================================================

@@ -72,6 +72,6 @@ PYBIND11_MODULE( ISM_core, m ) {
 
   m.def( "total_attenuation", py::vectorize(&sed::total_attenuation) );
 
-} // end PYBIND11_MODULE( SFH_core, m )
+} // end PYBIND11_MODULE( ISM_core, m )
 
 // ==========================================================================================
