@@ -41,8 +41,8 @@ namespace utl {
 
     transmission () = default;
     
-    transmission ( const std::vector< double > ll,
-		   const std::vector< double > fl ) {
+    transmission ( const std::vector< double > & ll,
+		   const std::vector< double > & fl ) {
 
       // compute the normalization factor and the pivot wavelenght
       // by integrating with the trapezoid rule
