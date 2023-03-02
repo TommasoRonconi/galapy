@@ -159,47 +159,77 @@ def main():
 
     #############################################################################
     # C++ implementation of the Nebular Free-Free emission (Bremsstrahlung)
-    
-    ext_nff = Extension( "galapy.NFF_core",
-                         [ os.path.join( 'c++', 'rad', 'src', 'cpy_nff.cpp' ),
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
-                                          os.path.join( 'c++', 'utl', 'include' ),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
+
+    ext_nff = Pybind11Extension(
+        "galapy.NFF_core",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_CNFF.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'rad', 'include' ),
+                                 os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
     )
+    
+    # ext_nff = Extension( "galapy.NFF_core",
+    #                      [ os.path.join( 'c++', 'rad', 'src', 'cpy_nff.cpp' ),
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
+    #                                       os.path.join( 'c++', 'utl', 'include' ),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of the Synchrotron emission (generic parametric)
-    
-    ext_syn = Extension( "galapy.SYN_core",
-                         [ os.path.join( 'c++', 'rad', 'src', 'cpy_syn.cpp' ),
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
-                                          os.path.join( 'c++', 'utl', 'include' ),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
-    )
+
+    ext_syn = Pybind11Extension(
+        "galapy.SYN_core",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_CSYN.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'rad', 'include' ),
+                                 os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
+    )    
+    # ext_syn = Extension( "galapy.SYN_core",
+    #                      [ os.path.join( 'c++', 'rad', 'src', 'cpy_syn.cpp' ),
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
+    #                                       os.path.join( 'c++', 'utl', 'include' ),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
 
     #############################################################################
     # C++ implementation of BPT functions and types
-    
-    ext_bpt = Extension( "galapy.BandpassTransmission",
-                         [ os.path.join( 'c++', 'utl', 'src', 'cpy_transmission.cpp' )
-                         ],
-                         include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
-                                          np.get_include()
-                         ],
-                         extra_compile_args=extra_compile_args,
-                         language="c++14",
-                         libraries = [ "m", "stdc++" ]
-    )
+
+    ext_bpt = Pybind11Extension(
+        "galapy.BandpassTransmission",
+        sorted(
+            [ os.path.join( 'pybind11', 'pyb11_transmission.cpp' ) ]
+        ),
+        include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
+                                 os.path.join( 'pybind11' ) ] ),
+        libraries = [ "m" ],
+    )        
+    # ext_bpt = Extension( "galapy.BandpassTransmission",
+    #                      [ os.path.join( 'c++', 'utl', 'src', 'cpy_transmission.cpp' )
+    #                      ],
+    #                      include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
+    #                                       np.get_include()
+    #                      ],
+    #                      extra_compile_args=extra_compile_args,
+    #                      language="c++14",
+    #                      libraries = [ "m", "stdc++" ]
+    # )
     
     #############################################################################
     # Call setup
