@@ -25,7 +25,7 @@ namespace sed {
 		     py::array::c_style | py::array::forcecast > & il,
 		     const py::array_t<
 		     double,
-		     py::array::c_style | py::array::forcecast > & Tfact = {} ) {
+		     py::array::c_style | py::array::forcecast > & Tfact ) {
 
     auto res = py::array_t<float>(il.shape(0));
 
@@ -113,7 +113,9 @@ PYBIND11_MODULE( CSP_core, m ) {
 	  py::arg("LSSP"), py::arg("do_CCSN") )
     .def( "set_params", &sed::csp::set_params )
     .def( "SSP",        &sed::csp::luminosity )
-    .def( "emission",   &sed::get_csp_emission )
+    .def( "emission",   &sed::get_csp_emission,
+	  "computes the composite stellar population emission",
+	  py::arg("il"), py::arg("Tfact") = py::array_t<double>() )
     .def( "RCCSN",      &sed::csp::RCCSN )
     .def( py::pickle(
 		     []( const sed::csp &o ) { //__getstate__
