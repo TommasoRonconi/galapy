@@ -32,7 +32,7 @@ def get_version( rel_path ):
 # #                        in sysconfig.get_config_var('CFLAGS').split()
 # #                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
 # extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
-extra_compile_args = [ "-DNDEBUG", "-O3" ]
+# extra_compile_args = [ "-DNDEBUG", "-O3" ]
 
 # extra_link_args = []
 # extra_link_args += [ el
@@ -44,8 +44,8 @@ extra_compile_args = [ "-DNDEBUG", "-O3" ]
 
 def main():
 
-    os.environ["CC"] = "g++"
-    os.environ["CXX"] = "g++"    
+    # os.environ["CC"] = "g++"
+    # os.environ["CXX"] = "g++"    
 
     #############################################################################
     # C++ implementation of the interpolation class
