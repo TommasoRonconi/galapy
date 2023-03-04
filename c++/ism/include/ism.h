@@ -75,9 +75,9 @@ namespace sed {
     virtual ~ism () = default;
 
     virtual void set_params ( const double * const param ) noexcept = 0;
-    void set_temperature ( const double temp ) { _Temp = temp; }
+    virtual void set_temperature ( const double temp ) { _Temp = temp; }
 
-    void set_slopes ( const double low, const double upp ) noexcept {
+    virtual void set_slopes ( const double low, const double upp ) noexcept {
       
       _low = low;
       _upp = upp;
@@ -195,6 +195,20 @@ namespace sed {
       return;
       
     }
+    
+    void set_temperature ( const double temp ) noexcept override {
+
+      ism::set_temperature( temp );
+      return;
+
+    }
+    
+    void set_slopes ( const double low, const double upp ) noexcept override {
+
+      ism::set_slopes( low, upp );
+      return;
+      
+    }
 
     double extinction ( const double lambda ) const noexcept override {
 
@@ -291,6 +305,20 @@ namespace sed {
       
     }
     
+    void set_temperature ( const double temp ) noexcept override {
+
+      ism::set_temperature( temp );
+      return;
+
+    }
+    
+    void set_slopes ( const double low, const double upp ) noexcept override {
+
+      ism::set_slopes( low, upp );
+      return;
+      
+    }
+    
     double eta ( const double tau ) const noexcept {
 
       return
@@ -314,6 +342,11 @@ namespace sed {
     }
 
     double emission ( const double lambda ) const noexcept override;
+    double temperature ( const double Etot ) noexcept override {
+
+      return ism::temperature( Etot );
+
+    }
 
     double time_attenuation ( const double lambda, const double tau ) const noexcept;
 
