@@ -3,8 +3,7 @@ import os
 import sysconfig
 import numpy as np
 
-from setuptools import setup, find_packages, Extension
-from pybind11.setup_helpers import Pybind11Extension
+from setuptools import setup, find_packages
 
 ################################################################################
 # Functions for reading the version 
@@ -24,29 +23,11 @@ def get_version( rel_path ):
 
 
 ################################################################################
-# Global variables for compiler
+# Functions for building the library
 
-# extra_compile_args = []
-# # extra_compile_args = [ el
-# #                        for el
-# #                        in sysconfig.get_config_var('CFLAGS').split()
-# #                        if ( el != '-Wstrict-prototypes' ) and ( el != '-O2' ) ]
-# extra_compile_args += ["-DNDEBUG", "-O3", "-std=c++14", "-fPIC", "-shared"]
-# extra_compile_args = [ "-DNDEBUG", "-O3" ]
-
-# extra_link_args = []
-# extra_link_args += [ el
-#                      #if el != '-Wl,--as-needed'
-#                      #else '-Wl,--no-as-needed'
-#                      for el
-#                      in sysconfig.get_config_var('LDFLAGS').split() ]
-# extra_link_args += [ '-Wl,--no-undefined' ]
-
-def main():
-
-    # os.environ["CC"] = "g++"
-    # os.environ["CXX"] = "g++"    
-
+def return_extensions () :
+    from pybind11.setup_helpers import Pybind11Extension
+    
     #############################################################################
     # C++ implementation of the interpolation class
 
@@ -59,17 +40,7 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )
-    # ext_intp = Extension( "galapy.internal.interp",
-    #                       [ os.path.join( 'c++', 'utl', 'src', 'cpy_interpolation.cpp' )
-    #                       ],
-    #                       include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
-    #                                        np.get_include()
-    #                       ],
-    #                       extra_compile_args=extra_compile_args,
-    #                       language="c++14",
-    #                       libraries = [ "m", "stdc++" ]
-    # )
-
+    
     #############################################################################
     # C++ implementation of SFH functions and types
 
@@ -86,21 +57,6 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )
-    
-    # ext_sfh = Extension( "galapy.SFH_core",
-    #                      [ os.path.join( 'c++', 'sfh', 'src', 'cpy_sfh.cpp' ),
-    #                        os.path.join( 'c++', 'sfh', 'src', 'sfh_base.cpp' ),
-    #                        os.path.join( 'c++', 'sfh', 'src', 'sfh_insitu.cpp')
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'sfh', 'include'),
-    #                                       os.path.join( 'c++', 'imf', 'include'),
-    #                                       os.path.join( 'c++', 'utl', 'include'),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
 
     #############################################################################
     # C++ implementation of CSP functions and types
@@ -116,18 +72,6 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )
-    # ext_csp = Extension( "galapy.CSP_core",
-    #                      [ os.path.join( 'c++', 'csp', 'src', 'cpy_csp.cpp' ),
-    #                        os.path.join( 'c++', 'csp', 'src', 'csp.cpp' ),
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'csp', 'include' ),
-    #                                       os.path.join( 'c++', 'utl', 'include' ),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
 
     #############################################################################
     # C++ implementation of ISM functions and types
@@ -143,19 +87,6 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )
-    
-    # ext_ism = Extension( "galapy.ISM_core",
-    #                      [ os.path.join( 'c++', 'ism', 'src', 'cpy_ism.cpp' ),
-    #                        os.path.join( 'c++', 'ism', 'src', 'ism.cpp' ),
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'ism', 'include' ),
-    #                                       os.path.join( 'c++', 'utl', 'include' ),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
 
     #############################################################################
     # C++ implementation of the Nebular Free-Free emission (Bremsstrahlung)
@@ -170,18 +101,6 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )
-    
-    # ext_nff = Extension( "galapy.NFF_core",
-    #                      [ os.path.join( 'c++', 'rad', 'src', 'cpy_nff.cpp' ),
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
-    #                                       os.path.join( 'c++', 'utl', 'include' ),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
 
     #############################################################################
     # C++ implementation of the Synchrotron emission (generic parametric)
@@ -196,17 +115,6 @@ def main():
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
     )    
-    # ext_syn = Extension( "galapy.SYN_core",
-    #                      [ os.path.join( 'c++', 'rad', 'src', 'cpy_syn.cpp' ),
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'rad', 'include' ),
-    #                                       os.path.join( 'c++', 'utl', 'include' ),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
 
     #############################################################################
     # C++ implementation of BPT functions and types
@@ -219,17 +127,19 @@ def main():
         include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-    )        
-    # ext_bpt = Extension( "galapy.BandpassTransmission",
-    #                      [ os.path.join( 'c++', 'utl', 'src', 'cpy_transmission.cpp' )
-    #                      ],
-    #                      include_dirs = [ os.path.join( 'c++', 'utl', 'include' ),
-    #                                       np.get_include()
-    #                      ],
-    #                      extra_compile_args=extra_compile_args,
-    #                      language="c++14",
-    #                      libraries = [ "m", "stdc++" ]
-    # )
+    )
+
+    return [
+        ext_intp,
+        ext_sfh,
+        ext_csp,
+        ext_ism,
+        ext_nff,
+        ext_syn,
+        ext_bpt
+    ]
+
+def main():
     
     #############################################################################
     # Call setup
@@ -249,15 +159,7 @@ def main():
                         'galapy.internal',
                         'galapy.sampling',
                         'galapy.analysis' ],
-           ext_modules = [
-               ext_intp,
-               ext_sfh,
-               ext_csp,
-               ext_ism,
-               ext_nff,
-               ext_syn,
-               ext_bpt
-           ],
+           ext_modules = return_extensions(),
            include_package_data = True,
            entry_points = {
                'console_scripts' : [
