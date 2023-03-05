@@ -196,7 +196,7 @@ class Results () :
         self.SFR    = numpy.empty(shape=(self.size,))
         self.TMC    = numpy.empty(shape=(self.size,))
         self.TDD    = numpy.empty(shape=(self.size,))
-        
+
         for i, par in enumerate(sample_res) :
             self.params += [handler.return_nested(par)['galaxy']]
             model.set_parameters( **self.params[-1] )
@@ -234,10 +234,6 @@ class Results () :
             
         nested = _han.return_nested(params)
         _gxy.set_parameters( **nested['galaxy'] )
-        # if isinstance( _han, GXYParameters ) :
-        #     _gxy.set_parameters( **nested )
-        # else :
-        #     _gxy.set_parameters( **nested['galaxy'] )
         
         model = _gxy.photoSED()
         data  = _obs.fluxes
