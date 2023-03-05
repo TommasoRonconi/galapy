@@ -493,10 +493,14 @@ class GXY ( Model ) :
         if age is not None :
             # if the provided age is larger than the age of the Universe,
             # set the age to the age of the Universe
-            self.age = numpy.min( [ age, self.UA ] )
+            self.age = age
             reset_csp = True
             reset_ism = True
             self.params['age'] = self.age
+
+        if self.age > self.UA :
+            raise RuntimeError( "Trying to set an age larger than the age "
+                                "of the Universe at current redshift." )
 
         if sfh is not None :
             self.sfh.set_parameters(**sfh)
