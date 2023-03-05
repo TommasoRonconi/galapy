@@ -77,6 +77,9 @@ def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
     except RuntimeError :
         return -numpy.inf
 
+    if model.age > model.UA :
+        return -numpy.inf
+
     if noise is not None :
         noise.set_parameters( **nested['noise'] )
         errors = noise.apply( data.errors, flux_model )

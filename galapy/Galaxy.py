@@ -498,9 +498,9 @@ class GXY ( Model ) :
             reset_ism = True
             self.params['age'] = self.age
 
-        if self.age > self.UA :
-            raise RuntimeError( "Trying to set an age larger than the age "
-                                "of the Universe at current redshift." )
+        # if self.age > self.UA :
+        #     raise RuntimeError( "Trying to set an age larger than the age "
+        #                         "of the Universe at current redshift." )
 
         if sfh is not None :
             self.sfh.set_parameters(**sfh)
