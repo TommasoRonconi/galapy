@@ -82,7 +82,7 @@ class PMS () :
             for arg in args :
                 try :
                     *path, name = arg.split('.')
-                    ll, fl = numpy.loadtxt( DataFile( f'{arg:s}.dat',
+                    ll, fl = numpy.loadtxt( DataFile( f'{name:s}.dat',
                                                       numpy.append( GP_GBL.FILT_DIR, path ) ).get_file(),
                                             unpack=True )
                 except OSError :
