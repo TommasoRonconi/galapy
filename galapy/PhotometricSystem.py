@@ -42,7 +42,8 @@ def print_filters ( experiment = None ) :
         else :
             try :
                 exppath = experiment.split('.')
-                _recursive_print_filters( root = os.path.join(path, *GP_GBL.FILT_DIR, *experiment.split('.') ),
+                _recursive_print_filters( root = os.path.join(
+                    path, *GP_GBL.FILT_DIR, *experiment.split('.') ),
                                           pathline = exppath )
             except :
                 raise AttributeError( f'experiment {experiment} not in database.' )
