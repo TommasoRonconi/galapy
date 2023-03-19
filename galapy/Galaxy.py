@@ -561,6 +561,8 @@ class GXY ( Model ) :
             except AttributeError :
                 raise AttributeError( 'Passing AGN-parameters to a GXY-class built '
                                       'without an AGN component is not allowed.' )
+            except :
+                raise
 
         ############################################################################
         # NFF varies both whether some new parameters are passed or if some
@@ -571,13 +573,6 @@ class GXY ( Model ) :
             nff.update( { 'Zgas' : self.sfh.core.Zgas(self.age) } )
             self.nff.set_parameters( **nff )
             self.params['nff'].update(self.nff.params)
-            # try :
-            #     nff.update( { 'Zgas' : ism[ 'Zgas' ] } )
-            #     self.nff.set_parameters( **nff )
-            #     self.params['nff'].update(self.nff.params)
-            # except AttributeError :
-            #     raise AttributeError( 'Passing NFF-parameters to a GXY-class built '
-            #                           'without an NFF component is not allowed.' )
 
         ############################################################################
         # If the object exists and CCSN varied for some reason, csp has already
