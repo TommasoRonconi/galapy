@@ -303,10 +303,6 @@ def run () :
         sample_serial( hyperpar )
     else :
         global global_args
-        # global gxy_data
-        # global gxy_model
-        # global gxy_noise
-        # global gxy_params
     
         init_args = (
             hyperpar.bands,
@@ -329,7 +325,6 @@ def run () :
             },
             noise_kwargs = hyperpar.noise_kwargs,
         )
-        # gxy_data, gxy_model, gxy_params = initialize( *init_args, **init_kwargs )
         global_args = initialize( *init_args, **init_kwargs )
         sample_parallel( hyperpar, Ncpu = args.Ncpu )
 
