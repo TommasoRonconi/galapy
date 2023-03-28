@@ -44,7 +44,7 @@ namespace sed {
 
   protected :
 
-    double _Temp;
+    double _Temp, _lambda_wien = 0.;
     std::vector< double > _paramsrc;
     double _low, _upp, _ext_norm_cont;
     virtual double _A_Vband ( const double * const param = nullptr ) const noexcept = 0;
@@ -68,14 +68,12 @@ namespace sed {
 
     ism () = default;
     ism ( const double low, const double upp ) { set_slopes( low, upp ); }
-    // ism ( const double low, const double upp ) : _low{ low }, _upp{ upp } {
-    //   _ext_norm_cont = std::pow( 1.81818181818181818e+2, _upp - _low );
-    // }
       
     virtual ~ism () = default;
 
     virtual void set_params ( const double * const param ) noexcept = 0;
-    virtual void set_temperature ( const double temp ) { _Temp = temp; }
+    virtual void set_temperature ( const double temp ) {
+      _Temp = temp; _lambda_wien = 3.e+7 / _Temp; }
 
     virtual void set_slopes ( const double low, const double upp ) noexcept {
       

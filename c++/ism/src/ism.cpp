@@ -56,7 +56,10 @@ double sed::ism::temperature ( const double Etot ) noexcept {
     _Temp = utl::line_from_2points( 0.,
 				    Et[ idx ], Tvec[ idx ],
 				    Et[ idx + 1 ], Tvec[ idx + 1 ] );
-  
+
+    // setting lambda wien's displacement
+    _lambda_wien = 3.e+7 / _Temp;
+    
     return _Temp;
   }
   else return 0.;
@@ -96,7 +99,9 @@ double sed::diffuse::emission ( const double lambda ) const noexcept {
 
   return sed::cnst::solL *
     ( this->_emission( lambda, _Temp, _paramsrc[ 1 ] ) + // dust contribute
-      _paramsrc[ 2 ] * _Labs * _fpah( lambda ) );        // PAH contribute
+      _paramsrc[ 2 ] * _Labs * _fpah( lambda ) *         // PAH contribute
+      double( lambda < _lambda_wien ) );                 // guarantees Ryleigh-Jeans
+                                                         // decline instead of PAH's
 
 }
 
