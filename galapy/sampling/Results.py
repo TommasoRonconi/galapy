@@ -199,7 +199,21 @@ class Results () :
 
         for i, par in enumerate(sample_res) :
             self.params += [handler.return_nested(par)['galaxy']]
-            model.set_parameters( **self.params[-1] )
+
+            try :
+                model.set_parameters( **self.params[-1] )
+            except RuntimeError :
+                self.SED[i]   = -numpy.inf * numpy.ones_like(model.wl())
+                self.Mstar[i] = -numpy.inf
+                self.Mdust[i] = -numpy.inf
+                self.Mgas[i]  = -numpy.inf
+                self.Zstar[i] = -numpy.inf
+                self.Zgas[i]  = -numpy.inf
+                self.SFR[i]   = -numpy.inf
+                self.TMC[i]   = -numpy.inf
+                self.TDD[i]   = -numpy.inf
+                continue
+            
             age = model.age
             self.SED[i]   = model.get_SED()
             self.Mstar[i] = model.sfh.Mstar(age)

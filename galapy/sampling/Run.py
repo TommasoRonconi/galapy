@@ -61,7 +61,10 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
     init = {}
     for klist, v in handler.parameters.items() :
         set_nested( init, klist.split('.'), v )
-    model.set_parameters( **init['galaxy'] )
+    try :
+        model.set_parameters( **init['galaxy'] )
+    except RuntimeError :
+        pass
     if noise is not None : noise.set_parameters( **init['noise'] )
 
     return data, model, noise, handler
@@ -77,8 +80,8 @@ def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
     except RuntimeError :
         return -numpy.inf
 
-    if model.age > model.UA :
-        return -numpy.inf
+    # if model.age > model.UA :
+    #     return -numpy.inf
 
     if noise is not None :
         noise.set_parameters( **nested['noise'] )
