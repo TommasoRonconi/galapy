@@ -163,8 +163,8 @@ def main():
            include_package_data = True,
            entry_points = {
                'console_scripts' : [
-                   'galapy-fit = galapy.sampling.Run:run',
-                   'galapy-genparams = galapy.sampling.Run:generate_parameter_file',
+                   'galapy-fit = galapy.sampling.Run:_run',
+                   'galapy-genparams = galapy.sampling.Run:_generate_parameter_file',
                    'galapy-download-database = galapy.internal.data:_entrypoint_download_database',
                ]
            },

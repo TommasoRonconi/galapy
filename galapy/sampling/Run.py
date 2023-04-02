@@ -664,7 +664,7 @@ nsamples = 16
 #############################
 """
 
-def generate_parameter_file () :
+def _generate_parameter_file () :
 
     ####################################################################
     # Read command-line arguments:
