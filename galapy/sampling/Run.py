@@ -15,6 +15,15 @@ from galapy.sampling.Observation import Observation
 from galapy.sampling.Results import generate_output_base, dump_results
 from galapy.internal.utils import set_nested
 
+_default_sampling_kw = {
+    'dynesty' : dict(
+        dlogz_init=0.05, nlive_init=500, nlive_batch=100,
+        maxiter_init=10000, maxiter_batch=1000, maxbatch=10,
+        stop_kwargs = {'target_n_effective': int(5e6)}
+    ),
+    'emcee' : {},
+}    
+
 ################################################################################
 
 def initialize ( bands, fluxes, errors, uplims, filters, params,
@@ -80,9 +89,6 @@ def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
     except RuntimeError :
         return -numpy.inf
 
-    # if model.age > model.UA :
-    #     return -numpy.inf
-
     if noise is not None :
         noise.set_parameters( **nested['noise'] )
         errors = noise.apply( data.errors, flux_model )
@@ -141,6 +147,10 @@ def sample_serial ( hyperpar ) :
         },
         noise_kwargs = hyperpar.noise_kwargs
     )
+    
+    # Sampling keywords
+    sampling_kw = dict(_default_sampling_kw[hyperpar.sampler])
+    sampling_kw.update(hyperpar.sampling_kw)
 
     # It's run-time!
     sampler = None
@@ -164,7 +174,7 @@ def sample_serial ( hyperpar ) :
                            dynesty_sampler_kw = kw )
 
         # Run sampling
-        sampler.run_sampling( dynesty_sampling_kw = hyperpar.sampling_kw )
+        sampler.run_sampling( dynesty_sampling_kw = sampling_kw )
         
     if hyperpar.sampler == 'emcee' :
 
@@ -188,7 +198,7 @@ def sample_serial ( hyperpar ) :
         
         # Run sampling
         sampler.run_sampling( pos_init, hyperpar.nsamples,
-                              emcee_sampling_kw = hyperpar.sampling_kw )
+                              emcee_sampling_kw = sampling_kw )
 
     # Store results:
     outbase = generate_output_base( out_dir = hyperpar.output_directory,
@@ -214,6 +224,11 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
     with mp.Pool( Ncpu ) as pool :
 
         gxy_data, gxy_model, gxy_noise, gxy_params = global_args
+    
+        # Sampling keywords
+        sampling_kw = dict(_default_sampling_kw[hyperpar.sampler])
+        sampling_kw.update(hyperpar.sampling_kw)
+    
         # It's run-time!
         sampler = None
         if hyperpar.sampler == 'dynesty' :
@@ -237,7 +252,7 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
                                dynesty_sampler_kw = kw )
 
             # Run sampling
-            sampler.run_sampling( dynesty_sampling_kw = hyperpar.sampling_kw )
+            sampler.run_sampling( dynesty_sampling_kw = sampling_kw )
         
         if hyperpar.sampler == 'emcee' :
 
@@ -258,7 +273,7 @@ def sample_parallel ( hyperpar, Ncpu = None ) :
             
             # Run sampling
             sampler.run_sampling( pos_init, hyperpar.nsamples,
-                                  emcee_sampling_kw = hyperpar.sampling_kw )
+                                  emcee_sampling_kw = sampling_kw )
 
     # Store results:
     outbase = generate_output_base( out_dir = hyperpar.output_directory,
