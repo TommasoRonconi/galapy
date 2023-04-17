@@ -156,6 +156,10 @@ class AGN () :
         import galapy.internal.globs as GP_GBL
         import os
 
+        # check inputs
+        if not fAGN < 1.0 :
+            raise RuntimeError( 'trying to set fAGN>=1.0 not allowed.' )
+        
         # store the argument variables
         self.lmin, self.lmax = lmin, lmax
         self._pad = pad
@@ -281,7 +285,10 @@ class AGN () :
         """
 
         if fAGN is not None :
-            self.params.update( fAGN = fAGN )
+            if fAGN < 1.0 :
+                self.params.update( fAGN = fAGN )
+            else :
+                raise RuntimeError( 'trying to set fAGN>=1.0 not allowed.' )
         if len(kwargs) > 0 :
             for k in set( self.params['template'].keys() ).intersection( kwargs.keys() ) :
                 self.params['template'][k] = find_template_par( k, kwargs[k] )

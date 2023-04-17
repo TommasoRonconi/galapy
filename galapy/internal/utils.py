@@ -419,7 +419,7 @@ def filter_strings ( inlist, fields ) :
 
 ###################################################################################
 
-def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) :
+def cat_to_dict ( infile, id_field = 'id', err_field = '_err', meta_fields = [], skip_fields = [] ) :
     """Converts a Topcat-like catalogue into a 2-levels dictionary.
     The 1st order dictionary contains a 2nd order dictionary for each entry in the catalogue.
     Each 2nd order dictionary contains data and meta-data about the named entry. 
@@ -430,6 +430,9 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
         Path to the csv file
     id_field : str
         (Optional, default='id') header name of the field containing the sources' ID
+    err_field : str
+        (Optional, default='_err') the sub-string identifying fields
+        containing error measurements
     meta_fields : str or sequence of str
         (Optional, default empty list) which fields to consider meta-data
         Either a single string or a sequence of strings. 
@@ -451,7 +454,7 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
     
     with open(infile, 'r') as f :
         lines = f.readlines()
-    content = [ re.split( '\t+| +', line.rstrip() ) for line in lines ]
+    content = [ re.split( '\t+| +|,', line.rstrip() ) for line in lines ]
     
     gxydict = {}
     names = []
@@ -472,7 +475,7 @@ def cat_to_dict ( infile, id_field = 'id', meta_fields = [], skip_fields = [] ) 
                 except ValueError :
                     warnings.warn( f'{head} value {gxy} cannot be cast to float, skipping' )
                     continue
-            elif '_err' in head :
+            elif err_field in head :
                 try :
                     gxydict[key]['errors'].append(float(gxy))
                 except ValueError :

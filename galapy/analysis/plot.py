@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = (7,5)
 plt.rcParams['font.size'] = 14
 plt.rcParams['lines.linewidth'] = 2.
-#plt.rc('text', usetex=True)
 plt.rcParams['text.latex.preamble'] = r"\usepackage{amsmath}"
 plt.style.use('seaborn-deep')
 clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -30,10 +29,6 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 import galapy as gp
 from galapy.internal.utils import filter_strings
-# from galapy.Galaxy import gxy_params_defaults as gpdefault
-# from galapy.Galaxy import gxy_params_defaults 
-# from galapy.Noise import noise_params_defaults
-# gpdefault = dict( **gxy_params_defaults, **noise_params_defaults )
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
 
@@ -304,7 +299,7 @@ def sed_flux_res ( res,
     redshift = None
     lx = None
     obs_scale = frame in set(['obs', 'both'])
-    if 'redshift' in res.get_sampling_params().par_free :
+    if 'galaxy.redshift' in res.get_sampling_params().par_free :
         redshift = res.get_bestfit( 'params' )['redshift']
         lx = model.wl()
         if obs_scale :

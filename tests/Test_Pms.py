@@ -82,7 +82,7 @@ def test_pms_get_fluxes ():
 
      """
 
-     pms = gppms.PMS( 'b_goods' )
+     pms = gppms.PMS( 'GOODS.b' )
      ll = np.logspace( 3.5, 3.7, 100 )
      fl = np.logspace( 0., 5. , 100 )
      assert pms.get_fluxes( ll, fl ) == pytest.approx( [ 6314.613587755724 ] )

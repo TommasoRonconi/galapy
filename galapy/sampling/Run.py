@@ -15,6 +15,17 @@ from galapy.sampling.Observation import Observation
 from galapy.sampling.Results import generate_output_base, dump_results
 from galapy.internal.utils import set_nested
 
+_default_sampling_kw = {
+    'dynesty' : dict(
+        dlogz_init=0.05, nlive_init=500, nlive_batch=100,
+        maxiter_init=10000, maxiter_batch=1000, maxbatch=10,
+        stop_kwargs = {'target_n_effective': int(5e6)}
+    ),
+    'emcee' : {},
+}    
+
+global_dict = None
+
 ################################################################################
 
 def initialize ( bands, fluxes, errors, uplims, filters, params,
@@ -23,6 +34,8 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
                  noise_model = None, noise_params = {},
                  gxy_kwargs = {}, noise_kwargs = {} ) :
 
+    global global_dict 
+    
     #########################################################################
     # Build observation
 
@@ -61,23 +74,29 @@ def initialize ( bands, fluxes, errors, uplims, filters, params,
     init = {}
     for klist, v in handler.parameters.items() :
         set_nested( init, klist.split('.'), v )
-    model.set_parameters( **init['galaxy'] )
+    try :
+        model.set_parameters( **init['galaxy'] )
+    except RuntimeError :
+        pass
     if noise is not None : noise.set_parameters( **init['noise'] )
 
-    return data, model, noise, handler
+    global_dict = { 'data' : data, 'model' : model, 'noise' : noise, 'handler' : handler }
+    return;
 
 ################################################################################
 
-def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
+def loglikelihood ( par, **kwargs ) :
+    
+    data    = global_dict['data']
+    model   = global_dict['model']
+    noise   = global_dict['noise']
+    handler = global_dict['handler']
 
     nested = handler.return_nested( par )
     try :
         model.set_parameters( **nested['galaxy'] )
         flux_model = numpy.asarray( model.photoSED() )
     except RuntimeError :
-        return -numpy.inf
-
-    if model.age > model.UA :
         return -numpy.inf
 
     if noise is not None :
@@ -97,180 +116,162 @@ def loglikelihood ( par, data, model, noise, handler, **kwargs ) :
                                    uplims = data.uplims,
                                    **kwargs )
 
-def loglikelihood_globals ( par, **kwargs ) :
-    return loglikelihood( par, *global_args, **kwargs )
-
 ################################################################################
 
 # Include prior in likelihood (here uniform prior)
-def logprob ( par, data, model, noise, handler, **kwargs ) :
+def logprob ( par, **kwargs ) :
     
-    pmin, pmax = handler.par_prior.T
+    pmin, pmax = global_dict['handler'].par_prior.T
     if all( ( pmin < par ) & ( par < pmax ) ) :
-        return loglikelihood( par, data, model, noise, handler, **kwargs )
+        return loglikelihood( par, **kwargs )
     
     return -numpy.inf
 
-def logprob_globals ( par, **kwargs ) :
-    return logprob( par, *global_args, **kwargs )
-
 ################################################################################
-        
-def sample_serial ( hyperpar ) :
 
-    # Run the initializer, it populates the scope with global variables:
-    gxy_data, gxy_model, gxy_noise, gxy_params = initialize(
-        bands        = hyperpar.bands,
-        fluxes       = hyperpar.fluxes,
-        errors       = hyperpar.errors,
-        uplims       = hyperpar.uplims,
-        filters      = hyperpar.filters,
-        params       = hyperpar.galaxy_parameters,
-        sfh_model    = hyperpar.sfh_model,
-        ssp_lib      = hyperpar.ssp_lib,
-        do_Radio     = hyperpar.do_Radio,
-        do_Xray      = hyperpar.do_Xray,
-        do_AGN       = hyperpar.do_AGN,
-        noise_model  = hyperpar.noise_model,
-        noise_params = hyperpar.noise_parameters,
-        gxy_kwargs = {
-            'lstep' : hyperpar.lstep
-        },
-        noise_kwargs = hyperpar.noise_kwargs
-    )
-
+def sample ( sampler = 'emcee', nwalkers = None, nsamples = None, 
+             sampler_kw = {}, logl_kw = {}, run_sampling_kw = {},
+             Ncpu = 1, pool = None ) :
+    
+    # Sampler keywords
+    sampler_kw = dict( sampler_kw )
+    
+    # Sampling keywords
+    sampling_kw = dict(_default_sampling_kw[sampler])
+    sampling_kw.update(run_sampling_kw)
+    
     # It's run-time!
-    sampler = None
-    if hyperpar.sampler == 'dynesty' :
+    if sampler == 'dynesty' :
         
         # Define prior-transform to map parameters in the unit-cube
         from galapy.sampling.Statistics import transform_to_prior_unit_cube
-
+    
         # Build sampler
-        kw = hyperpar.sampler_kw
-        kw.update(
-            { 'logl_args' : ( gxy_data, gxy_model, gxy_noise, gxy_params ),
-              'logl_kwargs' : { 'method_uplims' : hyperpar.method_uplims },
-              'ptform_args' : (gxy_params.par_prior,)
+        sampler_kw.update(
+            { 'ptform_args' : ( global_dict['handler'].par_prior, ),
+              'logl_kwargs' : logl_kw,
+              'queue_size' : Ncpu
             }
         ) 
         sampler = Sampler( loglikelihood = loglikelihood,
-                           ndim = len( gxy_params.par_free ),
-                           sampler = hyperpar.sampler,
+                           ndim = len( global_dict['handler'].par_free ),
+                           sampler = sampler,
                            prior_transform = transform_to_prior_unit_cube,
-                           dynesty_sampler_kw = kw )
+                           pool = pool,
+                           dynesty_sampler_kw = sampler_kw )
 
         # Run sampling
-        sampler.run_sampling( dynesty_sampling_kw = hyperpar.sampling_kw )
+        sampler.run_sampling( dynesty_sampling_kw = sampling_kw )
+    
+    if sampler == 'emcee' :
         
-    if hyperpar.sampler == 'emcee' :
-
         # Build sampler
-        kw = hyperpar.sampler_kw
-        kw.update(
-            { 'args' : ( gxy_data, gxy_model, gxy_noise, gxy_params ),
-              'kwargs' : { 'method_uplims' : hyperpar.method_uplims }
-            }
-        ) 
+        sample_kw.update( { 'kwargs' : logl_kw } )
         sampler = Sampler( loglikelihood = logprob,
-                           ndim = len( gxy_params.par_free ),
-                           sampler = hyperpar.sampler,
-                           nwalkers = hyperpar.nwalkers,
-                           emcee_sampler_kw = kw )
+                           ndim = len( global_dict['handler'].par_free ),
+                           sampler = sampler,
+                           nwalkers = nwalkers,
+                           pool = pool,
+                           emcee_sampler_kw = sampler_kw )
 
         # Define initial position for walkers
-        pos_init = gxy_params.rng.uniform(*gxy_params.par_prior.T,
-                                          size=(hyperpar.nwalkers,
-                                                len(gxy_params.par_free)))
-        
+        pos_init = global_dict['handler'].rng.uniform(*global_dict['handler'].par_prior.T,
+                                          size=(nwalkers,
+                                                len(global_dict['handler'].par_free)))
+
         # Run sampling
-        sampler.run_sampling( pos_init, hyperpar.nsamples,
-                              emcee_sampling_kw = hyperpar.sampling_kw )
+        sampler.run_sampling( pos_init, nsamples,
+                              emcee_sampling_kw = sampling_kw )
+    
+    # return the sampler for storing
+    return sampler
 
+################################################################################
+
+def store_results ( sampler, 
+                    out_dir = '.', name = '', 
+                    pickle_sampler = False, pickle_raw = False ) :
+        
     # Store results:
-    outbase = generate_output_base( out_dir = hyperpar.output_directory,
-                                    name = hyperpar.run_id )
-    _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
-                      sampler = sampler, noise = gxy_noise,outbase = outbase )
+    outbase = generate_output_base( out_dir = out_dir,
+                                    name = name )
+    _ = dump_results( model = global_dict['model'],
+                      handler = global_dict['handler'],
+                      data = global_dict['data'],
+                      sampler = sampler,
+                      noise = global_dict['noise'],
+                      outbase = outbase )
     sampler.save_results( outbase = outbase,
-                          pickle_sampler = hyperpar.pickle_sampler,
-                          pickle_raw = hyperpar.pickle_raw )
-
+                          pickle_sampler = pickle_sampler,
+                          pickle_raw = pickle_raw )
     return;
 
 ################################################################################
-        
-def sample_parallel ( hyperpar, Ncpu = None ) :
-    import multiprocessing as mp
 
+def _sample_serial ( which_sampler = 'emcee', nwalkers = None, nsamples = None, 
+                     sampler_kw = {}, logl_kw = {}, run_sampling_kw = {}, 
+                     out_dir = '.', name = '', 
+                     pickle_sampler = False, pickle_raw = False  ) :
+
+    # Run the sampling
+    sampler = sample(
+        sampler = which_sampler, 
+        sampler_kw = sampler_kw, 
+        logl_kw = logl_kw,
+        run_sampling_kw = run_sampling_kw,
+        nwalkers = nwalkers,
+        nsamples = nsamples
+    )
+    
+    # Store the results
+    store_results(
+        sampler, 
+        out_dir = out_dir, name = name, 
+        pickle_sampler = pickle_sampler,
+        pickle_raw = pickle_raw
+    )
+    
+    return;
+
+################################################################################
+
+def _sample_parallel ( which_sampler = 'emcee', nwalkers = None, nsamples = None, 
+                       sampler_kw = {}, logl_kw = {}, run_sampling_kw = {},
+                       Ncpu = None, 
+                       out_dir = '.', name = '', 
+                       pickle_sampler = False, pickle_raw = False  ) :
+    import multiprocessing as mp
     
     # Use all available CPUs if no specific number is provided.
     if Ncpu is None :
         Ncpu = mp.cpu_count()
-        
+
+    # Run the sampling
+    sampler = None
     with mp.Pool( Ncpu ) as pool :
+        sampler = sample(
+            sampler = which_sampler, 
+            sampler_kw = sampler_kw, 
+            logl_kw = logl_kw,
+            run_sampling_kw = run_sampling_kw,
+            nwalkers = nwalkers,
+            nsamples = nsamples,
+            Ncpu = Ncpu, pool = pool
+        )
 
-        gxy_data, gxy_model, gxy_noise, gxy_params = global_args
-        # It's run-time!
-        sampler = None
-        if hyperpar.sampler == 'dynesty' :
-        
-            # Define prior-transform to map parameters in the unit-cube
-            from galapy.sampling.Statistics import transform_to_prior_unit_cube
-
-            # Build sampler
-            kw = hyperpar.sampler_kw
-            kw.update(
-                { 'ptform_args' : ( gxy_params.par_prior, ),
-                  'logl_kwargs' : { 'method_uplims' : hyperpar.method_uplims },
-                  'queue_size' : Ncpu
-                }
-            ) 
-            sampler = Sampler( loglikelihood = loglikelihood_globals,
-                               ndim = len( gxy_params.par_free ),
-                               sampler = hyperpar.sampler,
-                               prior_transform = transform_to_prior_unit_cube,
-                               pool = pool,
-                               dynesty_sampler_kw = kw )
-
-            # Run sampling
-            sampler.run_sampling( dynesty_sampling_kw = hyperpar.sampling_kw )
-        
-        if hyperpar.sampler == 'emcee' :
-
-            # Build sampler
-            kw = hyperpar.sampler_kw
-            kw.update( { 'kwargs' : { 'method_uplims' : hyperpar.method_uplims } } )
-            sampler = Sampler( loglikelihood = logprob_globals,
-                               ndim = len( gxy_params.par_free ),
-                               sampler = hyperpar.sampler,
-                               nwalkers = hyperpar.nwalkers,
-                               pool = pool,
-                               emcee_sampler_kw = kw )
-            
-            # Define initial position for walkers
-            pos_init = gxy_params.rng.uniform(*gxy_params.par_prior.T,
-                                              size=(hyperpar.nwalkers,
-                                                    len(gxy_params.par_free)))
-            
-            # Run sampling
-            sampler.run_sampling( pos_init, hyperpar.nsamples,
-                                  emcee_sampling_kw = hyperpar.sampling_kw )
-
-    # Store results:
-    outbase = generate_output_base( out_dir = hyperpar.output_directory,
-                                    name = hyperpar.run_id )
-    _ = dump_results( model = gxy_model, handler = gxy_params, data = gxy_data,
-                      sampler = sampler, noise = gxy_noise, outbase = outbase )
-    sampler.save_results( outbase = outbase,
-                          pickle_sampler = hyperpar.pickle_sampler,
-                          pickle_raw = hyperpar.pickle_raw )
+    # Store the results
+    store_results(
+        sampler, 
+        out_dir = out_dir, name = name, 
+        pickle_sampler = pickle_sampler,
+        pickle_raw = pickle_raw
+    )
     
     return;
 
 ################################################################################
 
-def run () :
+def _run () :
 
     ####################################################################
     # Read command-line arguments:
@@ -299,34 +300,58 @@ def run () :
     
     ####################################################################
 
+    # Initialization
+    init_args = (
+        hyperpar.bands,
+        hyperpar.fluxes,
+        hyperpar.errors,
+        hyperpar.uplims,
+        hyperpar.filters,
+        hyperpar.galaxy_parameters,
+    )
+    init_kwargs = dict(
+        sfh_model    = hyperpar.sfh_model,
+        ssp_lib      = hyperpar.ssp_lib,
+        do_Radio     = hyperpar.do_Radio,
+        do_Xray      = hyperpar.do_Xray,
+        do_AGN       = hyperpar.do_AGN,
+        noise_model  = hyperpar.noise_model,
+        noise_params = hyperpar.noise_parameters,
+        gxy_kwargs = {
+            'lstep' : hyperpar.lstep
+                },
+        noise_kwargs = hyperpar.noise_kwargs,
+    )
+    initialize( *init_args, **init_kwargs )
+
+    # Run
     if args.serial :
-        sample_serial( hyperpar )
+        _sample_serial(
+            which_sampler = hyperpar.sampler,
+            nwalkers = hyperpar.nwalkers,
+            nsamples = hyperpar.nsamples, 
+            sampler_kw = hyperpar.sampler_kw, 
+            logl_kw = { 'method_uplims' : hyperpar.method_uplims }, 
+            run_sampling_kw = hyperpar.sampling_kw,
+            out_dir = hyperpar.output_directory,
+            name = hyperpar.run_id, 
+            pickle_sampler = hyperpar.pickle_sampler,
+            pickle_raw = hyperpar.pickle_raw
+        )
     else :
-        global global_args
-    
-        init_args = (
-            hyperpar.bands,
-            hyperpar.fluxes,
-            hyperpar.errors,
-            hyperpar.uplims,
-            hyperpar.filters,
-            hyperpar.galaxy_parameters,
+        _sample_parallel(
+            which_sampler = hyperpar.sampler,
+            nwalkers = hyperpar.nwalkers,
+            nsamples = hyperpar.nsamples, 
+            sampler_kw = hyperpar.sampler_kw, 
+            logl_kw = { 'method_uplims' : hyperpar.method_uplims }, 
+            run_sampling_kw = hyperpar.sampling_kw,
+            Ncpu = args.Ncpu, 
+            out_dir = hyperpar.output_directory,
+            name = hyperpar.run_id, 
+            pickle_sampler = hyperpar.pickle_sampler,
+            pickle_raw = hyperpar.pickle_raw
         )
-        init_kwargs = dict(
-            sfh_model    = hyperpar.sfh_model,
-            ssp_lib      = hyperpar.ssp_lib,
-            do_Radio     = hyperpar.do_Radio,
-            do_Xray      = hyperpar.do_Xray,
-            do_AGN       = hyperpar.do_AGN,
-            noise_model  = hyperpar.noise_model,
-            noise_params = hyperpar.noise_parameters,
-            gxy_kwargs = {
-                'lstep' : hyperpar.lstep
-            },
-            noise_kwargs = hyperpar.noise_kwargs,
-        )
-        global_args = initialize( *init_args, **init_kwargs )
-        sample_parallel( hyperpar, Ncpu = args.Ncpu )
 
     return;    
 
@@ -639,7 +664,7 @@ nsamples = 16
 #############################
 """
 
-def generate_parameter_file () :
+def _generate_parameter_file () :
 
     ####################################################################
     # Read command-line arguments:

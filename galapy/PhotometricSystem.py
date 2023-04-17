@@ -9,6 +9,46 @@ from galapy.internal.data import DataFile
 from galapy.internal.utils import FlagVal
 from galapy.BandpassTransmission import BPT
 
+def _recursive_print_filters ( root, pathline = [] ) :
+    _, subd, files = next(os.walk(root))
+    for f in files : print('.'.join(pathline+f.split('.')[:-1]))
+    for s in subd : _recursive_print_filters(os.path.join(root, s), pathline+[s])
+    return;    
+
+def print_filters ( experiment = None ) :
+    """Prints on screen all filters available in database.
+    
+    Parameters
+    ----------
+    experiment : string or None
+        (Optional, default = None) filter the results by experiment.
+    
+    Examples
+    --------
+    >>> print_filters(experiment='Herschel.SPIRE')
+    
+    # Path: /path/to/.galapy
+    
+    Herschel.SPIRE.PSW
+    Herschel.SPIRE.PLW
+    Herschel.SPIRE.PMW
+    """
+    from galapy.configuration import rcParams
+    for path in rcParams['datapath'] :
+        print(f"\n# Path: {path}\n")
+        if experiment is None or len(experiment) == 0 :
+            _recursive_print_filters( root = os.path.join(path, *GP_GBL.FILT_DIR ),
+                                      pathline = [] )
+        else :
+            try :
+                exppath = experiment.split('.')
+                _recursive_print_filters( root = os.path.join(
+                    path, *GP_GBL.FILT_DIR, *experiment.split('.') ),
+                                          pathline = exppath )
+            except :
+                raise AttributeError( f'experiment {experiment} not in database.' )
+    return;
+
 class PMS () :
     """ Builds the Photometric System 
     
@@ -42,8 +82,9 @@ class PMS () :
         if len( args ) > 0 :
             for arg in args :
                 try :
-                    ll, fl = numpy.loadtxt( DataFile( f'{arg:s}.dat',
-                                                      GP_GBL.FILT_DIR ).get_file(),
+                    *path, name = arg.split('.')
+                    ll, fl = numpy.loadtxt( DataFile( f'{name:s}.dat',
+                                                      numpy.append( GP_GBL.FILT_DIR, path ) ).get_file(),
                                             unpack=True )
                 except OSError :
                     raise ValueError( f'Filter "{arg}" provided is not present in galapy database.' )
