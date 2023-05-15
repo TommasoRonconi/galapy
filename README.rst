@@ -1,5 +1,5 @@
-Welcome to GalaPy!
-==================
+GalaPy: Spectral modelling tool for Galaxies in Python
+======================================================
 
 GalaPy is an extensible API for modelling Galactic emission.
 It provides an easy-to-use Python user interface while the number-crunching is done with compiled, high-performance, object-oriented C++.

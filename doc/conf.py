@@ -41,7 +41,7 @@ for fn in glob.glob("../notebooks/*.ipynb"):
 # -- Project information -----------------------------------------------------
 
 project = 'GalaPy'
-copyright = '2022, Tommaso Ronconi'
+copyright = '2023, Tommaso Ronconi'
 author = 'Tommaso Ronconi'
 
 # -- General configuration ---------------------------------------------------
@@ -114,6 +114,6 @@ latex_elements = {}
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'main.tex', 'GaLapy Documentation',
+    (master_doc, 'main.tex', 'GalaPy Documentation',
      'Tommaso Ronconi', 'manual')
 ]
