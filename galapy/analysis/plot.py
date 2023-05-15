@@ -443,7 +443,7 @@ def sed_residuals_res ( res,
                               center=True, redshift=redshift, frame=frame, ax = ax)
         
     _ = sed_flux( lsed, numpy.zeros_like(lsed), redshift=redshift, frame=frame, ax = ax )
-    _ = sed_obs(ll, chi, numpy.zeros_like(ll), numpy.zeros_like(ll, dtype=bool), 
+    _ = sed_obs(ll, chi, numpy.zeros_like(ll), lo, #numpy.zeros_like(ll, dtype=bool), 
                 redshift=redshift, frame=frame, ax = ax)
     
     # Plot eventual text-box
