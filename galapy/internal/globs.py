@@ -30,24 +30,24 @@ bc03_stelib_chab_zeros = ( 'stelib_chab_zero_extended.dat', BC03 )
 bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
 
 ################################################################
-# Bressan SSP libraries
+# PARSEC22 SSP libraries
 
 # directory
-Br22 = ( DATA_DIR, 'SSP', 'Br22' )
+parsec22 = ( DATA_DIR, 'SSP', 'parsec22' )
 
 # Custom SISSA SSPs including non-thermal SN emission
-br22_NT = ( 'Bressan_NT_formatted.dat', Br22  )
+parsec22_NT = ( 'parsec22_NT_formatted.dat', parsec22  )
 
 # Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-br22_NTL = ( 'Bressan_NTL_formatted.dat', Br22  )
-
-# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-# + thinner lambda-grid
-br22_NT_refined = ( 'Bressan_NT_formatted_refined.dat', Br22  )
+parsec22_NTL = ( 'parsec22_NTL_formatted.dat', parsec22  )
 
 # Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
 # + thinner lambda-grid
-br22_NTL_refined = ( 'Bressan_NTL_formatted_refined.dat', Br22  )
+parsec22_NT_refined = ( 'parsec22_NT_formatted_refined.dat', parsec22  )
+
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
+parsec22_NTL_refined = ( 'parsec22_NTL_formatted_refined.dat', parsec22  )
 
 ################################################################
 # Photometric Filters

@@ -18,10 +18,10 @@ _SSP_LIB = {
     'bc03.basel.chab.refined' : GP_GBL.bc03_basel_chab_zeros_refined,
     'bc03.stelib.chab.extend' : GP_GBL.bc03_stelib_chab_zeros,
     'bc03.stelib.chab.extrap' : GP_GBL.bc03_stelib_chab_extrap,
-    'br22.NT'  : GP_GBL.br22_NT,
-    'br22.NTL' : GP_GBL.br22_NTL,
-    'br22.NT.refined'  : GP_GBL.br22_NT_refined,
-    'br22.NTL.refined' : GP_GBL.br22_NTL_refined,
+    'parsec22.NT'  : GP_GBL.parsec22_NT,
+    'parsec22.NTL' : GP_GBL.parsec22_NTL,
+    'parsec22.NT.refined'  : GP_GBL.parsec22_NT_refined,
+    'parsec22.NTL.refined' : GP_GBL.parsec22_NTL_refined,
     }
 
 def print_ssp_libs () :
@@ -61,7 +61,7 @@ class CSP () :
     Keyword Arguments
     -----------------
     ssp_lib : string
-      which SSP library to load. The default is :code:`bc03.basel.chab.extend`-
+      which SSP library to load. The default is :code:`parsec22.NT`-
       To see the list of available libraries run 
       :code:`galapy.CompositeStellarPopulation.print_ssp_libs()`
     CCSN : bool
@@ -72,7 +72,7 @@ class CSP () :
     :func:`galapy.CompositeStellarPopulation.print_ssp_libs()`
     """
 
-    def __init__ ( self, ssp_lib = 'bc03.basel.chab.extend', CCSN = False ) :
+    def __init__ ( self, ssp_lib = 'parsec22.NT', CCSN = False ) :
         
         self.ssp_lib = None
         if ssp_lib in set(_SSP_LIB.keys()) :

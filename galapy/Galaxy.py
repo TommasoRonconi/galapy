@@ -313,7 +313,7 @@ class GXY ( Model ) :
         # NOTE THAT a more consistent implementation would be
         # to also set the parameter to false if synchrotron
         # is already included in the SSPs, left for future development:
-        # csp[ 'CCSN' ] = do_Radio and 'br22.NT' not in csp['ssp_lib']
+        # csp[ 'CCSN' ] = do_Radio and 'parsec22.NT' not in csp['ssp_lib']
 
         self.csp = CSP( **csp )
         self.csp.set_parameters( self.age, self.sfh )
@@ -351,7 +351,7 @@ class GXY ( Model ) :
         self.snsyn = None
         # Build the Nebular-Free support only if
         # it is not already included in the SSP library
-        if do_Radio and 'br22.NTL' not in self.csp.ssp_lib :
+        if do_Radio and 'parsec22.NTL' not in self.csp.ssp_lib :
             if nff is None :
                 nff = {}
             self.nff = NFF( self.csp.l, **nff )
@@ -362,7 +362,7 @@ class GXY ( Model ) :
 
             # Build the Synchrotron support only if
             # it is not already included in the SSP library
-            if 'br22.NT' not in self.csp.ssp_lib :
+            if 'parsec22.NT' not in self.csp.ssp_lib :
                 if syn is None :
                     syn = {}
                 syn[ 'RCCSN' ] = self.csp.core.RCCSN()

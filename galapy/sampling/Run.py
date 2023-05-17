@@ -29,7 +29,7 @@ global_dict = None
 ################################################################################
 
 def initialize ( bands, fluxes, errors, uplims, filters, params,
-                 sfh_model = 'insitu', ssp_lib = 'br22.NT',
+                 sfh_model = 'insitu', ssp_lib = 'parsec22.NT',
                  do_Radio = False, do_Xray = False, do_AGN = False,
                  noise_model = None, noise_params = {},
                  gxy_kwargs = {}, noise_kwargs = {} ) :
@@ -449,7 +449,7 @@ cosmo     = 'Planck18'
 sfh_model = 'insitu'
 
 # The SSP library to use for building the unattenuated stellar emission component
-ssp_lib   = 'br22.NT'
+ssp_lib   = 'parsec22.NT'
 
 # Whether to provide X-ray emission support (True) or not (False). 
 do_Xray = False
