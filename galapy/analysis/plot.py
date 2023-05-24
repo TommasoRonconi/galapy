@@ -50,7 +50,7 @@ _specs_default = {
         'xlim'   : (1.e+0,1.e+10),
         'ylim'   : (1.e-10, 1.e+10),
         'xlabel' : '$\\lambda\\ [\\,\\AA\\,]$',
-        'ylabel' : '$S_\\lambda\\ [\\mathrm{mJy}]$',
+        'ylabel' : '$S_\\nu\\ [\\mathrm{mJy}]$',
     },
     'sed_legend_kw' : {
         'l1' : { 'loc' : 'upper right',
