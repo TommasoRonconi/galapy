@@ -549,8 +549,8 @@ class GXY ( Model ) :
         if self.xrb is not None :
             self.xrb.set_parameters( age = self.age,
                                      psi = self.sfh( self.age ),
-                                     Mstar = self.sfh.core.Mstar( self.age ),
-                                     Zstar = self.sfh.core.Zstar( self.age ) )
+                                     Mstar = self.sfh.Mstar( self.age ),
+                                     Zstar = self.sfh.Zstar( self.age ) )
 
         ############################################################################
         # AGN varies only if some new parameters are passed
