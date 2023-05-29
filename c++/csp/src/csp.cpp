@@ -52,15 +52,6 @@ double sed::csp::emission ( const std::size_t il,
 
 }
 
-// double sed::csp::emission ( const std::size_t il ) const noexcept {
-
-//   double Lout = 0.;
-//   for ( std::size_t it = 1; it <= _it_last; ++it )
-//       Lout += _sfh_lum_timeintegrand( il, it );
-//   return Lout;
-
-// }
-
 // double sed::csp::emission ( const std::size_t il,
 // 			    const std::vector< double > & Tfact ) const noexcept {
 
