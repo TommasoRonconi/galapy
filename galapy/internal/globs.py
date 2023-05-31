@@ -6,10 +6,10 @@ import os
 # contains binary and ASCII files to be used along the library #
 ################################################################
 
-DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_data/releases/'
+DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_database/releases/'
 DATA_VERSION = '0.0.1'
-DATA_URL = 'https://github.com/TommasoRonconi/galapy_data/blob/main/{:s}?raw=true'
-DATA_DIR = 'data'
+DATA_URL = 'https://github.com/TommasoRonconi/galapy_database/blob/main/{:s}?raw=true'
+DATA_DIR = 'galapy_database'
 
 ################################################################
 # Bruzual and Charlot (2003) SSP libraries
@@ -36,18 +36,18 @@ bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
 parsec22 = ( DATA_DIR, 'SSP', 'parsec22' )
 
 # Custom SISSA SSPs including non-thermal SN emission
-parsec22_NT = ( 'parsec22_NT_formatted.dat', parsec22  )
+parsec22_NT = ( 'parsec22_NT.dat', parsec22  )
 
 # Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-parsec22_NTL = ( 'parsec22_NTL_formatted.dat', parsec22  )
-
-# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-# + thinner lambda-grid
-parsec22_NT_refined = ( 'parsec22_NT_formatted_refined.dat', parsec22  )
+parsec22_NTL = ( 'parsec22_NTL.dat', parsec22  )
 
 # Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
 # + thinner lambda-grid
-parsec22_NTL_refined = ( 'parsec22_NTL_formatted_refined.dat', parsec22  )
+parsec22_NT_refined = ( 'parsec22_NT_refined.dat', parsec22  )
+
+# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
+# + thinner lambda-grid
+parsec22_NTL_refined = ( 'parsec22_NTL_refined.dat', parsec22  )
 
 ################################################################
 # Photometric Filters

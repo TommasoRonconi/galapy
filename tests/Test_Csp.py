@@ -13,10 +13,13 @@ Dictionary providing available SSP-libraries .
 Available SSP formats
 ---------------------
 
-* bc03.basel.chab.extend ( default ) ;
-* bc03.stelib.chab.extend ;
-* bc03.stelib.chab.extrap ;
-
+* bc03.basel.chab.extend;
+* bc03.stelib.chab.extend;
+* bc03.stelib.chab.extrap;
+* parsec22.NT; (default)
+* parsec22.NTL;
+* parsec22.NT.refined;
+* parsec22.NTL.refined;
 """
 
 # External imports
@@ -32,7 +35,7 @@ from galapy import CompositeStellarPopulation as gpcsp
 @pytest.fixture
 def csp ():
     
-     csp = gpcsp.CSP( )
+     csp = gpcsp.CSP( ssp_lib = 'bc03.basel.chab.extend' )
      return csp 
 
 def test_csp_init ( csp ) :

@@ -63,7 +63,7 @@ namespace sed {
     _Lidx ( const std::size_t il,
 	    const std::size_t it,
 	    const std::size_t iz )
-      const noexcept { return il * _NZ * _Ntau + it * _NZ + iz; }
+      const noexcept { return iz * _Ntau * _Nlambda + il * _Ntau + it; }
     
     inline double
     _sfh_lum_timeintegrand ( const std::size_t il,

@@ -1,4 +1,4 @@
-""" GalaPy module for combining Simple Stellar Populations(SSP) into a 
+""" GalaPy module for combining Simple Stellar Populations (SSP) into a 
 Composite Stellar Population (CSP).
 """
 
@@ -22,6 +22,10 @@ _SSP_LIB = {
     'parsec22.NTL' : GP_GBL.parsec22_NTL,
     'parsec22.NT.refined'  : GP_GBL.parsec22_NT_refined,
     'parsec22.NTL.refined' : GP_GBL.parsec22_NTL_refined,
+    'br22.NT'  : GP_GBL.parsec22_NT,                     # keeping this for backward compatibility
+    'br22.NTL' : GP_GBL.parsec22_NTL,                    # keeping this for backward compatibility
+    'br22.NT.refined'  : GP_GBL.parsec22_NT_refined,     # keeping this for backward compatibility
+    'br22.NTL.refined' : GP_GBL.parsec22_NTL_refined,    # keeping this for backward compatibility
     }
 
 def print_ssp_libs () :
@@ -47,6 +51,102 @@ def print_ssp_libs () :
     print( 'Available SSP formats\n'
            '---------------------\n'
            + list_libs )
+    return;
+
+def format_SSP_table ( L, lidx, tidx, Zidx, lsize, tsize, Zsize, flat = True ) :
+    """Given an input SSP table returns a version with the formatting internally
+    required by the library.
+        
+    Parameters
+    ----------
+    L : array-like
+        input SSP table. It can be either a continuous array indexed on 3 coordinates
+        (i.e. wavelength, age and metallicity) in whatever ordering, or a 3-dimensional
+        matrix for which the 3 dimensions run over the wavelength, age and metallicity 
+        (also in this case the order is not important).
+    lidx : integer
+        axis number in the array `L` corresponding to the wavelength dimension 
+    tidx : integer
+        axis number in the array `L` corresponding to the age dimension 
+    Zidx : integer
+        axis number in the array `L` corresponding to the metallicity dimension 
+    lsize : integer
+        dimension of the wavelength grid 
+    tsize : integer
+        dimension of the age grid 
+    Zsize : integer
+        dimension of the metallicity grid
+    flat : bool
+        if True, the input array is assumed to be flattened, if False it should instead
+        be a 3D matrix with axes corresponding to the 3 grids in wavelength, age and metallicity
+        
+    Returns
+    -------
+    newL : 1d contiguous array
+        output SSP table in the correct format
+    """
+    input_shape = numpy.empty(3, dtype=int)
+    input_shape[lidx] = lsize
+    input_shape[tidx] = tsize
+    input_shape[Zidx] = Zsize
+    if flat :
+        L = numpy.array(L).reshape(input_shape)
+    if tuple(input_shape) != L.shape :
+        raise RuntimeError( f'Wrong input shape, expected {tuple(input_shape)}, got {L.shape}' )
+        
+    return numpy.ascontiguousarray( 
+        numpy.transpose(L, axes=(Zidx, lidx, tidx)).ravel()
+    )
+
+def store_SSP_table ( outfile, l, t, Z, L, endianism = 'little', force = False ) :
+    """Save a new SSP table
+    
+    Parameters
+    ----------
+    outfile : string
+        path to output file name.
+    l : array-like
+        wavelength grid
+    t : array-like
+        age grid
+    Z : array-like
+        metallicity grid
+    L : array-like
+        flattened SSP table in the correct format accepted by the library
+        (check function ``format_SSP_table()``)
+    endianism : string
+        endianism of your machine, you can check this by calling ``import sys; print(sys.byteorder)``
+    force : bool
+        whether to overwrite an already existing ``outfile``
+    """
+    from sys import byteorder
+    if endianism != byteorder :
+        raise RuntimeError('wrong endianism selected')
+    if os.path.isfile(outfile) and not force :
+        warnings.warn( 
+            f'Selected filename {outfile} is an existing file, to overwrite it set parameter `force=True`')
+        return;
+    if not os.path.isdir(os.path.dirname(outfile)) :
+        raise RuntimeError(
+            'The selected output file name is pointing to path that does not exist in the filesystem'
+        )
+    l = numpy.ascontiguousarray(l)
+    t = numpy.ascontiguousarray(t)
+    Z = numpy.ascontiguousarray(Z)
+    L = numpy.ascontiguousarray(L)
+    with open( outfile, 'wb' ) as f :
+        # write wavelength block
+        f.write( l.size.to_bytes(8, endianism) )
+        f.write( l.tobytes() )
+        # write age block
+        f.write( t.size.to_bytes(8, endianism) )
+        f.write( t.tobytes() )
+        # write metallicity block
+        f.write( Z.size.to_bytes(8, endianism) )
+        f.write( Z.tobytes() )
+        # write luminosity block
+        f.write( L.size.to_bytes(8, endianism) )
+        f.write( L.tobytes() )
     return;
 
 class CSP () :
