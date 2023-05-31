@@ -297,7 +297,7 @@ def download_database ( loc = None, name = None, version = None,
     # Open tarball
     archive = tarfile.open(where)
 
-    # Get common prefix name (e.g. galapy_data-1.0.0)
+    # Get common prefix name (e.g. galapy_database-1.0.0)
     archive_root = os.path.commonprefix( archive.getnames() )
 
     # Extract everything from tarball on assigned position
