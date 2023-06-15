@@ -6,8 +6,7 @@ import os
 # contains binary and ASCII files to be used along the library #
 ################################################################
 
-# https://api.github.com/repos/TommasoRonconi/galapy_database/releases/
-DATABASE = 'https://github.com/TommasoRonconi/galapy_database/archive/refs/tags/'
+DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_database/releases'
 DATA_VERSION = '0.1.0'
 DATA_URL = 'https://github.com/TommasoRonconi/galapy_database/blob/main/{:s}?raw=true'
 DATA_DIR = 'galapy_database'

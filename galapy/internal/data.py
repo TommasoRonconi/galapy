@@ -184,7 +184,7 @@ def download_database ( loc = None, name = None, version = None,
         The database version to download (Default is None and will download the latest version)
     database : str
         A valid URL to a database. Typically this would be in the form
-        ``'https://api.github.com/repos/<user>/<repository>/releases/'``.
+        ``'https://api.github.com/repos/<user>/<repository>/releases'``.
         Any URL that can be converted by function requests.request.json() to a dictionary
         containing a valid URL to a tarball associated to key 'tarball_url' is valid.
     overwrite : bool
@@ -259,7 +259,7 @@ def download_database ( loc = None, name = None, version = None,
     # Download database
 
     # Request for a given release and check the URL is correct and working
-    release = requests.get( urllib.parse.urljoin( database, version ) )
+    release = requests.get( database )
     try :
         release.raise_for_status()
     except requests.exceptions.HTTPError as http_err :
@@ -269,9 +269,16 @@ def download_database ( loc = None, name = None, version = None,
         print( f'Other error occurred: {err}' )
         raise
 
+    # converting json from list to dict
+    releaselist = release.json()
+    releasedict = {'latest' : releaselist[0]}
+    releasedict.update(
+        { rel['tag_name'] : rel for rel in releaselist }
+    )
+
     # Extract from JSON the tarball URL and check for exceptions
     try :
-        tarurl = release.json()['tarball_url']
+        tarurl = releasedict[version]['tarball_url']
     except JSONDecodeError as err :
         print( f'Provided URL cannot be converted to JSON dictionary' )
         raise
@@ -282,6 +289,8 @@ def download_database ( loc = None, name = None, version = None,
     # Try downloading the tarball and eventually raise exception.
     where = os.path.join( loc, f'{name}.tar.gz' )
     try :
+        if rcParams[ 'verbose_downloads' ] :
+            print( 'downloading tarball, this might require some time ...' )
         nbytes = download_file( tarurl, where,
                                 overwrite = overwrite,
                                 verbose = verbose )
