@@ -225,6 +225,8 @@ def download_database ( loc = None, name = None, version = None,
         
     if version is None :
         version = 'latest'
+    elif version == 'latest' :
+        pass
     elif version == 'default' :
         version = f'v{DATA_VERSION}'
     else :
