@@ -32,7 +32,11 @@ jobs:
     - name: Install library
       run: |
         python setup.py install
-        galapy-download-database
+        galapy-download-database -h
     - name: Test with pytest
       run: |
+        echo "do some checks before running"
+        ls
+	pwd
+      	python -c 'import galapy; print(rcparams)'
         pytest tests/*.py
