@@ -36,8 +36,8 @@ jobs:
     - name: Test with pytest
       run: |
         echo "do some checks before running"
-	ls
-	pwd
-	python -c 'import galapy; print(galapy.rcParams)'
-	pytest tests/*.py
+        ls
+        pwd
+        python -c 'import galapy; print(galapy.rcParams)'
+        pytest tests/*.py
 
