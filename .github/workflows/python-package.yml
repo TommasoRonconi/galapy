@@ -33,6 +33,7 @@ jobs:
       run: |
         python setup.py install
         galapy-download-database -h
+        galapy-download-database
     - name: Test with pytest
       run: |
         echo "do some checks before running"

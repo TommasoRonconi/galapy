@@ -345,11 +345,11 @@ def _entrypoint_download_database () :
     parser.add_argument( '--name', '-n',
                          dest = 'name',
                          type = str,
-                         default = 'data',
+                         default = 'galapy_database',
                          help = (
                              'Name to assign to the directory inside ``loc`` where ' +
                              'the database will be extracted. ' +
-                             'DEFAULT: "data"'
+                             'DEFAULT: "galapy_database"'
                          ) )
     parser.add_argument( '--version', '-v',
                          dest = 'version',
