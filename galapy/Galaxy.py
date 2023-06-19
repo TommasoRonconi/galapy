@@ -1,7 +1,4 @@
 """
-Galaxy module
--------------
-
 Implements galaxy classes wrapping up the interplay between the different components 
 contribution to the overall emission.
 By instantiating an object of class ``GXY`` or derived it is possible to set-up the
@@ -754,6 +751,10 @@ class GXY ( Model ) :
     
 
 class PhotoGXY ( GXY ) :
+    """Galaxy class including photometric system.
+    This is a class derived from ``galapy.Galaxy`` which implements authomatic computation of fluxes 
+    convolved with bandpass transmission filters.
+    """
 
     def __init__ ( self, *args, pms = None, **kwargs ) :
 
@@ -761,11 +762,22 @@ class PhotoGXY ( GXY ) :
         self.pms = pms
 
     def build_photometric_system ( self, *args, **kwargs ) :
+        """Forwards ``args`` and ``kwargs`` to the constructor of the photometric system.
+        
+        Parameters
+        ----------
+        args : sequence
+            positional arguments of the PMS contructor
+        kwargs : dictionary
+            keyword arguments of the PMS constructor
+        """
 
         self.pms = PMS( *args, **kwargs)
         return;
 
     def photoSED ( self ) :
+        """Computes and returns the photometric bandpass fluxes.
+        """
 
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
@@ -776,5 +788,7 @@ class PhotoGXY ( GXY ) :
         
 
 class SpectralGXY ( GXY ) :
+    """Not implemented yet
+    """
     pass
 
