@@ -1,5 +1,4 @@
 import os
-# from galapy.configuration import rcParams
 
 ################################################################
 #                      DATA DIRECTORY:                         #
@@ -8,7 +7,7 @@ import os
 
 DATABASE = 'https://api.github.com/repos/TommasoRonconi/galapy_database/releases'
 DATA_VERSION = '0.1.0'
-DATA_URL = 'https://github.com/TommasoRonconi/galapy_database/blob/main/{:s}?raw=true'
+DATA_URL = 'https://raw.githubusercontent.com/TommasoRonconi/galapy_database/main/{:s}'
 DATA_DIR = 'galapy_database'
 
 ################################################################
