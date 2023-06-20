@@ -278,7 +278,7 @@ namespace utl {
   /**
    * @brief Black-Body Emission Law
    *
-   * @param ll wavelenght [cm]
+   * @param ll wavelength [cm]
    * @param TT temperature [K]
    * 
    * @result

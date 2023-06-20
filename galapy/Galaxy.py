@@ -196,7 +196,7 @@ class GXY ( Model ) :
         All these arrays should have the same length.
     lstep :  scalar int or boolean mask
         (default = ``None``) Reduces the granularity of the wavelength grid.
-        If the input is scalar, select one any `lstep` wavelenghts.
+        If the input is scalar, select one any `lstep` wavelengths.
         If the input is a boolean mask, only select the indexes of the
         array masked with lstep.
     do_Xray : bool
@@ -369,7 +369,7 @@ class GXY ( Model ) :
 
         # If sub-gridding is required, build subgrid
         if lstep is not None :
-            self.lgrid = self.get_wavelenght_grid(lstep)
+            self.lgrid = self.get_wavelength_grid(lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
 
@@ -387,7 +387,7 @@ class GXY ( Model ) :
             )
         
     def wl ( self, obs = False ) :
-        """Returns the wavelenght grid with the mask applied.
+        """Returns the wavelength grid with the mask applied.
         
         Parameters
         ----------
@@ -406,20 +406,20 @@ class GXY ( Model ) :
             return ( 1 + self.redshift ) * self.csp.l[ self.lgrid ]
         return self.csp.l[self.lgrid]
     
-    def get_wavelenght_grid ( self, lstep ) :
-        """ Reduces the granularity of the wavelenght grid [optimization]
+    def get_wavelength_grid ( self, lstep ) :
+        """ Reduces the granularity of the wavelength grid [optimization]
         
         Parameters
         ----------
         lstep : scalar int or boolean mask
-            If the input is scalar, select one any `lstep` wavelenghts.
+            If the input is scalar, select one any `lstep` wavelengths.
             If the input is a boolean mask, only select the indexes of the
             array masked with lstep.
             
         Returns
         -------
         : integer array
-            A list of indices of the wavelenght grid
+            A list of indices of the wavelength grid
         """
         if isinstance(lstep, int) :
             return numpy.arange(self.csp.l.size, step=lstep)
@@ -629,7 +629,7 @@ class GXY ( Model ) :
         Returns
         -------
         : 1d-array
-            the emission on the selected wavelenght grid 
+            the emission on the selected wavelength grid 
             in units of solar luminosities (:math:`[L_\odot]`)
         
         Note

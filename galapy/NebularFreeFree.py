@@ -26,7 +26,7 @@ class NFF () :
     Parameters
     ----------
     ll : float array
-      the wavelenght grid where the free-free emission is computed
+      the wavelength grid where the free-free emission is computed
     """
     
     def __init__ ( self, ll, **kwargs ) :

@@ -254,7 +254,7 @@ def sed_flux_res ( res,
         Whether to plot the 1- and 2-sigma contours around the mean SED (dafault is ``False``).
     frame : string
         One among {``'rest'``, ``'obs'``, ``'both'``}, choose the frame, observed- or rest-frame,
-        to plot the wavelenght-axis (default is ``'both'``)
+        to plot the wavelength-axis (default is ``'both'``)
     show_legend : bool
         (Optional)
     legend_kwargs : dict
@@ -292,7 +292,7 @@ def sed_flux_res ( res,
                     'Attribute "observation" should be an instance of type ``Observation``'
                 )
 
-    # Set the wavelenght (lambda) axis:
+    # Set the wavelength (lambda) axis:
     # If 'redshift' is a free parameter the local variable
     # will be set to the best-fit value, otherwise the
     # spectroscopic redshift will be extracted from the model.
@@ -392,7 +392,7 @@ def sed_residuals_res ( res,
         A ``Results`` instance from a sampling run.
     frame : string
         One among {``'rest'``, ``'obs'``, ``'both'``}, choose the frame, observed- or rest-frame,
-        to plot the wavelenght-axis (default is ``'both'``)
+        to plot the wavelength-axis (default is ``'both'``)
     plot_contours : bool
         Whether to plot the 1- and 2-sigma contours around the mean SED (dafault is ``False``).
     plot_chi2 : bool
@@ -503,7 +503,7 @@ def photometric_system ( obj, colors = None, ax = None, ax_kwargs = {} ) :
         colors = plt.cm.plasma(numpy.linspace(0.,1.,len(pms.keys)))
     elif len(colors) != len(pms) :
         raise AttributeError( 'Attribute ``color`` must be a list or iterable of valid colors '
-                              'with the same lenght of the photometric system' )
+                              'with the same length of the photometric system' )
             
     # If not passed, attach to the latest axis or generate new one
     if ax is None :
@@ -565,7 +565,7 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
           ndim is the number of free parameters of the sampling run. Each of the
           ndim couples will be assigned to the ordered list of free-parameters.
         - a dictionary where the keys are the names of the free parameters of the
-          sampling run and the values are sequences of lenght = 2 with the limits
+          sampling run and the values are sequences of length = 2 with the limits
           for the corresponding free parameter.
     plot_titles : bool
         Whether to plot titles above the diagonal marginal posteriors with summary

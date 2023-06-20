@@ -9,7 +9,7 @@ class Observation () :
         It builds the photometric system from arguments and stores the 
         observational data in ordered numpy arrays. The order is set
         by the photometric system chosen. By construction, it follows
-        the pivot wavelenghts of the transmission filters provided.
+        the pivot wavelengths of the transmission filters provided.
         
         Parameters
         ----------
@@ -54,7 +54,7 @@ class Observation () :
             
         if any( [ len( lst ) != len( self.pms ) 
                   for lst in [ bands, fluxes, errors, uplims ] ] ) :
-            raise ValueError( 'All arguments should have the same lenght.' )
+            raise ValueError( 'All arguments should have the same length.' )
         
         # create temporary data dictionary to iterate by-key in the order provided by the pms object
         data = { k : v for k, v in zip( bands, zip( fluxes, errors, uplims ) ) }

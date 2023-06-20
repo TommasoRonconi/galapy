@@ -44,7 +44,7 @@ namespace utl {
     transmission ( const std::vector< double > & ll,
 		   const std::vector< double > & fl ) {
 
-      // compute the normalization factor and the pivot wavelenght
+      // compute the normalization factor and the pivot wavelength
       // by integrating with the trapezoid rule
       for ( std::size_t ii = 1; ii < ll.size(); ++ii ) {
         norm +=
@@ -65,7 +65,7 @@ namespace utl {
       // build the interpolator
       _ftran = utl::interpolator< utl::lin_interp > { ll, ff, "linear" };
       
-      // store the minimum and the maximum wavelenght
+      // store the minimum and the maximum wavelength
       lmin = _ftran.get_xmin();
       lmax = _ftran.get_xmax();
       

@@ -68,12 +68,12 @@ class _XRBase ( ABC ) :
         ###########################################################
         # Compute X-template
 
-        # generate wavelenght grid
+        # generate wavelength grid
         ll = numpy.logspace( numpy.log10( self.lmin ),
                              numpy.log10( self.lmax ),
                              256 )
         
-        # convert wavelenght to energy
+        # convert wavelength to energy
         El = Ang_to_keV( ll )
         
         # find interval for hard-X normalization

@@ -179,7 +179,7 @@ class Results () :
         self.size = len(sample_res)
         if self.size != len(sample_logl) or self.size != len(sample_weights):
             raise RuntimeError( 
-                'Arguments sample_res, sample_logl and sample_weights should have same lenght'
+                'Arguments sample_res, sample_logl and sample_weights should have same length'
             )
         self.params = []
         self.logl    = sample_logl

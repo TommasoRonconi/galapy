@@ -406,17 +406,17 @@ filters = list(bands)
 # This parameter should be a nested dictionary with user-defined transmissions.
 # Such transmissions are passed as properly formatted dictionaries
 # 
-# filters = {{ 'filter_1' : {{ 'wavelenghts' : array-like,
+# filters = {{ 'filter_1' : {{ 'wavelengths' : array-like,
 #                            'photons' : array-like }},
-#             'filter_2' : {{ 'wavelenghts' : array-like,
+#             'filter_2' : {{ 'wavelengths' : array-like,
 #                            'photons' : array-like }},
 #             ...
-#             'filter_N' : {{ 'wavelenghts' : array-like,
+#             'filter_N' : {{ 'wavelengths' : array-like,
 #                            'photons' : array-like }} }}
 #
 # As the keywords in the lower level dictionaries suggest,
 # the two arrays provided, must define the
-# wavelenght grid and the corresponding transmission in photon units
+# wavelength grid and the corresponding transmission in photon units
 # (and thus they must have the same size).
 # Note that the chosen keyword in the higher level dictionary
 # (e.g. 'filter_1') will be used as unique identifier of
@@ -472,11 +472,11 @@ do_Radio = False
 # Whether to build a galaxy containing an AGN (True) or not (False).
 do_AGN = False
 
-# Sub-sampling of the wavelenght grid.
-# If lstep is an integer it will consider a wavelenght grid entry every lstep values.
-# If lstep is a sequence of integers or a mask, only the wavelenght grid entries
+# Sub-sampling of the wavelength grid.
+# If lstep is an integer it will consider a wavelength grid entry every lstep values.
+# If lstep is a sequence of integers or a mask, only the wavelength grid entries
 # corresponding to the indices provided will be considered.
-# If None, it will consider the whole wavelenght grid (safest choice)
+# If None, it will consider the whole wavelength grid (safest choice)
 lstep = None
 
 # Eventual noise model to add. The default is ``None``, i.e. no noise will be added.
@@ -667,7 +667,7 @@ pickle_sampler = False
 
 # EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
 # - set the number of walkers (`nwalkers`)
-# - set the chain lenght (`nsamples`)
+# - set the chain length (`nsamples`)
 nwalkers = 32
 nsamples = 16
 

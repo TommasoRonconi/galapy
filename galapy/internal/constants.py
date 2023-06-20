@@ -22,6 +22,6 @@ hP = {
 }
 
 # Angstrom to keV
-def Ang_to_keV ( wavelenght ) :
-    return 1.e-3 * hP['eV/Hz'] * clight['A/s'] / wavelenght
+def Ang_to_keV ( wavelength ) :
+    return 1.e-3 * hP['eV/Hz'] * clight['A/s'] / wavelength
 

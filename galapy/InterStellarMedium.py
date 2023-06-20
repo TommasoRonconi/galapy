@@ -107,9 +107,9 @@ class ismPhase ():
         Parameters
         ----------
         lower : float
-          slope of extinction at wavelenghts <= 100 :math:`\mu m`
+          slope of extinction at wavelengths <= 100 :math:`\mu m`
         lower : float
-          slope of extinction at wavelenghts > 100 :math:`\mu m`
+          slope of extinction at wavelengths > 100 :math:`\mu m`
           
         """
         self.params[ism_tunables[self.phase][-2]] = lower 
@@ -143,8 +143,8 @@ class ismPhase ():
         self.T = self.core.temperature( Etot )
         return self.T
 
-    def emission ( self, wavelenght, T = None ) :
-        r""" Computes the ISM emission at given wavelenght.
+    def emission ( self, wavelength, T = None ) :
+        r""" Computes the ISM emission at given wavelength.
         
         We assume the ISM radiates as a gray body with emission spectrum
         
@@ -163,8 +163,8 @@ class ismPhase ():
 
         Parameters
         ----------
-        wavelenght : float of array-like of floats
-          wavelenght in angstroms :math:`[\mathring{A}]`
+        wavelength : float of array-like of floats
+          wavelength in angstroms :math:`[\mathring{A}]`
 
         Keyword Arguments
         -----------------
@@ -175,37 +175,37 @@ class ismPhase ():
         Returns
         -------
         L_ISM : float of array-like of floats
-          Luminosity at given wavelenght 
+          Luminosity at given wavelength 
         """
         if T :
             self.set_temperature( T )
-        return self.core.emission( wavelenght )
+        return self.core.emission( wavelength )
 
-    def attenuation ( self, wavelenght ) :
-        """ Computes the ISM attenuation at given wavelenght.
+    def attenuation ( self, wavelength ) :
+        """ Computes the ISM attenuation at given wavelength.
 
         Parameters
         ----------
-        wavelenght : array or scalar float
+        wavelength : array or scalar float
         
         Returns
         -------
          : array or scalar float
         """
-        return self.core.attenuation( wavelenght )
+        return self.core.attenuation( wavelength )
 
-    def extinction ( self, wavelenght ) :
-        """ Computes the ISM extinction at given wavelenght.
+    def extinction ( self, wavelength ) :
+        """ Computes the ISM extinction at given wavelength.
 
         Parameters
         ----------
-        wavelenght : array or scalar float
+        wavelength : array or scalar float
         
         Returns
         -------
          : array or scalar float
         """
-        return self.core.extinction( wavelenght )
+        return self.core.extinction( wavelength )
 
     def A_V ( self ) :
         """ Returns the extinction value in the visible band-
@@ -220,9 +220,9 @@ class MC ( ismPhase ) :
     def eta ( self, tt ) :
         return self.core.eta( tt )
 
-    def time_attenuation ( self, wavelenght, tt ) :
+    def time_attenuation ( self, wavelength, tt ) :
         return (
-            1 - ( 1 - self.attenuation( wavelenght ) )[:,numpy.newaxis]
+            1 - ( 1 - self.attenuation( wavelength ) )[:,numpy.newaxis]
             * self.eta( tt )[numpy.newaxis,:]
         )
         
@@ -252,9 +252,9 @@ class ISM () :
                                     if k in ism_tunables[ 'dd' ] } )
         return;
 
-    def total_attenuation ( self, wavelenght, tt ) :
-        attMC = self.mc.time_attenuation( wavelenght, tt )
-        attDD = attMC * self.dd.attenuation( wavelenght )[:,numpy.newaxis]
+    def total_attenuation ( self, wavelength, tt ) :
+        attMC = self.mc.time_attenuation( wavelength, tt )
+        attDD = attMC * self.dd.attenuation( wavelength )[:,numpy.newaxis]
         return ( numpy.ascontiguousarray( attMC.ravel() ),
                  numpy.ascontiguousarray( attDD.ravel() ) )
 

@@ -15,10 +15,10 @@ Testing the class PMS that builds the Photometric System.
        Keyword arguments can be used for providing user-defined 
        transmissions. 
        Custom transmissions are passed as properly formatted dictionaries:
-       keyword = { 'wavelenghts' : array-like,
+       keyword = { 'wavelengths' : array-like,
                    'photons' : array-like }
        The two arrays provided, as the keys suggest, must define the
-       wavelenght grid and the corresponding transmission in photon units
+       wavelength grid and the corresponding transmission in photon units
        (and thus they must have the same size).
        Note that the chosen keyword will be used as unique identifier of
        the custom transmission.

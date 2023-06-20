@@ -85,7 +85,7 @@ def test_syn_set_params ( syn ):
 def test_syn_opt_depth (syn):
     
     """
-    Check the value of the optical depth for different wavelenghts.
+    Check the value of the optical depth for different wavelengths.
     
     """
 

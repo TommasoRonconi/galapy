@@ -5,7 +5,7 @@
 // Non-member functions
 // =============================================================================
 
-double sed::total_attenuation ( const double wavelenght,
+double sed::total_attenuation ( const double wavelength,
 				const double att_dd_ll,
 				const double att_mc_ll,
 				const double eta_mc_tt ) {

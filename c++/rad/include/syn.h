@@ -37,7 +37,7 @@ namespace sed {
     double _alpha_syn = 0.75;     // [ adimensional ]
     double _nu_self = 0.2;        // [ GHz ]
 
-    // constant conversion factor wavelenght [ Angstroms ] -> inverse of the frequency [ 1./GHz ]
+    // constant conversion factor wavelength [ Angstroms ] -> inverse of the frequency [ 1./GHz ]
     double _Ang2GHz =
       1.e-8 *          // cm to Angstrom
       1.e+9 /          // s^-1 to GHz 

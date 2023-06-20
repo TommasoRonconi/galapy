@@ -122,12 +122,12 @@ class AGN () :
     Parameters
     ----------
     lmin, lmax : float
-      minimum and maximum values of the wavelenght-domain. The original templates
+      minimum and maximum values of the wavelength-domain. The original templates
       are computed within the 10-10^7 Angstrom interval. At build time this domain
       is extended with `pad` padding values before and after the limits of the 
-      template's wavelenght domain to match the requested limits.
+      template's wavelength domain to match the requested limits.
     pad : integer
-      number of padding values to match the requested wavelenght domain
+      number of padding values to match the requested wavelength domain
     fAGN : float
       fraction of the total reference emission
     do_Xray : bool
@@ -190,7 +190,7 @@ class AGN () :
             numpy.genfromtxt( DataFile( filename, GP_GBL.AGN_DIR ).get_file(),
                               unpack=True )
 
-        # Extend the wavelenght domain by padding with zeros the emissions
+        # Extend the wavelength domain by padding with zeros the emissions
         ltmp = numpy.pad( self.ll, self._pad, constant_values = 0. )
         ltmp[:self._pad+1]  = numpy.logspace( numpy.log10(self.lmin),
                                               numpy.log10(self.ll.min()),
@@ -216,16 +216,16 @@ class AGN () :
         """ Pre-computes the not-normalized and not-bolometric-corrected X-ray spectrum. 
         """
 
-        # generate wavelenght grid
+        # generate wavelength grid
         ll = numpy.logspace( numpy.log10( self.lmin ),
                              numpy.log10( self.lmax ),
                              256 )
-        # convert wavelenght to energy
+        # convert wavelength to energy
         El = Ang_to_keV( ll )
 
         if El.max() < 2. :
             raise RuntimeError( "Cannot build the X-ray spectrum for "
-                                "a wavelenght grid starting at lambda > "
+                                "a wavelength grid starting at lambda > "
                                 "6 Angstrom ~ 2 keV! "
                                 "Set a smaller `lmin` value." )
         
@@ -302,7 +302,7 @@ class AGN () :
         Parameters
         ----------
         ll : sequence
-          wavelenght list or array or iterable
+          wavelength list or array or iterable
         Lref : float
           bolometric reference luminosity used to compute the bolometric correction
           of the high-energy part of the spectrum
@@ -310,7 +310,7 @@ class AGN () :
         Returns
         -------
         : numpy-array
-          Luminosity per unit wavelenght in units of solar luminosities emitted by
+          Luminosity per unit wavelength in units of solar luminosities emitted by
           the AGN.
         """
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )

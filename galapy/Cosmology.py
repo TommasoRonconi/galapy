@@ -13,7 +13,7 @@ from galapy.internal.data import DataFile
 
 class CSM () :
     """ Class for cosmological computations. It is built using pre-computed redshift-dependent
-    quantities useful for transforming energies radiated per unit wavelenght into fluxes from
+    quantities useful for transforming energies radiated per unit wavelength into fluxes from
     objects at a given distance.
     
     Parameters
@@ -27,7 +27,7 @@ class CSM () :
         the redshift values of the first key-value couple;
       * key = 'age', value = an array of ages of the Universe corresponding to the redshift 
         values of the first key-value couple.
-      It is obvious all these arrays should have the same lenght.
+      It is obvious all these arrays should have the same length.
     
     Attributes
     ----------
@@ -67,7 +67,7 @@ class CSM () :
         self.age = lin_interp( zz, UA )
         self._TF = lin_interp( zz, TF )
 
-    def to_flux ( self, redshift, restframe_wavelenght, luminosity )  :
+    def to_flux ( self, redshift, restframe_wavelength, luminosity )  :
         """ Converts a restframe luminosity to the flux received at 
         a given redshift.
         
@@ -78,7 +78,7 @@ class CSM () :
         Parameters
         ----------
         redshift : float
-        restframe_wavelenght : array-like 
+        restframe_wavelength : array-like 
         luminosity : array-like
         
         Returns
@@ -86,7 +86,7 @@ class CSM () :
         : array-like
           a flux in milliJansky
         """
-        return luminosity * restframe_wavelenght**2 * self._TF( redshift ) 
+        return luminosity * restframe_wavelength**2 * self._TF( redshift ) 
 
         
 

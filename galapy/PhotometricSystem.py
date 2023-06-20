@@ -61,10 +61,10 @@ class PMS () :
        Keyword arguments can be used for providing user-defined 
        transmissions. 
        Custom transmissions are passed as properly formatted dictionaries:
-       keyword = { 'wavelenghts' : array-like,
+       keyword = { 'wavelengths' : array-like,
                    'photons' : array-like }
        The two arrays provided, as the keys suggest, must define the
-       wavelenght grid and the corresponding transmission in photon units
+       wavelength grid and the corresponding transmission in photon units
        (and thus they must have the same size).
        Note that the chosen keyword will be used as unique identifier of
        the custom transmission.
@@ -107,12 +107,12 @@ class PMS () :
         for key, value in kwargs.items() :
             if isinstance( value, MM ) :
                 try :
-                    ll = numpy.ascontiguousarray(value[ 'wavelenghts' ])
+                    ll = numpy.ascontiguousarray(value[ 'wavelengths' ])
                     fl = numpy.ascontiguousarray(value[ 'photons' ])
                     self.bpt[ key ] = BPT( ll, fl )
                 except KeyError :
                     raise ValueError( f'The provided dictionary "{key}" does not contain the necessary items, '
-                                      'please provide a "wavelenghts" and a "photons" array.' )
+                                      'please provide a "wavelengths" and a "photons" array.' )
                 except :
                     raise ValueError()
                 
@@ -122,7 +122,7 @@ class PMS () :
                 
             else :
                 raise ValueError( 'Keyword arguments must be correctly formatted dictionaries: '
-                                  'k = {"wavelenghts":array-like,"photons":array-like}' )
+                                  'k = {"wavelengths":array-like,"photons":array-like}' )
 
         # Sort the flattened extremes array
         extremes = extremes[numpy.argsort([ext.value for ext in extremes])]
@@ -141,7 +141,7 @@ class PMS () :
                     self.olims[-1] += [ext.value]
         self.olims = numpy.asarray( self.olims )
 
-        # Store array with pivot wavelenghts
+        # Store array with pivot wavelengths
         self.lpiv = numpy.asarray( [ bpt.get_lpiv()
                                      for bpt
                                      in self.bpt.values() ] )

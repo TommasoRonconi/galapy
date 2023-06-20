@@ -87,7 +87,7 @@ def test_csp_parameters ( csp ) :
 def test_csp_SSP_wavelengths ( csp ) :
 
     """
-    Test the dimension of the wavelenghts array, formatted from the binary file,
+    Test the dimension of the wavelengths array, formatted from the binary file,
     and one of its value .
     ( This is valid only for the default ssp library ) .
 
@@ -128,7 +128,7 @@ def test_csp_SSP_luminosity ( csp ) :
 
     """
     Test the luminosity of a SSP of age tt and metallicity zz in a range of 
-    wavelenghts.
+    wavelengths.
 
     """
     
@@ -143,7 +143,7 @@ def test_csp_SSP_luminosity ( csp ) :
 def test_csp_emission ( csp ) :
     
     """                                                    
-    Test the emission at a certain wavelenght ll at different CSP-ages and with 
+    Test the emission at a certain wavelength ll at different CSP-ages and with 
     a specific SFH (In-Situ model, default one) .
     
     """
@@ -151,7 +151,7 @@ def test_csp_emission ( csp ) :
     # ll = 14025.0 amstrong 
     ages = [ 1.e+7, 1.e+8, 1.e+9 ]
     sfh = CSFH.SFH( )
-    il = 1000               # ll wavelenght index
+    il = 1000               # ll wavelength index
     Lcsp = [ csp.emission( age, sfh ) for age in ages ]
     Lcsp_ll = [ Lcsp[ i ][ il ] for i in range( 0, len ( ages ) ) ]
     assert np.all ( Lcsp_ll == pytest.approx( [ 8086.216432373749,

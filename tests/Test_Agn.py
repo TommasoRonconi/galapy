@@ -122,7 +122,7 @@ def test_agn_compute_X_template ():
 
     with pytest.raises( RuntimeError, match =
                         "Cannot build the X-ray spectrum for "
-                                "a wavelenght grid starting at lambda > "
+                                "a wavelength grid starting at lambda > "
                                 "6 Angstrom ~ 2 keV! "
                                 "Set a smaller `lmin` value."):
 

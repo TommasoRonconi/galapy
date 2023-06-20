@@ -31,7 +31,7 @@ class SYN () :
     Parameters
     ----------
     ll : float array
-      the wavelenght grid where the synchrotron emission is computed
+      the wavelength grid where the synchrotron emission is computed
     """
 
     def __init__ ( self, ll, **kwargs ) :
@@ -73,7 +73,7 @@ class SYN () :
         return ret
 
     def energy ( self, SynNorm, il = None ) :
-        """ Returns the normalized total energy radiated at given wavelenght.       
+        """ Returns the normalized total energy radiated at given wavelength.       
         """
         
         if il is None :

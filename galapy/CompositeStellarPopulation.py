@@ -38,7 +38,7 @@ def print_ssp_libs () :
     #. **author**: An achronym for the authors of the SSP library
     #. **method**: if present, shows which method was used to compute the SSP
     #. **imf**: if present shows the initial mass function used to compute the SSP
-    #. **filling_schema**: all the SSPs' wavelenght domain has been extended to
+    #. **filling_schema**: all the SSPs' wavelength domain has been extended to
        span from :math:`1\ \mathring{A}` to :math:`10^{10}\ \mathring{A}`. 
        This code provides the strategy used (:code:`extend` = filled with zeros, 
        :code:`extrap` = extrapolated linearly in the logarithm, 
@@ -154,7 +154,7 @@ class CSP () :
 
     It provides convenient functions for reading the SSPs from the provided formatted 
     binary files. 
-    SSPs can be extracted for given age/wavelenght/metallicity.
+    SSPs can be extracted for given age/wavelength/metallicity.
     Providing an object of type galapy.StarFormationHistory the self.emission function
     computes the luminosity of the resulting Composite Stellar Population.
     
@@ -225,7 +225,7 @@ class CSP () :
         Parameters
         ----------
         il : uint or array-like of uints
-          index in the wavelenght-grid of pre-computed SSPs
+          index in the wavelength-grid of pre-computed SSPs
         it : uint or array-like of uints
           index in the time-grid of pre-computed SSPs
         iz : uint or array-like of uints
@@ -243,7 +243,7 @@ class CSP () :
         return self.core.SSP( il, it, iz )
 
     def emission ( self, age, sfh, il = None, ftau = None ) :
-        """ Computes the CSP emission at given index in the wavelenght-grid.
+        """ Computes the CSP emission at given index in the wavelength-grid.
 
         It approximates the integral:
 
@@ -261,7 +261,7 @@ class CSP () :
         :math:`F(\\lambda, \\tau)` is aa attenuating function of choice.
         The latter is passed as the keyword argument :code:`ftau` and should be a matrix
         with dimension :math:`(N_\\lambda, N_\\tau)`, where :math:`N_\\lambda` is the
-        size of the wavelenght grid (chosen through the keyword argument :code:`il`) and 
+        size of the wavelength grid (chosen through the keyword argument :code:`il`) and 
         :math:`N_\\tau` is the size of the time grid of the SSP (:code:`self.shape[1]`).
         :code:`ftau` defaults to :code:`None`, in which case no attenuation is applied.
 
@@ -276,9 +276,9 @@ class CSP () :
         Keyword Arguments
         -----------------
         il : array of int
-           array of indexes of the positions in the wavelenght-grid
+           array of indexes of the positions in the wavelength-grid
            for which to compute the emission. The default value is :code:`None`, for which 
-           the function will return the emission all over the wavelenght grid.
+           the function will return the emission all over the wavelength grid.
         Ftau : array
            array containing a function of time to convolve the integrand with 
            (must have same dimension of the `il` array size times the SSP's time-grid size)

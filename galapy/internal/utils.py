@@ -100,7 +100,7 @@ def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
 
 def poly_N ( xx, coeff ) :
     """ Method for computing N-order polynomia.
-    The order of the polynomium is set by the lenght of the `coeff` list.
+    The order of the polynomium is set by the length of the `coeff` list.
     
     The method computes
 

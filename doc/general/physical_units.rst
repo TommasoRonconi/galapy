@@ -8,7 +8,7 @@ Even though the assumed physical units are also reported throughout the `documen
 +-----------------+--------------------------------------------+
 | **Quantity**    | **Unit**                                   |
 +=================+============================================+
-| Wavelenght      | Angstroms :math:`[\mathring{A}]`           |
+| Wavelength      | Angstroms :math:`[\mathring{A}]`           |
 +-----------------+--------------------------------------------+
 | Time/Age        | Years :math:`[\text{yr}]`                  |
 +-----------------+--------------------------------------------+

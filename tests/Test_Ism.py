@@ -280,7 +280,7 @@ def test_ism_mc_eta (ism) :
 Total attenuation, as it depends on the time spent by the photons within the 
 molecular cloud through the parameter tau_esc, is a function of time.
 The function total_attenuation of the ISM class returns a tuple with 2 matrices, 
-of shape (len(ll), len(tt)) where ll is the wavelenght grid and tt the time 
+of shape (len(ll), len(tt)) where ll is the wavelength grid and tt the time 
 grid, containing the contribute to attenuation from MC-only and the global 
 attenuation itself.
 
