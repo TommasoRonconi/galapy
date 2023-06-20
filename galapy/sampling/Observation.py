@@ -4,7 +4,7 @@ from galapy.PhotometricSystem import PMS
 
 class Observation () :
     
-    def __init__ ( self, bands, fluxes, errors, uplims, filters ) :
+    def __init__ ( self, bands, fluxes, errors, uplims, pms ) :
         """ Class for managing photometric observations of galaxies.
         It builds the photometric system from arguments and stores the 
         observational data in ordered numpy arrays. The order is set
@@ -30,21 +30,27 @@ class Observation () :
           in argument `fluxes` should be considered non-detection (`True`)
           or a detection (`False`)
 
-        filters : either sequence or dictionary
-          the argument to be passed to an object of type 
-          `galapy.PhotometricSystem.PMS`, this can either be a 
-          sequence of strings naming bandpass filters already present in
-          the database, or a nested dictionary with formatted key-value pairs
-          (for further details see the documentation of `galapy.PhotometricSystem.PMS`)
+        pms : galapy.PhotometricSystem.PMS
+          instance of type ``galapy.PhotometricSystem.PMS`` with 
+          the collection of bandpass transmissions producing the 
+          integrated fluxes for the observation (same as listed in
+          argument ``bands``)
         """
-    
-        if isinstance( filters, list ) or isinstance( filters, tuple ) :
-            self.pms = PMS( *filters )
-        elif isinstance( filters, MutableMapping ) :
-            self.pms = PMS( **filters )
-        else :
-            raise RuntimeError( 'filters argument must be either a list (or a tuple) of strings '
-                                'or a properly formatted dictionary.' )
+
+        if not isinstance( pms, PMS ) :
+            try :
+                self.pms = PMS( *bands )
+            except Exception as err :
+                print(
+                    'Not possible to deduce the photometric system '
+                    'from the list of bands provided. Exited with exception: '
+                    f'{err:s}' )
+                raise
+            else :
+                raise RuntimeError(
+                    'pms argument must be an instance of type ``galapy.PhotometricSystem.PMS``'
+                )
+        self.pms = pms
             
         if any( [ len( lst ) != len( self.pms ) 
                   for lst in [ bands, fluxes, errors, uplims ] ] ) :

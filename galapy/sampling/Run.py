@@ -6,6 +6,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 import argparse
 import importlib.util
 
+from galapy.PhotometricSystem import PMS
 from galapy.Galaxy import PhotoGXY
 from galapy.Noise import CalibrationError
 from galapy.Handlers import ModelParameters
@@ -28,18 +29,23 @@ global_dict = None
 
 ################################################################################
 
-def initialize ( bands, fluxes, errors, uplims, filters, params,
+def initialize ( bands, fluxes, errors, uplims, filter_args, params,
                  sfh_model = 'insitu', ssp_lib = 'parsec22.NT',
                  do_Radio = False, do_Xray = False, do_AGN = False,
                  noise_model = None, noise_params = {},
-                 gxy_kwargs = {}, noise_kwargs = {} ) :
+                 gxy_kwargs = {}, noise_kwargs = {}, filter_kwargs = {} ) :
 
     global global_dict 
     
     #########################################################################
+    # Build photometric system
+
+    pms = PMS( *filter_args, **filter_kwargs )
+    
+    #########################################################################
     # Build observation
 
-    data = Observation( bands, fluxes, errors, uplims, filters )
+    data = Observation( bands, fluxes, errors, uplims, pms )
     
     #########################################################################
     # Build photometric galaxy
@@ -166,7 +172,7 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
     if sampler == 'emcee' :
         
         # Build sampler
-        sample_kw.update( { 'kwargs' : logl_kw } )
+        sampler_kw.update( { 'kwargs' : logl_kw } )
         sampler = Sampler( loglikelihood = logprob,
                            ndim = len( global_dict['handler'].par_free ),
                            sampler = sampler,
@@ -305,7 +311,8 @@ def _run () :
         hyperpar.bands,
         hyperpar.fluxes,
         hyperpar.errors,
-        hyperpar.uplims,
+        hyperpar.uplims if hyperpar.uplims is not None
+        else numpy.zeros_like(hyperpar.bands, dtype=bool),
         hyperpar.filters,
         hyperpar.galaxy_parameters,
     )
@@ -321,6 +328,7 @@ def _run () :
             'lstep' : hyperpar.lstep
                 },
         noise_kwargs = hyperpar.noise_kwargs,
+        filter_kwargs = hyperpar.filters_custom if hyperpar.filters_custom is not None else {},
     )
     initialize( *init_args, **init_kwargs )
 
@@ -366,13 +374,36 @@ default_parameter_file = f"""
 # Parameters for building the observation to fit #
 ##################################################
 
+# The observed dataset is expressed as 4 array-likes containing respectively:
+# - bands: a list of strings corresponding to the unique identifiers also used
+#          in the 'filters' variable below 
+# - fluxes: measures of fluxes (or upper limits) at the corresponding bands
+#           listed in variable 'bands'.
+#           The input measure should be given in units of milli-Jansky
+# - errors: 1-sigma error on the measures of the fluxes (or upper limits) listed
+#           in the variable 'fluxes'
+# - uplims: sequence of booleans identifying whether the values listed 
+#           in argument `fluxes` should be considered non-detection (`True`)
+#           or a detection (`False`)
+bands  = None
+fluxes = None
+errors = None
+uplims = None
+
 # The photometric filters system used in the observation.
-# This parameter can be either an iterable containing names
+# This parameter should be an iterable containing names
 # of filters already present in the database, e.g.
 #
 # filters = ['b_goods', 'i_goods', 'v_goods', 'z_goods']
 #
-# Alternatively it can be a nested dictionary with user-defined transmissions.
+# NOTE that, if the bands listed in variable ``bands`` 
+# are all present in the database and have the same names
+# of the filters listed with ``galapy.PhotometricSystem.print_filters()``,
+# this variable can be set as ``filters = bands``
+filters = list(bands)
+
+# Eventual custom photometric filters. 
+# This parameter should be a nested dictionary with user-defined transmissions.
 # Such transmissions are passed as properly formatted dictionaries
 # 
 # filters = {{ 'filter_1' : {{ 'wavelenghts' : array-like,
@@ -390,26 +421,7 @@ default_parameter_file = f"""
 # Note that the chosen keyword in the higher level dictionary
 # (e.g. 'filter_1') will be used as unique identifier of
 # the custom transmission.
-filters = None
-
-# The observed dataset is expressed as 4 array-likes containing respectively:
-# - bands: a list of strings corresponding to the unique identifiers also used
-#          in the 'filters' variable above (i.e. if you have provided as a list
-#          of filters already present in the database you can set
-#          bands = filters
-# - fluxes: measures of fluxes (or upper limits) at the corresponding bands
-#           listed in variable 'bands'.
-#           The input measure should be given in units of milli-Jansky
-# - errors: 1-sigma error on the measures of the fluxes (or upper limits) listed
-#           in the variable 'fluxes'
-# - uplims: sequence of booleans identifying whether the values listed 
-#           in argument `fluxes` should be considered non-detection (`True`)
-#           or a detection (`False`)
-bands  = None
-fluxes = None
-errors = None
-uplims = None
-
+filters_custom = None
 # Method for treatment of the upper limits, when present.
 # Available methods are:
 # - 'simple' : a heaviside function which is 0. when the model's flux is
