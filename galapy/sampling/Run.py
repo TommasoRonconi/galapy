@@ -422,6 +422,7 @@ filters = list(bands)
 # (e.g. 'filter_1') will be used as unique identifier of
 # the custom transmission.
 filters_custom = None
+
 # Method for treatment of the upper limits, when present.
 # Available methods are:
 # - 'simple' : a heaviside function which is 0. when the model's flux is
