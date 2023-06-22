@@ -63,7 +63,7 @@ After Install
    GalaPy, in some of its components (e.g. SSP tables, PAH template), makes use of pre-computed functions that are
    available in the official database (`galapy_database`_). When one of the files in the database is accessed for the
    first time it will authomatically be downloaded into the user's filesystem
-   (in the default location :code:`$HOME/.galapy/data`).
+   (in the default location :code:`$HOME/.galapy/galapy_database`).
    This will of course require an internet connection and can partially slow down the computations.
    We therefore suggest, prior to first run, to download all the database by running
 
