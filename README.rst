@@ -18,7 +18,7 @@ metallicity evolution, star formation histories and more.
 +-----------------------+-------------------------------------------+
 | **GitHub repository** | https://github.com/TommasoRonconi/galapy  |
 +-----------------------+-------------------------------------------+
-| **Python versions**   | >=3.6                                     |
+| **Python versions**   | >=3.7                                     |
 +-----------------------+-------------------------------------------+
 | **Dependencies**      | ``setuptools``, ``numpy``, ``scipy``,     |
 |                       | ``emcee``, ``dynesty``, ``matplotlib``,   |
