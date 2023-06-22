@@ -61,7 +61,7 @@ After Install
   
 .. note::
    GalaPy, in some of its components (e.g. SSP tables, PAH template), makes use of pre-computed functions that are
-   available in the official database (`galapy_data`_). When one of the files in the database is accessed for the
+   available in the official database (`galapy_database`_). When one of the files in the database is accessed for the
    first time it will authomatically be downloaded into the user's filesystem
    (in the default location :code:`$HOME/.galapy/data`).
    This will of course require an internet connection and can partially slow down the computations.
@@ -72,4 +72,4 @@ After Install
    $ galapy-download-database
 
 
-.. _galapy_data: ...
+.. _galapy_database: https://github.com/TommasoRonconi/galapy_database
