@@ -1,3 +1,5 @@
+.. _tunable_params:
+
 Tunable Parameters
 ==================
 
