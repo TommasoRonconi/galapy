@@ -526,7 +526,7 @@ def photometric_system ( obj, colors = None, ax = None, ax_kwargs = {} ) :
         v = pms.bpt[k]
         xticks += [v.get_lpiv()]
         xticklabels += [k[:10]]
-        ax.plot( v.get_xaxis(), v.get_xaxis()*v.get_yaxis(), color = c)
+        ax.plot( v.get_xaxis(), numpy.asarray( v.get_xaxis() )*numpy.asarray( v.get_yaxis() ), color = c)
         ax.axvline( v.get_lpiv(), color = c, ls = '--', lw = 2.)
     _ = ax.set_xticks(xticks)
     _ = ax.set_xticklabels(xticklabels, rotation=90, fontsize = 11)
