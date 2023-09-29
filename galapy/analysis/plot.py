@@ -28,7 +28,7 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 # Internal imports
 
 import galapy as gp
-from galapy.internal.utils import filter_strings
+from galapy.internal.utils import filter_strings, shorten_string
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
 
@@ -525,7 +525,7 @@ def photometric_system ( obj, colors = None, ax = None, ax_kwargs = {} ) :
     for k, c in zip( pms.keys, colors ) :
         v = pms.bpt[k]
         xticks += [v.get_lpiv()]
-        xticklabels += [k[:10]]
+        xticklabels += [shorten_string(k)]
         ax.plot( v.get_xaxis(), numpy.asarray( v.get_xaxis() )*numpy.asarray( v.get_yaxis() ), color = c)
         ax.axvline( v.get_lpiv(), color = c, ls = '--', lw = 2.)
     _ = ax.set_xticks(xticks)
