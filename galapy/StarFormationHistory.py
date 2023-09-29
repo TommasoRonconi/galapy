@@ -188,6 +188,7 @@ class SFH () :
         """
         if tau_quench is not None :
             self.core.set_tau_quench( tau_quench )
+            self.params['tau_quench'] = tau_quench
         self.params.update( kwargs )
         self.core.set_params( numpy.asarray( [
             self.params[k]
