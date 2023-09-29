@@ -369,7 +369,7 @@ def _run () :
 #     run()
 ################################################################################
 
-default_parameter_file = f"""
+default_parameter_file = """
 ##################################################
 # Parameters for building the observation to fit #
 ##################################################
@@ -459,7 +459,7 @@ cosmo     = 'Planck18'
 # - 'constant'
 # - 'delayedexp'
 # - 'lognormal'
-sfh_model = 'insitu'
+sfh_model = '{0:s}'
 
 # The SSP library to use for building the unattenuated stellar emission component
 ssp_lib   = 'parsec22.NT'
@@ -538,30 +538,7 @@ galaxy_parameters = {{
     ##########################
     
     'sfh.tau_quench' : ( [6., 11.], True ),
-
-    # In-Situ model
-    'sfh.psi_max' : ( [0., 4.], True ),
-    'sfh.tau_star' : ( [6., 11.], True ),
-
-    # Constant model
-    'sfh.psi'   : ( [0., 4.], True ),
-    'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgxy'  : ( [0., 1.], False ),
-    
-    # Delayed-Exponential model
-    'sfh.psi_norm' : ( [0., 4.], True ),
-    'sfh.k_shape'  : ( [0., 5.], False ),
-    'sfh.tau_star' : ( [6., 11.], True ),
-    'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgxy'  : ( [0., 1.], False ),
-    
-    # Log-Normal model
-    'sfh.psi_norm'   : ( [0., 4.], True ),
-    'sfh.sigma_star' : ( [0., 5.], False ),
-    'sfh.tau_star'   : ( [6., 11.], True ),
-    'sfh.Mdust' : ( [6., 14.], True ),
-    'sfh.Zgxy'  : ( [0., 1.], False ),
-
+{1:s}
     ########################
     # Inter-Stellar Medium #
     ########################
@@ -682,7 +659,12 @@ def _generate_parameter_file () :
     ####################################################################
     # Read command-line arguments:
     
-    parser = argparse.ArgumentParser( description = 'options' )
+    parser = argparse.ArgumentParser(
+        description = (
+            'Writes the parameter file that has to be modified by users '
+            'to meet the needs of their sampling.'
+        )
+    )
     parser.add_argument( '--name', '-n',
                          dest = 'name',
                          type = str,
@@ -697,12 +679,67 @@ def _generate_parameter_file () :
                              'when opening the file in a text editor). ' +
                              'DEFAULT: ${PWD}/galapy_hyper_parameters.py'
                          ) )
+    parser.add_argument( '--SFH_model', '-sfh',
+                         dest = 'sfh_model',
+                         type = str,
+                         default = None,
+                         help = (
+                             'Choose a SFH model. ' +
+                             'Available models are:' +
+                             ' insitu, constant, delayedexp, lognormal. ' +
+                             'DEFAULT: None'
+                         ) )
     args = parser.parse_args()
     
     ####################################################################
 
+    sfh_models = set(['insitu', 'constant', 'delayedexp', 'lognormal'])
+    sfh_params = {
+        'insitu' : """
+    # In-Situ model
+    'sfh.psi_max' : ( [0., 4.], True ),
+    'sfh.tau_star' : ( [6., 11.], True ),
+        """,
+        'constant' : """
+    # Constant model
+    'sfh.psi'   : ( [0., 4.], True ),
+    'sfh.Mdust' : ( [6., 14.], True ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
+        """,
+        'delayedexp' : """    
+    # Delayed-Exponential model
+    'sfh.psi_norm' : ( [0., 4.], True ),
+    'sfh.k_shape'  : ( [0., 5.], False ),
+    'sfh.tau_star' : ( [6., 11.], True ),
+    'sfh.Mdust' : ( [6., 14.], True ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
+        """,
+        'lognormal' : """
+    # Log-Normal model
+    'sfh.psi_norm'   : ( [0., 4.], True ),
+    'sfh.sigma_star' : ( [0., 5.], False ),
+    'sfh.tau_star'   : ( [6., 11.], True ),
+    'sfh.Mdust' : ( [6., 14.], True ),
+    'sfh.Zgxy'  : ( [0., 1.], False ),
+        """,
+    }
+
+    sfh_params_string = ''
+    if args.sfh_model not in sfh_models and args.sfh_model is not None :
+        raise RuntimeError(
+            'The chosen model is not available. '
+            'To see a list of the available choices call '
+            'this function with the --help argument'
+        )
+    elif args.sfh_model is None :
+        args.sfh_model = 'insitu'
+        for sfh in sfh_models :
+            sfh_params_string += sfh_params[sfh]
+    else :
+        sfh_params_string = sfh_params[args.sfh_model]
+
     with open( args.name + '.py', 'w' ) as paramfile :
-        paramfile.write( default_parameter_file )
+        paramfile.write( default_parameter_file.format(args.sfh_model, sfh_params_string) )
 
     return;
 
