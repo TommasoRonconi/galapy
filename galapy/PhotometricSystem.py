@@ -49,6 +49,47 @@ def print_filters ( experiment = None ) :
                 raise AttributeError( f'experiment {experiment} not in database.' )
     return;
 
+def _recursive_list_filters ( root, pathline = [], outlist = [] ) :
+    _, subd, files = next(os.walk(root))
+    for f in files : outlist += ['.'.join(pathline+f.split('.')[:-1])]
+    for s in subd : _recursive_list_filters(os.path.join(root, s), pathline+[s], outlist)
+    return;    
+
+def list_filters ( experiment = None ) :
+    """Return a list of filters available in database.
+    
+    Parameters
+    ----------
+    experiment : string or None
+        (Optional, default = None) filter the results by experiment.
+
+    Returns
+    -------
+    : list
+    a list of strings, containing the name of each filter in the database
+    
+    Examples
+    --------
+    >>> list_filters(experiment='Herschel.SPIRE')
+    ['Herschel.SPIRE.PSW', 'Herschel.SPIRE.PLW', 'Herschel.SPIRE.PMW' ]
+    """
+    from galapy.configuration import rcParams
+    outlist = []
+    for path in rcParams['datapath'] :
+        if experiment is None or len(experiment) == 0 :
+            _recursive_list_filters( root = os.path.join(path, *GP_GBL.FILT_DIR ),
+                                     pathline = [], outlist = outlist )
+        else :
+            try :
+                exppath = experiment.split('.')
+                _recursive_list_filters(
+                    root = os.path.join(
+                        path, *GP_GBL.FILT_DIR, *experiment.split('.') ),
+                    pathline = exppath, outlist = outlist )
+            except :
+                raise AttributeError( f'experiment {experiment} not in database.' )
+    return outlist
+
 class PMS () :
     """ Builds the Photometric System 
     
