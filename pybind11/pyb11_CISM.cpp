@@ -27,8 +27,8 @@ PYBIND11_MODULE( ISM_core, m ) {
     .def( "set_temperature", &sed::diffuse::set_temperature,
 	  "Sets internally the temperature" )
     .def( "set_slopes",  &sed::diffuse::set_slopes )
-    .def( "temperature", []( sed::diffuse & o, const double T ){
-			   return o.temperature( T ); },
+    .def( "temperature", []( sed::diffuse & o, const double Etot ){
+			   return o.temperature( Etot ); },
 	  "Computes temperature necessary for "
 	  "energy balance and returns it",
 	  py::arg("Etot") )
@@ -41,7 +41,8 @@ PYBIND11_MODULE( ISM_core, m ) {
 		      return utl::__getstate__< sed::diffuse >( o ); },
     		    []( const py::bytes b ) {     //__setstate__
 		      return utl::__setstate__< sed::diffuse >( b ); }
-    		    ) );
+    		    ) )
+    .def( "T", &sed::diffuse::get_temperature );
   
   // ========================================================================================
   
@@ -55,8 +56,8 @@ PYBIND11_MODULE( ISM_core, m ) {
     .def( "set_temperature", &sed::cloud::set_temperature,
 	  "Sets internally the temperature" )
     .def( "set_slopes",  &sed::cloud::set_slopes )
-    .def( "temperature", []( sed::cloud & o, const double T ){
-			   return o.temperature( T ); },
+    .def( "temperature", []( sed::cloud & o, const double Etot ){
+			   return o.temperature( Etot ); },
 	  "Computes temperature necessary for "
 	  "energy balance and returns it",
 	  py::arg("Etot") )
@@ -70,7 +71,8 @@ PYBIND11_MODULE( ISM_core, m ) {
 		      return utl::__getstate__< sed::cloud >( o ); },
     		    []( const py::bytes b ) {     //__setstate__
 		      return utl::__setstate__< sed::cloud >( b ); }
-    		    ) );
+    		    ) )
+    .def( "T", &sed::cloud::get_temperature );
 
   m.def( "total_attenuation", py::vectorize(&sed::total_attenuation) );
 

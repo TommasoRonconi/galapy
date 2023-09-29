@@ -107,6 +107,8 @@ namespace sed {
     
     virtual double temperature ( const double Etot ) noexcept;
 
+    virtual double get_temperature () const noexcept { return _Temp; }
+
     // ================================================================
     // Serialize Object:
 
@@ -228,6 +230,10 @@ namespace sed {
       return ism::temperature( ( 1 - _paramsrc[ 2 ] ) * Etot );
 
     }
+    
+    double get_temperature () const noexcept override {
+      return _Temp;
+    }
 
     // ================================================================
     // Serialize Object:
@@ -344,6 +350,10 @@ namespace sed {
 
       return ism::temperature( Etot );
 
+    }
+    
+    double get_temperature () const noexcept override {
+      return _Temp;
     }
 
     double time_attenuation ( const double lambda, const double tau ) const noexcept;
