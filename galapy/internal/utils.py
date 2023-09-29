@@ -416,7 +416,38 @@ def filter_strings ( inlist, fields ) :
         raise ValueError( 'fields argument should be either a string or a list of strings' )
         
     return fields
+    
+###################################################################################
 
+def shorten_string ( string, maxlength = 10, splitchar = '.' ) :
+    """Function for shortening a string, splitting it in components.
+    
+    Paramters
+    ---------
+    string : str
+        Input string
+    maxlength : int
+        (default = 10) Maximum number of characters in the final string
+    splitchar : str
+        (default = '.') The character over which perform the splitting.
+        
+    Returns
+    -------
+    : str 
+    The shortened string with length <= maxlength+len(splitchar)
+    """
+    
+    components = string.split(splitchar)
+    short_string = ''
+    for component in numpy.flip(components) :
+        if len(short_string) == 0 :
+            short_string = component
+        elif len(short_string) + len(component) + len(splitchar) < maxlength :
+            short_string = splitchar.join([component, short_string])
+        else :
+            break
+    return short_string
+    
 ###################################################################################
 
 def cat_to_dict ( infile, id_field = 'id', err_field = '_err', meta_fields = [], skip_fields = [] ) :
