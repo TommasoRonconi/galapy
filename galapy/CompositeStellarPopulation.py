@@ -187,6 +187,12 @@ class CSP () :
 
         self.CCSN = CCSN
         self.core = CCSP( self.l, self.t, self.Z, self.L, self.CCSN )
+        self.L = numpy.transpose(
+            self.L.reshape(
+                (self.shape[2], self.shape[0], self.shape[1])
+            ),
+            axes = ( 1, 2, 0 )
+        )
         self._timetuple = None
 
         # steal docstrings from C-core:
@@ -272,7 +278,7 @@ class CSP () :
         sfh : object of type SFH()
           The chosen star formation history. This has to be (or inherit from) 
           the instance of an object of type galapy.StarFormationHistory.SFH().        
-        
+         
         Keyword Arguments
         -----------------
         il : array of int
