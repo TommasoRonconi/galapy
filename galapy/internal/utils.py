@@ -22,7 +22,7 @@ def trap_int ( xx, yy ) :
     """
     xx = numpy.asarray(xx)
     yy = numpy.asarray(yy)
-    return numpy.sum( 0.5 * ( yy[:-1] + yy[1:] ) * ( xx[1:] - xx[:-1] ) )
+    return numpy.sum( 0.5 * ( yy[:-1] + yy[1:] ) * ( xx[1:] - xx[:-1] ), axis = 0 )
 
 ###################################################################################
 
