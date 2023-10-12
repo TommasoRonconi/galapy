@@ -29,7 +29,7 @@ void sed::sfh_base::model ( const double * const tau,
 double sed::sfh_base::get_Mstar ( const double tau,
 				  const std::size_t npoints ) const noexcept {
 
-  std::vector< double > tvec = utl::lin_vector( npoints, 1., tau );
+  std::vector< double > tvec = utl::log_vector( npoints, 1., tau );
   double Mstar = 0;
   for ( std::size_t it = 1; it < npoints; ++it ) {
     double tloc = 0.5 * ( tvec[ it ] + tvec[ it - 1 ] );
@@ -38,11 +38,6 @@ double sed::sfh_base::get_Mstar ( const double tau,
       ( 1 - sed::R_chabrier( tau - tloc ) ) *
       ( *this )( tloc );
   }
-  // for ( std::size_t it = 1; it < npoints; ++it ) 
-  //   Mstar +=
-  //     ( tvec[ it ] - tvec[ it - 1 ] ) *
-  //     ( 1 - sed::R_chabrier( tau - tvec[ it ] ) )*
-  //     ( *this )( tvec[ it ] );
   return Mstar;
   
 }
