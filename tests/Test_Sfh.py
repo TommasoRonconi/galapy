@@ -158,8 +158,8 @@ def test_sfh_insitu_Mstar ( sfh_insitu ) :
     Check the value of the stellar mass at quench time and at present time .
 
     """
-    assert sfh_insitu.Mstar( 8.e+8 ) == pytest.approx( 20694798192.00076 ) 
-    assert sfh_insitu.Mstar( 1.e+9 ) == pytest.approx( 19645102756.25652 ) 
+    assert sfh_insitu.Mstar( 8.e+8 ) == pytest.approx( 20636907970.400078 ) 
+    assert sfh_insitu.Mstar( 1.e+9 ) == pytest.approx( 20007556280.022045 ) 
 
 #------------------------------------------------------------------------------#
 
@@ -284,8 +284,8 @@ def test_sfh_const_Mstar ( sfh_const ) :
     Check the value of the stellar mass at quench and at present time .
 
     """
-    assert sfh_const.Mstar( 8.e+8 ) == pytest.approx( 535695178.04297197 ) 
-    assert sfh_const.Mstar( 1.e+9 ) == pytest.approx( 509519015.14239407 ) 
+    assert sfh_const.Mstar( 8.e+8 ) == pytest.approx( 533477627.10444653 ) 
+    assert sfh_const.Mstar( 1.e+9 ) == pytest.approx( 518451556.77913874 ) 
 
 #------------------------------------------------------------------------------#
 
@@ -414,8 +414,8 @@ def test_sfh_dexp_Mstar ( sfh_dexp ) :
     Check the value of the stellar mass at quench time and at present time .
 
     """
-    assert sfh_dexp.Mstar( 8.e+8 ) == pytest.approx( 2302675603.296462 ) 
-    assert sfh_dexp.Mstar( 1.e+9 ) == pytest.approx( 2255427119.0862346 ) 
+    assert sfh_dexp.Mstar( 8.e+8 ) == pytest.approx( 2289503120.923047 ) 
+    assert sfh_dexp.Mstar( 1.e+9 ) == pytest.approx( 2241072414.999002 ) 
 
 #------------------------------------------------------------------------------#
 
@@ -546,8 +546,8 @@ def test_sfh_lnorm_Mstar ( sfh_lnorm ) :
     Check the value of the stellar mass at quench and at present time .
 
     """
-    assert sfh_lnorm.Mstar( 8.e+8 ) == pytest.approx( 9751556099.681376 ) 
-    assert sfh_lnorm.Mstar( 1.e+9 ) == pytest.approx( 9273433696.49997 ) 
+    assert sfh_lnorm.Mstar( 8.e+8 ) == pytest.approx( 9715180681.910202 ) 
+    assert sfh_lnorm.Mstar( 1.e+9 ) == pytest.approx( 9433134636.553719 ) 
 
 #------------------------------------------------------------------------------#
 
