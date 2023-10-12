@@ -81,6 +81,10 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
     for klist, v in handler.parameters.items() :
         set_nested( init, klist.split('.'), v )
     try :
+        init['galaxy']['age'] = min(
+            model.cosmo.age( init['galaxy']['redshift'] ) - 1.0,
+            init['galaxy']['age']
+        )
         model.set_parameters( **init['galaxy'] )
     except RuntimeError :
         pass
