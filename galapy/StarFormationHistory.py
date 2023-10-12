@@ -10,19 +10,19 @@ from .SFH_core import CSFH
 
 sfh_tunables = {
     # In-Situ SF model
-    'insitu' : [ 'psi_max', 'tau_star' ],
+    'insitu' : ( 'psi_max', 'tau_star' ),
     
     # Constant SF model
-    'constant' : [ 'psi', 'Mdust', 'Zgxy' ],
+    'constant' : ( 'psi', 'Mdust', 'Zgxy' ),
     
     # Delayed-Exponential model
-    'delayedexp' : ['psi_norm', 'k_shape', 'tau_star', 'Mdust', 'Zgxy' ],
+    'delayedexp' : ('psi_norm', 'k_shape', 'tau_star', 'Mdust', 'Zgxy' ),
     
     # Log-Normal model
-    'lognormal' : ['psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgxy' ],
+    'lognormal' : ('psi_norm', 'sigma_star', 'tau_star', 'Mdust', 'Zgxy' ),
     
     # Interpolated model
-    'interpolated' : ['Mdust', 'Zgxy' ]
+    'interpolated' : ('Mdust', 'Zgxy' )
 }
 """ Dictionary of tunable parameters
 """
