@@ -23,7 +23,7 @@ from galapy.Synchrotron import SNSYN
 from galapy.Cosmology import CSM
 from galapy.InterGalacticMedium import IGM
 
-from galapy.internal.utils import trap_int
+from galapy.internal.utils import trap_int, find_nearest
 from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
@@ -608,6 +608,31 @@ class GXY ( Model ) :
         
         # emission from stars (using directly the core function for performance)  
         return self.csp.core.emission( self.lgrid )
+
+    def _passive_emission ( self, ftau = None ) :
+        if ftau is None :
+            ftau = numpy.ones( self.csp.shape[:-1] )
+        else :
+            ftau = ftau.reshape( self.csp.shape[:-1] )
+        
+        itmin = find_nearest(self.csp.t, self.age-self.sfh.params['tau_quench']).item()
+        itmax = max(find_nearest(self.csp.t, self.age).item(), itmin+1)
+        itque = find_nearest(self.csp.t, self.sfh.params['tau_quench']).item()
+    
+        Mweight = trap_int(
+            self.csp.t[:itque,numpy.newaxis], 
+            (self.sfh( self.csp.t[:itque] ) * ftau[:,:itque]).T
+        )
+        if itmax-itmin > 1 :
+            Lavg = self.csp.core.emission(self.lgrid, ftau)
+            LocWeight = trap_int( 
+                self.csp.t[itmin:itmax, numpy.newaxis], 
+                (self.sfh( self.csp.t[itmin:itmax] ) * ftau[:,itmin:itmax]).T 
+            )
+            wLW = (LocWeight > 0.0)
+            Lavg[wLW] /= LocWeight[wLW] 
+            return Lavg * Mweight 
+        return self.csp.L[:, itmax, self.csp._timetuple[2][0]] * Mweight
     
     def get_emission ( self, store_attenuation = False, **kwargs ) :
         """Computes the overall emission coming from a galaxy with given parameterisation.
@@ -643,10 +668,15 @@ class GXY ( Model ) :
         # attenuation from ISM
         attTotMC, attTot = self.ism.total_attenuation( self.wl(), self.csp.t )
         
-        # emission from stars (using directly the core function for performance)  
-        Lunatt = self.csp.core.emission( self.lgrid )
-        LattMC = self.csp.core.emission( self.lgrid, attTotMC )
-        Ltot   = self.csp.core.emission( self.lgrid, attTot )
+        # emission from stars (using directly the core function for performance)
+        if self.params['age'] <= self.params['sfh']['tau_quench'] :
+            Lunatt = self.csp.core.emission( self.lgrid )
+            LattMC = self.csp.core.emission( self.lgrid, attTotMC )
+            Ltot   = self.csp.core.emission( self.lgrid, attTot )
+        else :
+            Lunatt = self._passive_emission()
+            LattMC = self._passive_emission( attTotMC )
+            Ltot   = self._passive_emission( attTot )
         self.components['stellar'] = Lunatt
         self.components['extinct'] = numpy.array(Ltot)
 
