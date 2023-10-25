@@ -67,7 +67,7 @@ class ModelParameters () :
         self.par_free  = numpy.asarray(self.par_free)
         self.par_prior = numpy.asarray(self.par_prior)
                     
-    def return_nested ( self, par ) :
+    def return_nested ( self, par = None ) :
         """ From a list of parameters returns a nested dictionary in 
         the proper format. Here 'proper' means that such dictionary has
         the hierarchy necessary to pass it as keyword arguments dictionary
@@ -112,11 +112,19 @@ class ModelParameters () :
         >>> gxy.set_parameters( **nested )
         """
 
+        # If no argument is passed use internal parameters
+        ret = {}
+        if par is None :
+            ret = {}
+            for klist, v in self.parameters.items() :
+                set_nested( ret, klist.split('.'), v )
+            return ret
+        
+        # Otherwise use free parameters
         par = numpy.asarray( par ) 
         if len(par) != len(self.par_free) :
             raise RuntimeError( f'Provided {len(par)} but there are exactly '
                                 f'{len(self.par_free)} free parameters to set.' )
-        ret = {}
         val = numpy.zeros_like(par)
         val[self.par_log] = 10.**par[self.par_log]
         val[~self.par_log] = par[~self.par_log]

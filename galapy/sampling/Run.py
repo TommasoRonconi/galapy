@@ -77,9 +77,10 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
     #########################################################################
     # Set fixed parameters and initial values for free parameters
 
-    init = {}
-    for klist, v in handler.parameters.items() :
-        set_nested( init, klist.split('.'), v )
+    #init = {}
+    #for klist, v in handler.parameters.items() :
+    #    set_nested( init, klist.split('.'), v )
+    init = handler.return_nested()
     try :
         init['galaxy']['age'] = min(
             model.cosmo.age( init['galaxy']['redshift'] ) - 1.0,
