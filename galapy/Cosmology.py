@@ -3,6 +3,7 @@
 
 # External imports
 import numpy
+from collections.abc import MutableMapping as MM
 
 # Internal imports
 import galapy.internal.globs as GP_GBL
