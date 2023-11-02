@@ -97,8 +97,6 @@ namespace sed {
     
     virtual double attenuation ( const double lambda ) const noexcept {
 
-      // double ret = std::pow( 10, -0.4 * this->extinction( lambda ) );
-      // return ( ret < 1.0 ) ? ret : 0.99999;
       return std::pow( 10, -0.4 * this->extinction( lambda ) );
       
     }

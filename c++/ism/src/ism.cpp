@@ -99,9 +99,7 @@ double sed::diffuse::emission ( const double lambda ) const noexcept {
 
   return sed::cnst::solL *
     ( this->_emission( lambda, _Temp, _paramsrc[ 1 ] ) + // dust contribute
-      _paramsrc[ 2 ] * _Labs * _fpah( lambda ) *         // PAH contribute
-      double( lambda < _lambda_wien ) );                 // guarantees Ryleigh-Jeans
-                                                         // decline instead of PAH's
+      _paramsrc[ 2 ] * _Labs * _fpah( lambda ) );        // PAH contribute
 
 }
 
