@@ -183,10 +183,11 @@ class GXY ( Model ) :
     redshift : float
         (``None`` defaults to ``0.0``) redshift of the galaxy
     cosmo : str or dict
-        (default = ``'Planck18'``) cosmological model of choice, takes the same arguments an object of type
-        galapy.Cosmology.CSM would take. 
+        (default = ``'Planck18'``) cosmological model of choice, takes the same arguments 
+        an object of type galapy.Cosmology.CSM would take. 
         If a string is passed, it should name one of the pre-computed cosmologies available in the
-        database. Available cosmologies are ``'WMAP7'``, ``'WMAP9'``, ``'Planck15'``, ``'Planck18'``.
+        database. Available cosmologies are 
+        ``'WMAP7'``, ``'WMAP9'``, ``'Planck15'``, ``'Planck18'``.
         If a dictionary is passed, the class expects to find 3 key-value couples:
         key = ``'redshift'``, value = an array of redshift values;
         key = ``'luminosity_distance'``, value = an array of luminosity distances corresponding to 
@@ -368,8 +369,9 @@ class GXY ( Model ) :
                 self.components['synchrotron'] = None
 
         # If sub-gridding is required, build subgrid
-        if lstep is not None :
-            self.lgrid = self.get_wavelength_grid(lstep)
+        self.lstep = lstep
+        if self.lstep is not None :
+            self.lgrid = self.get_wavelength_grid(self.lstep)
         else : 
             self.lgrid = numpy.arange(self.csp.l.size)
 
@@ -385,6 +387,25 @@ class GXY ( Model ) :
                 self.wl( obs = True ),
                 self.redshift
             )
+
+    def dump ( self ) :
+
+        return dict(
+            lstep    = self.lstep,
+            do_Xray  = self.xrb is not None,
+            do_Radio = self.nff is not None,
+            do_AGN   = self.agn is not None,
+            do_IGM   = self.igm is not None,
+            cosmo    = { 'redshift' : self.cosmo.DL.get_x(),
+                         'luminosity_distance' :  self.cosmo.DL.get_y(),
+                         'age' :  self.cosmo.age.get_y() },
+            csp = { 'ssp_lib' : self.csp.ssp_lib },
+            **self.params
+        )
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        return cls( **dictionary )
         
     def wl ( self, obs = False ) :
         """Returns the wavelength grid with the mask applied.
@@ -466,9 +487,10 @@ class GXY ( Model ) :
         ----
         The method is built to optimise the number of computations performed. 
         Do not pass arguments that would not change the current parameterisation.
-        **e.g.1** passing ``sfh = {}`` is less performant than sticking to the default ``sfh = None``.
-        **e.g.2** passing the same value at each call is a waste of computational time: ``redshift = 2.0``
-        passed at each call will considerably slow down execution.
+        **e.g.1** passing ``sfh = {}`` is less performant than sticking to the 
+        default ``sfh = None``.
+        **e.g.2** passing the same value at each call is a waste of computational time: 
+        ``redshift = 2.0`` passed at each call will considerably slow down execution.
         **Bottom line**: pass an argument only when necessary. 
         """
 
@@ -595,7 +617,8 @@ class GXY ( Model ) :
            \\int_0^{\\tau'}\\text{d}\\tau 
            L_\\lambda^\\text{SSP}\\bigl[\\tau, Z_\\ast(\\tau'-\\tau)\\bigr]\\psi(\\tau'-\\tau)
 
-        where :math:`\\tau'` is the age of the galaxy, :math:`L_\\lambda^\\text{SSP}[\\tau, Z\\ast]`
+        where :math:`\\tau'` is the age of the galaxy, 
+        :math:`L_\\lambda^\\text{SSP}[\\tau, Z\\ast]`
         is the luminosity of the Simple Stellar Population at given time :math:`\\tau` 
         and at given stellar metallicity :math:`Z_\\ast`, :math:`\\psi(\\tau)` is the 
         Star Formation History at time :math:`\\tau`
@@ -610,6 +633,8 @@ class GXY ( Model ) :
         return self.csp.core.emission( self.lgrid )
 
     def _passive_emission ( self, ftau = None ) :
+        import warnings
+        warnings.filterwarnings("error")
         if ftau is None :
             ftau = numpy.ones( self.csp.shape[:-1] )
         else :
@@ -624,13 +649,19 @@ class GXY ( Model ) :
             (self.sfh( self.csp.t[:itque] ) * ftau[:,:itque]).T
         )
         if itmax-itmin > 1 :
-            Lavg = self.csp.core.emission(self.lgrid, ftau)
+            Lavg = self.csp.core.emission(self.lgrid, ftau) #.astype('float64')
             LocWeight = trap_int( 
                 self.csp.t[itmin:itmax, numpy.newaxis], 
                 (self.sfh( self.csp.t[itmin:itmax] ) * ftau[:,itmin:itmax]).T 
             )
-            wLW = (LocWeight > 0.0)
-            Lavg[wLW] /= LocWeight[wLW] 
+            # Note that the '>1.e-20' is a NOT ELEGANT SOLUTION for the overflow bug
+            # previously present in the following line
+            # Lavg[wLW] /= LocWeight[wLW] -> RuntimeWarning: overflow encountered in divide
+            # It is generated by Lavg being 'float32' and LocWeight 'float64' but 
+            # if Lavg is casted to 'float32' another overflow arises in the loglikelihood computation
+            # so this is not a perfect solution and should be investigated.
+            wLW = (LocWeight > 1.e-20)
+            Lavg[wLW] /= LocWeight[wLW]
             return Lavg * Mweight 
         return self.csp.L[:, itmax, self.csp._timetuple[2][0]] * Mweight
     
@@ -767,12 +798,14 @@ class GXY ( Model ) :
         ) * self.igm_trans
 
     def components_to_flux ( self ) :
-        """Utility function converting emissions in the internal ``components`` dictionary to fluxes.
+        """Utility function converting emissions in the internal ``components`` 
+        dictionary to fluxes.
         
         Returns
         -------
         : dict
-        copy of the internal dictionary ``components`` with the emission conveted to fluxes in milli-Jansky.
+        copy of the internal dictionary ``components`` with the emission conveted 
+        to fluxes in milli-Jansky.
         """
         return {
             k : self.cosmo.to_flux( self.redshift, self.wl(), c ) 
@@ -782,8 +815,8 @@ class GXY ( Model ) :
 
 class PhotoGXY ( GXY ) :
     """Galaxy class including photometric system.
-    This is a class derived from ``galapy.Galaxy`` which implements authomatic computation of fluxes 
-    convolved with bandpass transmission filters.
+    This is a class derived from ``galapy.Galaxy`` which implements authomatic computation 
+    of fluxes convolved with bandpass transmission filters.
     """
 
     def __init__ ( self, *args, pms = None, **kwargs ) :
@@ -791,6 +824,19 @@ class PhotoGXY ( GXY ) :
         super().__init__( *args, **kwargs )
         self.pms = pms
 
+    def dump ( self ) :
+        return dict(
+            pms_kwargs = self.pms.dump(),
+            **super().dump()
+        )
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        # ensure deep-copy
+        dictionary = dict( dictionary )
+        pms = PMS.load( dictionary.pop('pms_kwargs') )
+        return cls( pms = pms, **dictionary )
+    
     def build_photometric_system ( self, *args, **kwargs ) :
         """Forwards ``args`` and ``kwargs`` to the constructor of the photometric system.
         
