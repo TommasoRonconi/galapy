@@ -7,16 +7,19 @@
 import warnings
 import numpy
 import pickle
+from collections.abc import MutableMapping as MM
 
 #############################################################################################
 # Internal imports
 
-from galapy.Galaxy import GXY
-from galapy.Noise import Noise
+import galapy
+from galapy.Galaxy import GXY, PhotoGXY
+from galapy.Noise import Noise, CalibrationError
 from galapy.Handlers import ModelParameters, GXYParameters, NoiseParameters
 from galapy.sampling.Observation import Observation
 from galapy.sampling.Sampler import Sampler
 from galapy.internal.utils import now_string, func_scalar_or_array, quantile_weighted
+from galapy.io.hdf5 import write_to_hdf5, load_from_hdf5
 
 #############################################################################################
 
@@ -58,7 +61,9 @@ def generate_output_base ( out_dir = '', name = '' ) :
 
     return outbase
 
-def dump_results ( model, handler, data, sampler, noise = None, outbase = '' ) :
+def dump_results ( model, handler, data, sampler,
+                   noise = None, outbase = '',
+                   method = 'hdf5', lightweight = False ) :
     from time import time
 
     if len(outbase) == 0 :
@@ -80,7 +85,35 @@ def dump_results ( model, handler, data, sampler, noise = None, outbase = '' ) :
     if noise is not None :
         if not isinstance( noise, Noise ) :
             raise ValueError( "Argument ``noise`` should be an instance of type Noise" )
-        
+
+    if lightweight :
+        if method in { 'hdf5', 'h5' } :
+            outfile = '_'.join( [ outbase, sampler.which_sampler, 'results_light.galapy.hdf5' ] )
+            write_to_hdf5(
+                outfile,
+                metadata = dict(
+                    storage_method = 'light',
+                    galapy_version = galapy.__version__,
+                ),
+                hard = True,
+                results = {
+                    'model' : model.dump(),
+                    'handler' : handler.dump(),
+                    'sample_res' : sample_res,
+                    'sample_logl' : sample_logl,
+                    'sample_weights' : sample_weights,
+                    'data' : None if data is None else data.dump(),
+                    'noise' : None if noise is None else noise.dump(),
+                    'sampler_name' : sampler.which_sampler,
+                }
+            )
+            return outbase
+        else :
+            warnings.warn(
+                "Lightweight (`lightweight=True`) dumping only available with `method = 'hdf5'`. "
+                "Falling back to HDF5 output."
+            )
+                
     print( 'Now processing the sampling results, this might require some time ...' )
     tstart = time()
     results = Results( model, handler,
@@ -90,15 +123,79 @@ def dump_results ( model, handler, data, sampler, noise = None, outbase = '' ) :
                        sampler_name = sampler.which_sampler )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
-    
-    # Pickle the Results instance
-    with open( '_'.join( [ outbase, sampler.which_sampler,
-                           'results.galapy.pickle' ] ), 'wb' ) as f :
-        pickle.dump( results, f )
+
+    if method == 'pickle' :
+        # Pickle the Results instance
+        with open( '_'.join( [ outbase, sampler.which_sampler,
+                               'results.galapy.pickle' ] ), 'wb' ) as pfw :
+            pickle.dump( results, pfw )
+    if method in { 'hdf5', 'h5' } :
+        outfile = '_'.join( [ outbase, sampler.which_sampler, 'results.galapy.hdf5' ] )
+        write_to_hdf5(
+            outfile,
+            metadata = dict(
+                storage_method = 'heavy',
+                galapy_version = galapy.__version__,
+            ),
+            hard = True,
+            results = results.dump()
+        )
 
     print( f'Results stored in files with prefix: {outbase}' )
 
-    return outbase 
+    return outbase
+
+def load_results ( infile, method = None, lightweight = None ) :
+
+    if method is None :
+        method = infile.split('.')[-1]
+
+    res = None
+    
+    if method in { 'h5', 'hdf5' } :
+        res_dict = load_from_hdf5( infile )
+        if lightweight is None :
+            lightweight = res_dict['metadata']['storage_method'] == 'light'
+        if lightweight :
+            from time import time
+            print( 'Now processing the sampling results, this might require some time ...' )
+            tstart = time()
+            res = Results(
+                model = (
+                    PhotoGXY.load(res_dict['results']['model'])
+                    if 'pms_kwargs' in res_dict['results']['model']
+                    else GXY.load(res_dict['results']['model'])
+                ),
+                handler = ModelParameters.load( res_dict['results']['handler'] ),
+                sample_res = res_dict['results']['sample_res'],
+                sample_logl = res_dict['results']['sample_logl'],
+                sample_weights = (
+                    res_dict['results']['sample_weights']
+                    if 'sample_weights' in res_dict['results']
+                    else None
+                ),
+                data = (
+                    Observation.load( res_dict['results']['data'] )
+                    if 'data' in res_dict['results']
+                    else None
+                ),
+                noise = (
+                    CalibrationError.load( res_dict['results']['noise'] )
+                    if res_dict['results']['noise'] is not None
+                    else None
+                ),
+                sampler_name = res_dict['results']['sampler_name']
+            )
+            ndur = time() - tstart
+            print( f'... done in {ndur} seconds.' )
+        else :
+            res = Results.load( res_dict['results'] )
+        return res
+
+    if method == 'pickle' :
+        with open( infile, 'rb' ) as pfr :
+            res = pickle.load( pfr )
+        return res
 
 #############################################################################################
 
@@ -136,18 +233,26 @@ class Results () :
         """
         
         # Store the model architecture
-        if not isinstance(model, GXY) :
+        if not isinstance(model, GXY) and not isinstance( model, MM ) :
             raise AttributeError( 
                 'Attribute "model" should be an instance of type ``GXY``'
             )
-        self._mod = pickle.dumps(model)
+        if isinstance( model, MM ) :
+            self._mod = model
+            model = self.get_model()
+        else :
+            self._mod = model.dump()
         
         # Store the parameters specs
-        if not isinstance(handler, ModelParameters) :
+        if not isinstance(handler, ModelParameters) and not isinstance( handler, MM ) :
             raise AttributeError( 
                 'Attribute "handler" should be an instance of type ``ModelParameters``'
             )
-        self._han = pickle.dumps(handler)
+        if isinstance( handler, MM ) :
+            self._han = handler
+            handler = self.get_handler()
+        else :
+            self._han = handler.dump()
 
         if sample_weights is None :
             sample_weights = numpy.ones_like( sample_logl )
@@ -156,21 +261,29 @@ class Results () :
         self.Ndof = 1
         self._obs = None
         if data is not None :
-            if not isinstance(data,Observation) :
+            if not isinstance(data,Observation) and not isinstance( data, MM ) :
                 raise AttributeError( 
                     'Attribute "data" should be an instance of type ``Observation``'
                 )
-            self._obs = pickle.dumps(data)
+            if isinstance( data, MM ) :
+                self._obs = data
+                data = self.get_observation()
+            else :
+                self._obs = data.dump()
             self.Ndof = len(data.pms) - len(handler.par_free)
 
         # Store the noise model    
         self._noise = None
         if noise is not None :
-            if not isinstance( noise, Noise ) :
+            if not isinstance( noise, Noise ) and not isinstance( noise, MM ) :
                 raise AttributeError( 
                     'Attribute "noise" should be an instance of type ``Noise``'
                 )
-            self._noise = pickle.dumps(noise)
+            if isinstance( noise, MM ) :
+                self._noise = noise
+                noise = self.get_noise()
+            else :
+                self._noise = noise.dump()
 
         # Store the sampler's name and specs
         self.sampler = sampler_name
@@ -182,9 +295,9 @@ class Results () :
                 'Arguments sample_res, sample_logl and sample_weights should have same length'
             )
         self.params = []
-        self.logl    = sample_logl
-        self.samples = sample_res
-        self.weights = sample_weights
+        self.logl    = numpy.asarray( sample_logl )
+        self.samples = numpy.asarray( sample_res )
+        self.weights = numpy.asarray( sample_weights )
         self.wnot0 = ( self.weights > 0. )
         self.SED    = numpy.empty(shape=(self.size, 
                                          *model.wl().shape))
@@ -224,7 +337,76 @@ class Results () :
             self.SFR[i]   = model.sfh(age)
             self.TMC[i]   = model.ism.mc.T
             self.TDD[i]   = model.ism.dd.T
-            
+
+    def dump ( self ) :
+        return dict(
+            # Models' architecture
+            model = self._mod,
+            handler = self._han,
+            data = self._obs,
+            noise = self._noise,
+            # Sampling run hyperparameters
+            sampler_name = self.sampler,
+            size = self.size, Ndof = self.Ndof,
+            # Sampling run stored quantities
+            logl    = self.logl,
+            samples = self.samples,
+            weights = self.weights,
+            wnot0   = self.wnot0,
+            # Derived quantities
+            SED     = self.SED,
+            Mstar   = self.Mstar,
+            Mdust   = self.Mdust,
+            Mgas    = self.Mgas,
+            Zstar   = self.Zstar,
+            Zgas    = self.Zgas,
+            SFR     = self.SFR,
+            TMC     = self.TMC,
+            TDD     = self.TDD,
+        )
+
+    @classmethod
+    def load ( cls, dictionary ) :
+
+        # build object
+        ret = cls(
+            model   = dict( dictionary['model'] ),
+            handler = dict( dictionary['handler'] ),
+            data    = dict( dictionary['data'] ),
+            noise   = dict( dictionary['noise'] ),
+            sampler_name = dictionary['sampler_name'],
+            sample_res     = [],
+            sample_logl    = [],
+            sample_weights = []
+        )
+        # Sampling run stored quantities
+        ret.logl    = dictionary['logl']
+        ret.samples = dictionary['samples']
+        ret.weights = dictionary['weights']
+        ret.wnot0   = dictionary['wnot0']
+
+        # Additional hyperparameters
+        ret.Ndof    = dictionary['Ndof']
+        ret.size    = dictionary['size']
+
+        # Derived quantities
+        ret.SED     = dictionary['SED']
+        ret.Mstar   = dictionary['Mstar']
+        ret.Mdust   = dictionary['Mdust']
+        ret.Mgas    = dictionary['Mgas']
+        ret.Zstar   = dictionary['Zstar']
+        ret.Zgas    = dictionary['Zgas']
+        ret.SFR     = dictionary['SFR']
+        ret.TMC     = dictionary['TMC']
+        ret.TDD     = dictionary['TDD']
+
+        # Compute parameters' dictionaries
+        handler = ret.get_handler()
+        for i, par in enumerate(ret.samples) :
+            ret.params += [handler.return_nested(par)['galaxy']]
+
+        return ret
+        
     def get_stored_quantities ( self ) :
         """ Returns a list with all the quantities stored in the instance
         """
@@ -233,9 +415,9 @@ class Results () :
     def get_residuals ( self, which_model = 'bestfit', standardised = True ) :
         """
         """
-        _gxy = pickle.loads( self._mod )
-        _obs = pickle.loads( self._obs )
-        _han = pickle.loads( self._han )
+        _gxy = self.get_model() 
+        _obs = self.get_observation()
+        _han = self.get_handler()
         if which_model == 'bestfit' :
             params = self.get_bestfit( 'samples' )
         elif which_model == 'mean' :
@@ -254,7 +436,7 @@ class Results () :
         if standardised :
             error = _obs.errors
             if hasattr(self, '_noise') and self._noise is not None :
-                _noi = pickle.loads( self._noise )
+                _noi = self.get_noise()
                 _noi.set_parameters( **nested['noise'] )
                 error = _noi.apply( error, model )
             return ( data - model ) / error
@@ -369,16 +551,19 @@ class Results () :
         -------
         : galapy.Galaxy.GXY
         """
-        return pickle.loads( self._mod )
-    
-    def get_sampling_params ( self ) :
+        if 'pms_kwargs' in self._mod.keys() :
+            return PhotoGXY.load( self._mod )
+        else :
+            return GXY.load( self._mod )
+
+    def get_handler ( self ) :
         """ Instantiates a handler corresponding to the one used for sampling.
         
         Returns
         -------
-        : galapy.GalaxyParameters.GXYParameters
+        : galapy.GalaxyParameters.ModelParameters
         """
-        return pickle.loads( self._han )
+        return ModelParameters.load( self._han )
     
     def get_observation ( self ) :
         """ Instantiates a dataset corresponding to the one used for sampling.
@@ -388,7 +573,7 @@ class Results () :
         : galapy.sampling.Observation.Observation
         """
         if self._obs is not None :
-            return pickle.loads( self._obs )
+            return Observation.load( self._obs )
         else :
             warnings.warn( "The current instance has no Observation stored, passing None" )
             return None
@@ -401,9 +586,18 @@ class Results () :
         : galapy.sampling.Noise.Noise
         """
         if hasattr(self, '_noise') and self._noise is not None :
-            return pickle.loads( self._noise )
+            return CalibrationError.load( self._noise )
         else :
             warnings.warn( "The current instance has no Noise stored, passing None" )
             return None
+    
+    def get_sampling_params ( self ) :
+        """ Instantiates a handler corresponding to the one used for sampling.
+        
+        Returns
+        -------
+        : galapy.GalaxyParameters.GXYParameters
+        """
+        return self.get_handler()
 
 #############################################################################################

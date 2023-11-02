@@ -71,8 +71,10 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
     if noise is not None :
         sample_params.update( { '.'.join( ['noise', key] ) : value
                                 for key, value in noise_params.items() } )
-    handler = ModelParameters( model, noise,
-                               sample_params = sample_params )
+        handler = ModelParameters( model, noise,
+                                   sample_params = sample_params )
+    else :
+        handler = ModelParameters( model, sample_params = sample_params )
 
     #########################################################################
     # Set fixed parameters and initial values for free parameters
@@ -200,7 +202,8 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
 ################################################################################
 
 def store_results ( sampler, 
-                    out_dir = '.', name = '', 
+                    out_dir = '.', name = '',
+                    method = 'hdf5', lightweight = False,
                     pickle_sampler = False, pickle_raw = False ) :
         
     # Store results:
@@ -211,7 +214,10 @@ def store_results ( sampler,
                       data = global_dict['data'],
                       sampler = sampler,
                       noise = global_dict['noise'],
-                      outbase = outbase )
+                      outbase = outbase,
+                      method = method,
+                      lightweight = lightweight
+                     )
     sampler.save_results( outbase = outbase,
                           pickle_sampler = pickle_sampler,
                           pickle_raw = pickle_raw )
@@ -221,7 +227,8 @@ def store_results ( sampler,
 
 def _sample_serial ( which_sampler = 'emcee', nwalkers = None, nsamples = None, 
                      sampler_kw = {}, logl_kw = {}, run_sampling_kw = {}, 
-                     out_dir = '.', name = '', 
+                     out_dir = '.', name = '',
+                     store_method = 'hdf5', store_lightweight = False, 
                      pickle_sampler = False, pickle_raw = False  ) :
 
     # Run the sampling
@@ -237,7 +244,10 @@ def _sample_serial ( which_sampler = 'emcee', nwalkers = None, nsamples = None,
     # Store the results
     store_results(
         sampler, 
-        out_dir = out_dir, name = name, 
+        out_dir = out_dir,
+        name = name,
+        method = store_method,
+        lightweight = store_lightweight, 
         pickle_sampler = pickle_sampler,
         pickle_raw = pickle_raw
     )
@@ -250,6 +260,7 @@ def _sample_parallel ( which_sampler = 'emcee', nwalkers = None, nsamples = None
                        sampler_kw = {}, logl_kw = {}, run_sampling_kw = {},
                        Ncpu = None, 
                        out_dir = '.', name = '', 
+                       store_method = 'hdf5', store_lightweight = False,
                        pickle_sampler = False, pickle_raw = False  ) :
     import multiprocessing as mp
     
@@ -273,7 +284,10 @@ def _sample_parallel ( which_sampler = 'emcee', nwalkers = None, nsamples = None
     # Store the results
     store_results(
         sampler, 
-        out_dir = out_dir, name = name, 
+        out_dir = out_dir,
+        name = name, 
+        method = store_method,
+        lightweight = store_lightweight, 
         pickle_sampler = pickle_sampler,
         pickle_raw = pickle_raw
     )
@@ -347,7 +361,9 @@ def _run () :
             logl_kw = { 'method_uplims' : hyperpar.method_uplims }, 
             run_sampling_kw = hyperpar.sampling_kw,
             out_dir = hyperpar.output_directory,
-            name = hyperpar.run_id, 
+            name = hyperpar.run_id,
+            store_method = hyperpar.store_method,
+            store_lightweight = hyperpar.store_lightweight,
             pickle_sampler = hyperpar.pickle_sampler,
             pickle_raw = hyperpar.pickle_raw
         )
@@ -361,7 +377,9 @@ def _run () :
             run_sampling_kw = hyperpar.sampling_kw,
             Ncpu = args.Ncpu, 
             out_dir = hyperpar.output_directory,
-            name = hyperpar.run_id, 
+            name = hyperpar.run_id,
+            store_method = hyperpar.store_method,
+            store_lightweight = hyperpar.store_lightweight, 
             pickle_sampler = hyperpar.pickle_sampler,
             pickle_raw = hyperpar.pickle_raw
         )
@@ -388,8 +406,8 @@ default_parameter_file = """
 # - errors: 1-sigma error on the measures of the fluxes (or upper limits) listed
 #           in the variable 'fluxes'
 # - uplims: sequence of booleans identifying whether the values listed 
-#           in argument `fluxes` should be considered non-detection (`True`)
-#           or a detection (`False`)
+#           in argument ``fluxes`` should be considered non-detection (``True``)
+#           or a detection (``False``)
 bands  = None
 fluxes = None
 errors = None
@@ -505,7 +523,7 @@ noise_kwargs = {{}}
 # The dictionary provided here will be used to set the fixed parameters to
 # the given value or to flag parameters as 'free' with some associated prior.
 # All the parameters that are not used in the specified galaxy model will be ignored.
-# (e.g. if the galaxy model has been built with `do_AGN = False` all the eventual
+# (e.g. if the galaxy model has been built with ``do_AGN = False`` all the eventual
 #  AGN-related parameters provided will be ignored)
 #
 # - To set the parameter 'fixed_parameter' as FIXED provide a single value:
@@ -521,12 +539,12 @@ noise_kwargs = {{}}
 #       'free_parameter' : ( a_list, a_bool ),
 #       ...
 #   }}
-#   The list `a_list` contains the minimum and maximum value of the
+#   The list ``a_list`` contains the minimum and maximum value of the
 #   UNIFORM prior from which to draw samples for the 'free_parameter'.
-#   The boolean `a_bool` states whether the prior has to be considered
-#   * logarithmic: `a_bool = True`, therefore samples will be drawn from the interval
+#   The boolean ``a_bool`` states whether the prior has to be considered
+#   * logarithmic: ``a_bool = True``, therefore samples will be drawn from the interval
 #                  10**min(a_list) < 'free_parameter' < 10**max(a_list)
-#   * linear: `a_bool = False`, therefore samples will be drawn from the interval
+#   * linear: ``a_bool = False``, therefore samples will be drawn from the interval
 #             min(a_list) < 'free_parameter' < max(a_list)
 
 galaxy_parameters = {{
@@ -640,6 +658,29 @@ output_directory = ''
 # (if the string is empty the current date+time will be used)
 run_id = ''
 
+# The method used for storing results. 
+# Possible choices are:
+# - 'hdf5' : uses HDF5 format to save a dictionary containing all the informations
+#            to build the Results class used for the analysis and visualization of the
+#            sampling-run results. (This is the safest choice, also in terms of security)
+# - 'pickle' : uses the standard python pickle format to directly save an instance of
+#              the Results class used for the analysis and visualization of the
+#              sampling-run results. (Recommended only for local usage, pickled objects
+#              are not safe for distribution)
+store_method = 'hdf5'
+
+# Only available if the output format chosen is HDF5 (see parameter store_method).
+# If True it stores only the chains, weights and loglikelihood values obtained by the
+# sampling run (along with information to re-build all the models used in running.
+# If False it will save all the infos on the derived quantities as well.
+# Selecting lightweight storage, it does not change the way users will ultimatelly access
+# the Results object, what will change is the time spent for loading it.
+# With lightweight storage the size of the output file is smaller, and the Results object
+# is computed (instantiated) when loading the file (so this will take up to some minutes).
+# With lightweight storage off, all the quantities are computed at the end of the sampling
+# run and are ready to use but the output file can reach a size of up to some GiB. 
+store_lightweight = False
+
 # Whether to pickle the sampler raw results.
 # (might be useful for analyzing run statistics)
 pickle_raw = True
@@ -649,8 +690,8 @@ pickle_raw = True
 pickle_sampler = False
 
 # EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
-# - set the number of walkers (`nwalkers`)
-# - set the chain length (`nsamples`)
+# - set the number of walkers (``nwalkers``)
+# - set the chain length (``nsamples``)
 nwalkers = 32
 nsamples = 16
 
@@ -678,7 +719,7 @@ def _generate_parameter_file () :
                              'provide here the name you want to give to ' +
                              'the parameter file, you can also choose ' +
                              'a path different to the current working directory: ' +
-                             '/path/to/chosen_name' +
+                             '/path/to/chosen_name\n' +
                              'NOTE THAT the extension ".py" will be appended to ' +
                              'the name chosen (this just to guarantee proper formatting ' +
                              'when opening the file in a text editor). ' +
