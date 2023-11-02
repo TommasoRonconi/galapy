@@ -26,6 +26,10 @@ class Noise ( Model ) :
     
     def __init__ ( self ) :
         super().__init__()
+
+    @abstractmethod
+    def dump ( self ) :
+        pass
         
     @abstractmethod
     def apply ( self ) :
@@ -42,6 +46,13 @@ class CalibrationError ( Noise ) :
         super().__init__()
         self.f_cal = f_cal
         self.params['f_cal'] = self.f_cal
+
+    def dump ( self ) :
+        return self.params
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        return cls( **dictionary )
         
     def set_parameters ( self, f_cal = None ) :
         """

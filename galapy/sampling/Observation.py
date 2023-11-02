@@ -64,3 +64,22 @@ class Observation () :
         self.fluxes = numpy.asarray( [ data[k][0] for k in self.pms.keys ] )
         self.errors = numpy.asarray( [ data[k][1] for k in self.pms.keys ] )
         self.uplims = numpy.asarray( [ data[k][2] for k in self.pms.keys ] )
+
+    def dump ( self ) :
+        return dict(
+            bands  = '|'.join(self.pms.keys),
+            fluxes = self.fluxes,
+            errors = self.errors,
+            uplims = self.uplims,
+            pms_kwargs = self.pms.dump(),
+        )
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        # ensure deep-copy
+        dictionary = dict( dictionary )
+        return cls(  
+            dictionary.pop('bands').split('|'),
+            pms = PMS.load( dictionary.pop( 'pms_kwargs' ) ),
+            **dictionary
+        )

@@ -66,6 +66,27 @@ class ModelParameters () :
         self.par_log   = numpy.asarray(self.par_log)
         self.par_free  = numpy.asarray(self.par_free)
         self.par_prior = numpy.asarray(self.par_prior)
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        ret = cls()
+        for k, v in dictionary.items() :
+            if k not in ret.__dict__.keys() :
+                raise KeyError(
+                    f'Element {k} of input dictionary not an attribute of the class'
+                )
+            if k == 'par_free' :
+                v = numpy.asarray(v.split('|'))
+            setattr( ret, k, v )
+        return ret
+        
+    def dump ( self ) :
+        return dict(
+            parameters = self.parameters,
+            par_free   = '|'.join(self.par_free),
+            par_log    = self.par_log,
+            par_prior  = self.par_prior,
+        )
                     
     def return_nested ( self, par = None ) :
         """ From a list of parameters returns a nested dictionary in 
