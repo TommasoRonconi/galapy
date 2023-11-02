@@ -124,13 +124,18 @@ class PMS () :
             for arg in args :
                 try :
                     *path, name = arg.split('.')
-                    ll, fl = numpy.loadtxt( DataFile( f'{name:s}.dat',
-                                                      numpy.append( GP_GBL.FILT_DIR, path ) ).get_file(),
-                                            unpack=True )
+                    ll, fl = numpy.loadtxt( DataFile(
+                        f'{name:s}.dat',
+                        numpy.append( GP_GBL.FILT_DIR, path )
+                    ).get_file(), unpack=True )
                 except OSError :
-                    raise ValueError( f'Filter "{arg}" provided is not present in galapy database.' )
+                    raise ValueError(
+                        f'Filter "{arg}" provided is not present in galapy database.'
+                    )
                 except :
-                    raise ValueError( f'Argument "{arg}" provided does not name a known filter.' )
+                    raise ValueError(
+                        f'Argument "{arg}" provided does not name a known filter.'
+                    )
                     
                 ll = numpy.ascontiguousarray(ll)
                 fl = numpy.ascontiguousarray(fl)
@@ -140,7 +145,8 @@ class PMS () :
                 except :
                     ValueError()
 
-                # append interval extremes to flattened array of flagged values ('s' = start, 'e' = end)
+                # append interval extremes to flattened array of flagged values
+                # ('s' = start, 'e' = end)
                 extremes = numpy.append( FlagVal( self.bpt[arg].get_lmin(), 's' ), extremes )
                 extremes = numpy.append( FlagVal( self.bpt[arg].get_lmax(), 'e' ), extremes )
 
@@ -152,12 +158,15 @@ class PMS () :
                     fl = numpy.ascontiguousarray(value[ 'photons' ])
                     self.bpt[ key ] = BPT( ll, fl )
                 except KeyError :
-                    raise ValueError( f'The provided dictionary "{key}" does not contain the necessary items, '
-                                      'please provide a "wavelengths" and a "photons" array.' )
+                    raise ValueError(
+                        f'The provided dictionary "{key}" does not contain the necessary items, '
+                        'please provide a "wavelengths" and a "photons" array.'
+                    )
                 except :
                     raise ValueError()
                 
-                # append interval limits to flattened array of flagged values ('s' = start, 'e' = end)
+                # append interval limits to flattened array of flagged values
+                # ('s' = start, 'e' = end)
                 extremes = numpy.append( FlagVal( self.bpt[key].get_lmin(), 's' ), extremes )
                 extremes = numpy.append( FlagVal( self.bpt[key].get_lmax(), 'e' ), extremes )
                 
@@ -192,6 +201,20 @@ class PMS () :
         self.lpiv = self.lpiv[idxsort]
         self.keys = tuple( self.keys[idxsort] )
 
+    def dump ( self ) :
+        return {
+            k : { 'wavelengths' : numpy.asarray( v.get_xaxis() ),
+                  'photons'     : (
+                      numpy.asarray( v.get_yaxis() ) *
+                      numpy.asarray( v.get_xaxis() ) /
+                      v.get_norm() ) }
+            for k, v in self.bpt.items()
+        }
+
+    @classmethod
+    def load ( cls, dictionary ) :
+        return cls( **dictionary )
+
     def __len__ ( self ) :
         return len( self.bpt )
 
@@ -220,3 +243,4 @@ class PMS () :
             fluxes += [self.bpt[key].get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
     
         return fluxes
+
