@@ -152,13 +152,15 @@ def main():
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
                'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
                'galapy.internal' : os.path.join( 'galapy', 'internal' ),
-               'galapy.analysis' : os.path.join( 'galapy', 'analysis' )
+               'galapy.analysis' : os.path.join( 'galapy', 'analysis' ),
+               'galapy.io' : os.path.join( 'galapy', 'io' ),
            },
            packages = [ 'galapy',
                         'galapy.configuration',
                         'galapy.internal',
                         'galapy.sampling',
-                        'galapy.analysis' ],
+                        'galapy.analysis',
+                        'galapy.io' ],
            ext_modules = return_extensions(),
            include_package_data = True,
            entry_points = {
@@ -177,6 +179,7 @@ def main():
                'matplotlib',
                'getdist',
                'requests',
+               'h5py',
                'pytest'
            ]
     )
