@@ -553,7 +553,8 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
         triangle plot. Also accepts wildcards (e.g. ``which_params = 'sfh*'`` will show all the
         parameters that contain the sub-string ``sfh``).
     getdist_settings : dict
-        a dictionary of custom analysis settings to pass to the ``getdist.MCSamples`` settings argument 
+        a dictionary of custom analysis settings to pass to the ``getdist.MCSamples`` 
+        settings argument 
         (for further informations see the documentation of ``getdist``)
         (to see defaults call ``galapy.analysis.plots.show_default_dict('getdist_settings')``)
     param_limits : str or sequence or dict
