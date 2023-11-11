@@ -375,6 +375,79 @@ def quantile_weighted ( values, quantiles, weights = None,
 
 ###################################################################################
 
+def get_credible_interval(samples, idcentre, percent = 0.68, weights = None) :
+    """Find lower and upper limits in sample array containing 
+    given percent value around position.
+    
+    It splits the samples in 2 half-intervals:
+    [lower, samples[idcentre]) and [samples[idcentre], upper) that are set to 
+    contain 0.5*percent of all the weighted samples.
+    If one of the two half-intervals does not have enough samples, it is considered
+    un-defined. When this happens, the function consider it instead an upper/lower limit 
+    on the sampled parameter and returns instead (None, upper-limit) or (lower-limit, None).
+    
+    Parameters
+    ----------
+    samples : ndarray or iterable
+        the weighted samples over which to compute the estimator 
+    idcentre : integer
+        index in the samples iterable around which to compute the interval
+    percent : float
+        probability enclosed by the interval 
+    weights :
+        (Optional, default = None) weights of the samples, if not None
+        this must have the same size of the samples argument
+    
+    Returns
+    -------
+    lower, upper : scalar floats
+        [lower-, upper-) limits of the interval if the interval is defined.
+        If it is not defined, the function will return either an upper limit or
+        a lower limit, respectively.
+    """
+    
+    if weights is None :
+        weights = numpy.ones_like(samples)
+    
+    # sort the samples
+    idsort = numpy.argsort(samples)
+    
+    # Normalize the weights to create a probability distribution
+    weights = numpy.array(weights[idsort]) / numpy.sum(weights[idsort])
+
+    # Calculate the cumulative distribution function (CDF)
+    cdf = numpy.cumsum(weights)
+
+    # Find the target value in the sorted array
+    idx, = numpy.where(idsort == idcentre)
+    idx = idx.item()
+
+    # Find the lower bound based on the desired percentile
+    lower_percentile = cdf[idx] - 0.5 * percent
+    
+    # account for upper limits
+    if lower_percentile < 0.0 :
+        upper_percentile = percent
+        upper_idx = numpy.searchsorted(cdf, upper_percentile)
+        return None, samples[idsort][upper_idx]
+    
+    # Find the upper bound based on the desired percentile
+    upper_percentile = cdf[idx] + 0.5 * percent
+    
+    # account for lower limits
+    if upper_percentile > 1.0 :
+        lower_percentile = 1.0-percent
+        lower_idx = numpy.searchsorted(cdf, lower_percentile)
+        return samples[idsort][lower_idx], None
+
+    # Find the lower and upper samples within the specified percentile range
+    lower_idx = numpy.searchsorted(cdf, lower_percentile)
+    upper_idx = numpy.searchsorted(cdf, upper_percentile)
+
+    return samples[idsort][lower_idx], samples[idsort][upper_idx]
+
+###################################################################################
+
 def now_string () :
     """ Generates a string with the minute the function is called
     """

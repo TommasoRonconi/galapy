@@ -18,7 +18,7 @@ from galapy.Noise import Noise, CalibrationError
 from galapy.Handlers import ModelParameters, GXYParameters, NoiseParameters
 from galapy.sampling.Observation import Observation
 from galapy.sampling.Sampler import Sampler
-from galapy.internal.utils import now_string, func_scalar_or_array, quantile_weighted
+from galapy.internal.utils import now_string, func_scalar_or_array, quantile_weighted, get_credible_interval, find_nearest
 from galapy.io.hdf5 import write_to_hdf5, load_from_hdf5
 
 #############################################################################################
@@ -543,6 +543,37 @@ class Results () :
                                                      weights = self.weights[self.wnot0],
                                                      axis = 0 )
         )
+
+    def get_credible_interval ( self, key, percent = 0.68, centre = 'bestfit' ) :
+        """
+        """
+        
+        samples = self.__dict__[k]
+
+        if centre == 'bestfit' :
+            idcentre = self.logl.argmax()
+        elif centre == 'mean' :
+            idcentre = find_nearest( samples[self.wnot0], self.get_mean( key ) )
+        elif centre == 'median' :
+            idcentre = find_nearest( samples[self.wnot0], self.get_median( key ) )
+        else :
+            raise RuntimeError(
+                "``centre`` argument should be one among ('bestfit', 'mean', 'median')"
+            )
+
+        # get limits from the weighted distribution
+        low, upp = get_credible_interval(
+            samples[self.wnot0], idcentre, percent, self.weights[self.wnot0]
+        )
+
+        # if upper-limit is found, return upper-limited indefinite interval
+        if low is None :
+            return -numpy.inf, upp
+        # if lower-limit is found, return lower-limited indefinite interval
+        if upp is None :
+            return low, +numpy.inf
+        # return lower and upper credibility distances from centre
+        return samples[idcentre]-low, upp-samples[idcentre]
     
     def get_model ( self ) :
         """ Instantiates a model corresponding to the one used for sampling.
