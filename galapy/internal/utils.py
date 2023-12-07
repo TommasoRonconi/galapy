@@ -419,8 +419,9 @@ def get_credible_interval(samples, idcentre, percent = 0.68, weights = None) :
     cdf = numpy.cumsum(weights)
 
     # Find the target value in the sorted array
-    idx, = numpy.where(idsort == idcentre)
-    idx = idx.item()
+    idx = numpy.nonzero(idsort == idcentre)
+    #idx, = numpy.where(idsort == idcentre)
+    #idx = idx.item()
 
     # Find the lower bound based on the desired percentile
     lower_percentile = cdf[idx] - 0.5 * percent
@@ -428,7 +429,7 @@ def get_credible_interval(samples, idcentre, percent = 0.68, weights = None) :
     # account for upper limits
     if lower_percentile < 0.0 :
         upper_percentile = percent
-        upper_idx = numpy.searchsorted(cdf, upper_percentile)
+        upper_idx = numpy.searchsorted(cdf, upper_percentile).item()
         return None, samples[idsort][upper_idx]
     
     # Find the upper bound based on the desired percentile
@@ -437,12 +438,12 @@ def get_credible_interval(samples, idcentre, percent = 0.68, weights = None) :
     # account for lower limits
     if upper_percentile > 1.0 :
         lower_percentile = 1.0-percent
-        lower_idx = numpy.searchsorted(cdf, lower_percentile)
+        lower_idx = numpy.searchsorted(cdf, lower_percentile).item()
         return samples[idsort][lower_idx], None
 
     # Find the lower and upper samples within the specified percentile range
-    lower_idx = numpy.searchsorted(cdf, lower_percentile)
-    upper_idx = numpy.searchsorted(cdf, upper_percentile)
+    lower_idx = numpy.searchsorted(cdf, lower_percentile).item()
+    upper_idx = numpy.searchsorted(cdf, upper_percentile).item()
 
     return samples[idsort][lower_idx], samples[idsort][upper_idx]
 

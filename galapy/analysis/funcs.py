@@ -24,24 +24,52 @@ def get_parameters_summary_statistics ( res, stat_type = 'quantiles', quantile =
     res : galapy.sampling.Results.Results
         An instance of type ``Results``
     stat_type : str
-        The desired summary statistics. Available statistics are
-        'mean_and_std' and 'quantiles'
+        The desired summary statistics. 
+        Available statistics are
+        'bestfit_and_interval', 'mean_and_std' and 'quantiles'
     quantile : scalar or sequence
-        The quantiles requested (used only is ``stat_type='quantiles'``.
+        If ``stat_type='bestfit_and_interval'``, the probability
+        enclosed in the credible interval. Default is 0.68, 
+        i.e. 68% credible interval.
+        If ``stat_type='quantiles'``, the quantiles requested.
         Default is (0.16,0.5,0.84), i.e. median and 68% bound.
     
     Returns
     -------
     : ndarray
+        - if ``stat_type='bestfit_and_interval'`` each row is an array with size = 3 
+          where the first element is the best-fit value, the second and third are the 
+          lower and upper uncertainties, respectively.
         - if ``stat_type='quantiles'`` each row is an array with size = ``len(quantile)``
         - if ``stat_type='mean_and_std'`` each row is an array of size = 2 where the
           first element is the mean and the second element is the standard deviation.
     """
     
-    if stat_type not in ('mean_and_std', 'quantiles') :
+    if stat_type not in ('bestfit_and_interval', 'mean_and_std', 'quantiles') :
         raise ValueError(
-            "Allowed values for argument ``stat_type`` are 'mean&std' and 'quantiles'"
+            "Allowed values for argument ``stat_type`` are "
+            "'bestfit_and_interval', 'mean_and_std' and 'quantiles'"
         )
+
+    if stat_type == 'bestfit_and_interval' :
+        if quantile is None :
+            print( 'Falling back to default percentile: 0.68')
+            quantile = 0.68
+        try :
+            quantile = float( quantile )
+        except :
+            raise
+        summary = numpy.empty([self.ndim,3], dtype=float)
+        idcentre = self.logl[self.wnot0].argmax()
+        for i, sample in enumerate( self.samples.T ) :
+            summary[i,0] = sample[idcentre]
+            low, upp = get_credible_interval(
+                sample, idcentre, quantile, self.weights[self.wnot0]
+            )
+            if low is None : low = -numpy.inf
+            if upp is None : upp = +numpy.inf
+            summary[i,1] = low
+            summary[i,2] = upp
         
     if stat_type == 'quantiles' :
         if quantile is None or len(quantile)!=3:

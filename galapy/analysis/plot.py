@@ -21,7 +21,7 @@ plt.rcParams['figure.figsize'] = (7,5)
 plt.rcParams['font.size'] = 14
 plt.rcParams['lines.linewidth'] = 2.
 plt.rcParams['text.latex.preamble'] = r"\usepackage{amsmath}"
-plt.style.use('seaborn-deep')
+plt.style.use('seaborn-v0_8-deep')
 clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 ######################################################################################
@@ -173,16 +173,53 @@ def sed_layout ( redshift, frame, ax = None, **kwargs ) :
     
     return(ax)
 
-def sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+def _errorbar_with_uplims( xx, yy, ee, lo, ax = None, **kwargs ) :
+    
+    if ax is None :
+        ax = plt.gca()
+    if 'c' not in kwargs.keys() and 'color' not in kwargs.keys() :
+        kwargs['color'] = next(ax._get_lines.prop_cycler)['color']
+    marker = 'o'
+    if 'marker' in kwargs.keys() :
+        marker = kwargs.pop('marker')
+    
+    Pdata = ax.errorbar(
+        xx[~lo], yy[~lo], ee[~lo],
+        label='data',
+        marker=marker,
+        markerfacecolor='white',
+        markeredgewidth=2.0, 
+        markersize=8.0,
+        elinewidth=2.0, 
+        linestyle='none',
+        zorder=3,
+        **kwargs
+    )
+    Puplims = ax.errorbar(
+        xx[lo], 2*ee[lo], 1*ee[lo],
+        uplims=lo[lo],
+        label='uplims',
+        capsize = 2.0, 
+        capthick=2.0,
+        elinewidth=2.0,
+        marker='none', 
+        linestyle='none',
+        zorder=3,
+        **kwargs
+    )
+    return Pdata, Puplims
+
+def sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwargs = {}, return_uplim_label=False ) :
 
     ax = sed_layout(redshift, frame, ax, **ax_kwargs)
-    
-    Pdata = ax.errorbar(ll, ff, ee, uplims = lo, 
-                        label='data', 
-                        ls='none', marker='o', 
-                        markerfacecolor='white',
-                        markeredgewidth=2.,
-                        markersize=8)
+
+    Pdata, Puplims = _errorbar_with_uplims( ll, ff, ee, lo, ax=ax )
+    # Pdata = ax.errorbar(ll, ff, ee, uplims = lo, 
+    #                     label='data', 
+    #                     ls='none', marker='o', 
+    #                     markerfacecolor='white',
+    #                     markeredgewidth=2.,
+    #                     markersize=8)
     
     return Pdata
 
@@ -327,7 +364,7 @@ def sed_flux_res ( res,
                            observation.fluxes,
                            observation.errors,
                            observation.uplims )
-        ff[lo] = 3*ee[lo]
+        # ff[lo] = 3*ee[lo]
         legend_primary.append(
             sed_obs( ll, ff, ee, lo,
                      redshift = redshift,
@@ -428,7 +465,6 @@ def sed_residuals_res ( res,
 
     # compute residuals
     chi = res.get_residuals()
-    # chi = (ff - pgxy.photoSED())/ee
     
     # Set axes
     ax_kw = dict(_specs_default['residuals_ax_kw'])
@@ -437,14 +473,33 @@ def sed_residuals_res ( res,
     
     #
     if plot_contours :
-        _ = sed_1sigma2sigma( lsed, 
-                              (res.get_mean('SED')-res.get_bestfit('SED'))/res.get_std('SED'), 
-                              numpy.ones_like(lsed),
+        sedstd = res.get_std('SED')
+        wnstd0 = sedstd > 0.0
+        _ = sed_1sigma2sigma( lsed[wnstd0], 
+                              (res.get_mean('SED')-res.get_bestfit('SED'))[wnstd0]/sedstd[wnstd0], 
+                              numpy.ones_like(lsed[wnstd0]),
                               center=True, redshift=redshift, frame=frame, ax = ax)
         
     _ = sed_flux( lsed, numpy.zeros_like(lsed), redshift=redshift, frame=frame, ax = ax )
-    _ = sed_obs(ll, chi, numpy.zeros_like(ll), lo, #numpy.zeros_like(ll, dtype=bool), 
-                redshift=redshift, frame=frame, ax = ax)
+    obs_color = next(ax._get_lines.prop_cycler)['color']
+    _ = _errorbar_with_uplims(
+        ll[~lo], chi[~lo],
+        numpy.zeros_like(ee[~lo]),
+        numpy.zeros_like(lo[~lo]),
+        ax = ax,
+        color = obs_color
+    )
+    _ = _errorbar_with_uplims(
+        ll[lo],
+        numpy.zeros_like(chi[lo]),
+        numpy.zeros_like(ee[lo]),
+        numpy.zeros_like(lo[lo]),
+        ax = ax,
+        color = obs_color,
+        marker = 'x'
+    )
+    #_ = sed_obs(ll, chi, numpy.zeros_like(ll), numpy.zeros_like(lo), 
+    #            redshift=redshift, frame=frame, ax = ax)
     
     # Plot eventual text-box
     if plot_chi2 :

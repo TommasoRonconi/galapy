@@ -544,18 +544,52 @@ class Results () :
                                                      axis = 0 )
         )
 
-    def get_credible_interval ( self, key, percent = 0.68, centre = 'bestfit' ) :
+    def get_median ( self, key ) :
+        """Returns the median of a stored quantity.
+        This is a shortcut for ``Results.get_quantile( key, quantile=0.5 )``
         """
+        return self.get_quantile( key, quantile=0.5 )
+
+    def get_credible_interval ( self, key, percent = 0.68, centre = 'bestfit' ) :
+        """Returns the credible interval around some position enclosing a user-defined
+        probability integral.
+        Automatically accounts for upper or lower limits on some parameter.
+        If an interval can be defined it returns the lower and upper distances from 
+        the centre of the interval.
+        If only upper/lower limits can be defined, it returns the position of the given limit.
+
+        Parameters
+        ----------
+        key : str
+            the name of one of the stored quantities.
+        percent : float
+            (Optional, default = 0.68) probability enclosed by the interval
+        centre : str
+            (Optional, default = 'bestfit') one among ('bestfit', 'mean', 'median'),
+            where to define the centre of the interval.
+            Note that, if this is set to 'median', and percent=0.5, this is equivalent
+            to call ``Results.get_quantile`` with the argument ``quantile=(0.25, 0.75)``
+        
+        Returns
+        -------
+        low, upp : tuple
+            If the interval is completely defined by the samples, returns the credible 
+            limits around the centre so that the integral of the posterior between
+            ``centre-low`` and ``centre+upp`` is equal to ``percent``.
+            In the case only upper/lower limits can be defined it returns either
+            ``(-numpy.inf, upp)`` for an upper limit, so that the integral between ``-inf``
+            and ``upp`` is equal to ``percent``, or ``(low, +numpy.inf)`` for a lower limit,
+            so that the integral between ``-inf`` and ``low`` is equal to ``1-percent``.
         """
         
-        samples = self.__dict__[k]
+        samples = self.__dict__[key][self.wnot0]
 
         if centre == 'bestfit' :
-            idcentre = self.logl.argmax()
+            idcentre = self.logl[self.wnot0].argmax()
         elif centre == 'mean' :
-            idcentre = find_nearest( samples[self.wnot0], self.get_mean( key ) )
+            idcentre = find_nearest( samples, self.get_mean( key ) )
         elif centre == 'median' :
-            idcentre = find_nearest( samples[self.wnot0], self.get_median( key ) )
+            idcentre = find_nearest( samples, self.get_median( key ) )
         else :
             raise RuntimeError(
                 "``centre`` argument should be one among ('bestfit', 'mean', 'median')"
@@ -563,7 +597,7 @@ class Results () :
 
         # get limits from the weighted distribution
         low, upp = get_credible_interval(
-            samples[self.wnot0], idcentre, percent, self.weights[self.wnot0]
+            samples, idcentre, percent, self.weights[self.wnot0]
         )
 
         # if upper-limit is found, return upper-limited indefinite interval
