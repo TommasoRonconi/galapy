@@ -420,8 +420,6 @@ def get_credible_interval(samples, idcentre, percent = 0.68, weights = None) :
 
     # Find the target value in the sorted array
     idx = numpy.nonzero(idsort == idcentre)
-    #idx, = numpy.where(idsort == idcentre)
-    #idx = idx.item()
 
     # Find the lower bound based on the desired percentile
     lower_percentile = cdf[idx] - 0.5 * percent

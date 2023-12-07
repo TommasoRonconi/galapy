@@ -10,9 +10,6 @@ import fnmatch
 # As the sane of mind do
 import numpy
 
-# For loading stored files
-# import pickle
-
 # For plotting
 import matplotlib.pyplot as plt
 
@@ -214,12 +211,6 @@ def sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwa
     ax = sed_layout(redshift, frame, ax, **ax_kwargs)
 
     Pdata, Puplims = _errorbar_with_uplims( ll, ff, ee, lo, ax=ax )
-    # Pdata = ax.errorbar(ll, ff, ee, uplims = lo, 
-    #                     label='data', 
-    #                     ls='none', marker='o', 
-    #                     markerfacecolor='white',
-    #                     markeredgewidth=2.,
-    #                     markersize=8)
     
     return Pdata
 
@@ -498,8 +489,6 @@ def sed_residuals_res ( res,
         color = obs_color,
         marker = 'x'
     )
-    #_ = sed_obs(ll, chi, numpy.zeros_like(ll), numpy.zeros_like(lo), 
-    #            redshift=redshift, frame=frame, ax = ax)
     
     # Plot eventual text-box
     if plot_chi2 :
