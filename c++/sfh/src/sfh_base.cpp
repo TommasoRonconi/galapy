@@ -57,70 +57,6 @@ void sed::sfh_base::eval ( const double * const tau,
 
 // =============================================================================
 
-// This is the version for CPython
-void sed::sfh_base::time_grid ( const double age,
-				const double * const tgrid,
-				const std::size_t tgrid_size,
-				const double * const Zgrid,
-				const std::size_t Zgrid_size,
-			        double * const * const out_psigrid,
-			        double * const * const out_Zgrid,
-			        std::size_t * const * const out_Zidx,
-				std::size_t * const out_last_idx ) {
-  
-  // 1) compute star formation history
-  // 2) compute star-metal enrichment history
-  // 3) find metallicity interval for interpolation  
-  std::fill( *out_psigrid, *out_psigrid + tgrid_size, 0. );
-  std::fill( *out_Zgrid,   *out_Zgrid   + tgrid_size, 0. );
-  std::fill( *out_Zidx,    *out_Zidx    + tgrid_size, 0  ); 
-  *out_last_idx = 0;
-
-  double time = age - tgrid[ *out_last_idx ];
-  while ( time > 0. ) {
-    /*(1)*/ (*out_psigrid)[ *out_last_idx ]  = ( *this )( time );
-    /*(2)*/ (*out_Zgrid)[ *out_last_idx ]    = ( *this ).get_Zstar( time );
-    /*(3)*/ (*out_Zidx)[ *out_last_idx ] = utl::find_low( (*out_Zgrid)[ *out_last_idx ],
-							  Zgrid, Zgrid_size );
-    ++( *out_last_idx ); // increment index
-    time = age - tgrid[ *out_last_idx ]; // update time
-  }
-  
-  return;
-
-}
-
-// // This is the version for PyBind11
-// void sed::sfh_base::time_grid ( const double age,
-// 				const std::vector< double > & tgrid,
-// 				const std::vector< double > & Zgrid,
-// 				std::vector< double > & out_psigrid,
-// 				std::vector< double > & out_Zgrid,
-// 				std::vector< std::size_t > & out_Zidx,
-// 				std::size_t & out_last_idx ) {
-  
-//   // 1) compute star formation history
-//   // 2) compute star-metal enrichment history
-//   // 3) find metallicity interval for interpolation  
-//   std::fill( out_psigrid.begin(), out_psigrid.end(), 0. );
-//   std::fill( out_Zgrid.begin(),   out_Zgrid.end(),   0. );
-//   std::fill( out_Zidx.begin(),    out_Zidx.end(),    0  ); 
-//   out_last_idx = 0;
-
-//   double time = age - tgrid[ out_last_idx ];
-//   while ( time > 0. ) {
-//     /*(1)*/ out_psigrid[ out_last_idx ]  = ( *this )( time );
-//     /*(2)*/ out_Zgrid[ out_last_idx ]    = ( *this ).get_Zstar( time );
-//     /*(3)*/ out_Zidx[ out_last_idx ]     = utl::find_low( out_Zgrid[ out_last_idx ], Zgrid );
-    
-//     ++out_last_idx; // increment index
-//     time = age - tgrid[ out_last_idx ]; // update time
-//   }
-  
-//   return;
-
-// }
-
 // This is the version for PyBind11
 void sed::sfh_base::time_grid ( const double age,
 				const std::vector< double > & tgrid,
@@ -140,11 +76,14 @@ void sed::sfh_base::time_grid ( const double age,
 
   double time = age - tgrid[ out_last_idx ], next_time;
   double dM = 0.0;
+  std::fill( _dM.begin(), _dM.end(), 0. ); // reset _dM vector
+  std::size_t jj = 0;
   while ( time > 0. ) {
     next_time = age - tgrid[ out_last_idx + 1 ];
     while ( time > next_time ) {
-      dM += ( *this )( time ) * 1.e+5;
-      time -= 1.e+5;
+      _dM[++jj] = ( *this )( time ) * 1.e+5; // dt=10^5 is fixed
+      dM += _dM[jj];
+      time -= 1.e+5; // dt=10^5 is fixed
     }
     /*(1)*/ out_dMgrid[ out_last_idx ] = dM;
     /*(2)*/ out_Zgrid[ out_last_idx ]  = ( *this ).get_Zstar( time );
@@ -157,5 +96,40 @@ void sed::sfh_base::time_grid ( const double age,
   return;
 
 }
+
+// =============================================================================
+
+// This is the version for CPython
+// void sed::sfh_base::time_grid ( const double age,
+// 				const double * const tgrid,
+// 				const std::size_t tgrid_size,
+// 				const double * const Zgrid,
+// 				const std::size_t Zgrid_size,
+// 			        double * const * const out_psigrid,
+// 			        double * const * const out_Zgrid,
+// 			        std::size_t * const * const out_Zidx,
+// 				std::size_t * const out_last_idx ) {
+  
+//   // 1) compute star formation history
+//   // 2) compute star-metal enrichment history
+//   // 3) find metallicity interval for interpolation  
+//   std::fill( *out_psigrid, *out_psigrid + tgrid_size, 0. );
+//   std::fill( *out_Zgrid,   *out_Zgrid   + tgrid_size, 0. );
+//   std::fill( *out_Zidx,    *out_Zidx    + tgrid_size, 0  ); 
+//   *out_last_idx = 0;
+
+//   double time = age - tgrid[ *out_last_idx ];
+//   while ( time > 0. ) {
+//     /*(1)*/ (*out_psigrid)[ *out_last_idx ]  = ( *this )( time );
+//     /*(2)*/ (*out_Zgrid)[ *out_last_idx ]    = ( *this ).get_Zstar( time );
+//     /*(3)*/ (*out_Zidx)[ *out_last_idx ] = utl::find_low( (*out_Zgrid)[ *out_last_idx ],
+// 							  Zgrid, Zgrid_size );
+//     ++( *out_last_idx ); // increment index
+//     time = age - tgrid[ *out_last_idx ]; // update time
+//   }
+  
+//   return;
+
+// }
 
 // =============================================================================

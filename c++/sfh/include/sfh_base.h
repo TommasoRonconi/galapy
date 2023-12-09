@@ -31,6 +31,7 @@ namespace sed {
 
     // private variables
     double _tau_quench;
+    std::vector< double > _dM = std::vector< double >( 2e5, 0.0 );
 
   protected :
     
@@ -70,6 +71,8 @@ namespace sed {
 
     double get_Mstar ( const double tau,
     		       const std::size_t npoints = 100 ) const noexcept;
+
+    std::vector< double > get_dMstar () const noexcept { return _dM; }
     
     // Virtual galactic content functions
     virtual double get_Mdust ( const double tau ) const noexcept = 0;
@@ -79,14 +82,6 @@ namespace sed {
 
     // Compute on time grid
     // on PyBind11
-    // void time_grid ( const double age,
-    // 		     const std::vector< double > & tgrid,
-    // 		     const std::vector< double > & Zgrid,
-    // 		     std::vector< double > & out_psigrid,
-    // 		     std::vector< double > & out_Zgrid,
-    // 		     std::vector< std::size_t > & out_Zidx,
-    // 		     std::size_t & out_last_idx );
-    // on PyBind11
     void time_grid ( const double age,
 		     const std::vector< double > & tgrid,
 		     const std::vector< double > & Zgrid,
@@ -95,15 +90,15 @@ namespace sed {
 		     std::vector< std::size_t > & out_Zidx,
 		     std::size_t & out_last_idx );
     // on CPython
-    void time_grid ( const double age,
-    		     const double * const tgrid,
-    		     const std::size_t tgrid_size,
-    		     const double * const Zgrid,
-    		     const std::size_t Zgrid_size,
-    		     double * const * const out_psigrid,
-    		     double * const * const out_Zgrid,
-    		     std::size_t * const * const out_Zidx,
-    		     std::size_t * const out_last_idx );
+    // void time_grid ( const double age,
+    // 		     const double * const tgrid,
+    // 		     const std::size_t tgrid_size,
+    // 		     const double * const Zgrid,
+    // 		     const std::size_t Zgrid_size,
+    // 		     double * const * const out_psigrid,
+    // 		     double * const * const out_Zgrid,
+    // 		     std::size_t * const * const out_Zidx,
+    // 		     std::size_t * const out_last_idx );
 
     // =============================================================
     // Serialize Object:

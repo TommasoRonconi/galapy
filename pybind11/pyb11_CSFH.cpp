@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <algorithm>
 // Internal includes
 #include <pyb11_serialize.h>
 #include <sfh.h>
@@ -82,6 +83,10 @@ namespace sed {
     double Mgas ( const double tau ) const noexcept { return ptr-> get_Mgas( tau ); }
     double Zgas ( const double tau ) const noexcept { return ptr-> get_Zgas( tau ); }
     double Zstar ( const double tau ) const noexcept { return ptr-> get_Zstar( tau ); }
+    py::array_t< double > dMstar () const noexcept {
+      auto dM = ptr->get_dMstar();
+      return py::array_t< double >( dM.size(), dM.data() );
+    }
 
     std::size_t serialize_size () const { return ptr->serialize_size(); }
     char * serialize ( char * data ) const { return ptr->serialize( data ); }
@@ -109,21 +114,22 @@ PYBIND11_MODULE( SFH_core, m ) {
     .def( "Mgas",  py::vectorize(&sed::CSFH::Mgas) )
     .def( "Zgas",  py::vectorize(&sed::CSFH::Zgas) )
     .def( "Zstar", py::vectorize(&sed::CSFH::Zstar) )
+    .def( "dMstar", &sed::CSFH::dMstar )
     .def( "time_grid",
 	  []( const sed::CSFH & csfh,
 	      const double age,
 	      const std::vector< double > & tgrid,
 	      const std::vector< double > & Zgrid ) {
 
-	    std::vector< double > out_psigrid (tgrid.size()), out_Zgrid(tgrid.size());
+	    std::vector< double > out_dMgrid (tgrid.size()), out_Zgrid(tgrid.size());
 	    std::vector< std::size_t > out_Zidx(tgrid.size());
 	    std::size_t out_last_idx;
 
 	    csfh.ptr->time_grid( age, tgrid, Zgrid,
-				 out_psigrid, out_Zgrid, out_Zidx, out_last_idx );
+				 out_dMgrid, out_Zgrid, out_Zidx, out_last_idx );
 	    
-	    return py::make_tuple( py::array_t< double >( out_psigrid.size(),
-							  out_psigrid.data() ),
+	    return py::make_tuple( py::array_t< double >( out_dMgrid.size(),
+							  out_dMgrid.data() ),
 				   py::array_t< double >( out_Zgrid.size(),
 							  out_Zgrid.data() ),
 				   py::array_t< std::size_t >( out_Zidx.size(),
