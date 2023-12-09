@@ -700,15 +700,13 @@ class GXY ( Model ) :
         attTotMC, attTot = self.ism.total_attenuation( self.wl(), self.csp.t )
         
         # emission from stars (using directly the core function for performance)
-        if self.params['age'] <= self.params['sfh']['tau_quench'] :
-            Lunatt, LattMC, Ltot = self.csp.core._kernel_emission( self.lgrid, attTotMC, attTot );
-            # Lunatt = self.csp.core.emission( self.lgrid )
-            # LattMC = self.csp.core.emission( self.lgrid, attTotMC )
-            # Ltot   = self.csp.core.emission( self.lgrid, attTot )
-        else :
-            Lunatt = self._passive_emission()
-            LattMC = self._passive_emission( attTotMC )
-            Ltot   = self._passive_emission( attTot )
+        Lunatt, LattMC, Ltot = self.csp.core._kernel_emission( self.lgrid, attTotMC, attTot )
+        # if self.params['age'] <= self.params['sfh']['tau_quench'] :
+        #     Lunatt, LattMC, Ltot = self.csp.core._kernel_emission( self.lgrid, attTotMC, attTot )
+        # else :
+        #     Lunatt = self._passive_emission()
+        #     LattMC = self._passive_emission( attTotMC )
+        #     Ltot   = self._passive_emission( attTot )
         self.components['stellar'] = Lunatt
         self.components['extinct'] = numpy.array(Ltot)
 
