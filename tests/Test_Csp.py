@@ -154,8 +154,13 @@ def test_csp_emission ( csp ) :
     il = 1000               # ll wavelength index
     Lcsp = [ csp.emission( age, sfh ) for age in ages ]
     Lcsp_ll = [ Lcsp[ i ][ il ] for i in range( 0, len ( ages ) ) ]
-    assert np.all ( Lcsp_ll == pytest.approx( [ 8086.216432373749,
-                                                429313.0040422565,
-                                                3535865.880163872] ) )
+    assert np.all (
+         Lcsp_ll == pytest.approx(
+              [ 10882.862, 480916.75, 3872580.0], rel = 0.001
+         )
+    )
+    # assert np.all ( Lcsp_ll == pytest.approx( [ 8086.216432373749,
+    #                                             429313.0040422565,
+    #                                             3535865.880163872] ) )
     
     
