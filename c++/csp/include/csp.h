@@ -52,7 +52,8 @@ namespace sed {
     vect_double _RCCSNtZ;
 
     // Parameters
-    vect_double _psi, _Zstar;
+    vect_double _dM, _Zstar;
+    // vect_double _psi, _Zstar;
     std::vector< std::size_t > _iz_low;
     std::size_t _it_last;
 
@@ -65,12 +66,23 @@ namespace sed {
 	    const std::size_t iz )
       const noexcept { return iz * _Ntau * _Nlambda + il * _Ntau + it; }
     
+    // inline double
+    // _sfh_lum_timeintegrand ( const std::size_t il,
+    // 			     const std::size_t it )
+    //   const noexcept { return				\
+    // 	( _tau[ it ] - _tau[ it - 1 ] ) *		\
+    // 	_psi[ it ] *					\
+    // 	utl::line_from_2points( _Zstar[ it ],
+    // 				_Z[ _iz_low[ it ] ],
+    // 				luminosity( il, it, _iz_low[ it ] ),
+    // 				_Z[ _iz_low[ it ] + 1 ],
+    // 				luminosity( il, it, _iz_low[ it ] + 1 ) ); }
+    
     inline double
     _sfh_lum_timeintegrand ( const std::size_t il,
 			     const std::size_t it )
       const noexcept { return				\
-	( _tau[ it ] - _tau[ it - 1 ] ) *		\
-	_psi[ it ] *					\
+	( _dM[ it ] - _dM[ it - 1 ] ) *			\
 	utl::line_from_2points( _Zstar[ it ],
 				_Z[ _iz_low[ it ] ],
 				luminosity( il, it, _iz_low[ it ] ),
@@ -95,7 +107,12 @@ namespace sed {
     // =============================================================================
     // Public functions
 
-    void set_params ( const vect_double & psi,
+    // void set_params ( const vect_double & psi,
+    // 		      const vect_double & Zstar,
+    // 		      const std::vector< std::size_t > & _iz_low,
+    // 		      const std::size_t _it_last ) noexcept;
+
+    void set_params ( const vect_double & dM,
 		      const vect_double & Zstar,
 		      const std::vector< std::size_t > & _iz_low,
 		      const std::size_t _it_last ) noexcept;
@@ -118,17 +135,36 @@ namespace sed {
     double emission ( const std::size_t il,
     		      const double * const Tfact ) const noexcept;
 
+    vect_double kernel_emission ( const std::size_t il,
+				  const double * const MCfact,
+				  const double * const DDfact ) const noexcept;
+
     // double emission ( const std::size_t il ) const noexcept;
     // double emission ( const std::size_t il,
     // 		      const std::vector< double > & Tfact ) const noexcept;
+
+    // double RCCSN () const noexcept {
+
+    //   double Rout = 0.;
+    //   for ( std::size_t it = 1; it <= _it_last; ++it )
+    // 	Rout +=							\
+    // 	  ( _tau[ it ] - _tau[ it - 1 ] ) *			\
+    // 	  _psi[ it ] *						\
+    // 	  utl::line_from_2points( _Zstar[ it ],
+    // 				  _Z[ _iz_low[ it ] ],
+    // 				  _RCCSNtZ[ it * _NZ + _iz_low[ it ] ],
+    // 				  _Z[ _iz_low[ it ] + 1 ],
+    // 				  _RCCSNtZ[ it * _NZ + _iz_low[ it ] + 1 ] );
+    //   return Rout;
+
+    // }
 
     double RCCSN () const noexcept {
 
       double Rout = 0.;
       for ( std::size_t it = 1; it <= _it_last; ++it )
 	Rout +=							\
-	  ( _tau[ it ] - _tau[ it - 1 ] ) *			\
-	  _psi[ it ] *						\
+	  ( _dM[ it ] - _dM[ it - 1 ] ) *			\
 	  utl::line_from_2points( _Zstar[ it ],
 				  _Z[ _iz_low[ it ] ],
 				  _RCCSNtZ[ it * _NZ + _iz_low[ it ] ],
@@ -153,7 +189,8 @@ namespace sed {
 	SerialVecPOD< double >::serialize_size( _LltZ ) +
 	SerialPOD< std::size_t >::serialize_size( _NL ) +
 	SerialVecPOD< double >::serialize_size( _RCCSNtZ ) +
-	SerialVecPOD< double >::serialize_size( _psi ) +
+	// SerialVecPOD< double >::serialize_size( _psi ) +
+	SerialVecPOD< double >::serialize_size( _dM ) +
 	SerialVecPOD< double >::serialize_size( _Zstar ) +
 	SerialVecPOD< std::size_t >::serialize_size( _iz_low ) +
 	SerialPOD< std::size_t >::serialize_size( _it_last );
@@ -171,7 +208,8 @@ namespace sed {
       data = SerialVecPOD< double >::serialize( data, _LltZ );
       data = SerialPOD< std::size_t >::serialize( data, _NL );
       data = SerialVecPOD< double >::serialize( data, _RCCSNtZ );
-      data = SerialVecPOD< double >::serialize( data, _psi );
+      // data = SerialVecPOD< double >::serialize( data, _psi );
+      data = SerialVecPOD< double >::serialize( data, _dM );
       data = SerialVecPOD< double >::serialize( data, _Zstar );
       data = SerialVecPOD< std::size_t >::serialize( data, _iz_low );
       data = SerialPOD< std::size_t >::serialize( data, _it_last );
@@ -190,7 +228,8 @@ namespace sed {
       data = SerialVecPOD< double >::deserialize( data, _LltZ );
       data = SerialPOD< std::size_t >::deserialize( data, _NL );
       data = SerialVecPOD< double >::deserialize( data, _RCCSNtZ );
-      data = SerialVecPOD< double >::deserialize( data, _psi );
+      // data = SerialVecPOD< double >::deserialize( data, _psi );
+      data = SerialVecPOD< double >::deserialize( data, _dM );
       data = SerialVecPOD< double >::deserialize( data, _Zstar );
       data = SerialVecPOD< std::size_t >::deserialize( data, _iz_low );
       data = SerialPOD< std::size_t >::deserialize( data, _it_last );

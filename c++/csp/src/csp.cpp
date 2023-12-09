@@ -28,12 +28,24 @@ sed::csp::csp ( const sed::csp::vect_double lambda,
 
 // =============================================================================
 
-void sed::csp::set_params ( const sed::csp::vect_double & psi,
+// void sed::csp::set_params ( const sed::csp::vect_double & psi,
+// 			    const sed::csp::vect_double & Zstar,
+// 			    const std::vector< std::size_t > & iz_low,
+// 			    const std::size_t it_last ) noexcept {
+
+//   _psi = psi; _Zstar = Zstar;
+//   _iz_low = iz_low; _it_last = it_last;
+  
+//   return;
+
+// }
+
+void sed::csp::set_params ( const sed::csp::vect_double & dM,
 			    const sed::csp::vect_double & Zstar,
 			    const std::vector< std::size_t > & iz_low,
 			    const std::size_t it_last ) noexcept {
 
-  _psi = psi; _Zstar = Zstar;
+  _dM = dM; _Zstar = Zstar;
   _iz_low = iz_low; _it_last = it_last;
   
   return;
@@ -52,14 +64,23 @@ double sed::csp::emission ( const std::size_t il,
 
 }
 
-// double sed::csp::emission ( const std::size_t il,
-// 			    const std::vector< double > & Tfact ) const noexcept {
+// =============================================================================
 
-//   double Lout = 0.;
-//   for ( std::size_t it = 1; it <= _it_last; ++it )
-//       Lout += Tfact[ it ] * _sfh_lum_timeintegrand( il, it );
-//   return Lout;
+std::vector< double > sed::csp::kernel_emission ( const std::size_t il,
+						  const double * const MCfact,
+						  const double * const DDfact )
+  const noexcept {
+  
+  std::vector< double > Lout = { 0., 0., 0.};
+  double dL;
+  for ( std::size_t it = 1; it <= _it_last; ++it ) {
+    dL = _sfh_lum_timeintegrand( il, it );
+    Lout[0] += dL;
+    Lout[1] += MCfact[ it ] * dL;
+    Lout[2] += DDfact[ it ] * dL;
+  }
+  return Lout;
 
-// }
+}
 
 // =============================================================================

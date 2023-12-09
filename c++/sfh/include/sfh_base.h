@@ -79,10 +79,18 @@ namespace sed {
 
     // Compute on time grid
     // on PyBind11
+    // void time_grid ( const double age,
+    // 		     const std::vector< double > & tgrid,
+    // 		     const std::vector< double > & Zgrid,
+    // 		     std::vector< double > & out_psigrid,
+    // 		     std::vector< double > & out_Zgrid,
+    // 		     std::vector< std::size_t > & out_Zidx,
+    // 		     std::size_t & out_last_idx );
+    // on PyBind11
     void time_grid ( const double age,
 		     const std::vector< double > & tgrid,
 		     const std::vector< double > & Zgrid,
-		     std::vector< double > & out_psigrid,
+		     std::vector< double > & out_dMgrid,
 		     std::vector< double > & out_Zgrid,
 		     std::vector< std::size_t > & out_Zidx,
 		     std::size_t & out_last_idx );

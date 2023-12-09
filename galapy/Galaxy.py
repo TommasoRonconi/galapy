@@ -701,9 +701,10 @@ class GXY ( Model ) :
         
         # emission from stars (using directly the core function for performance)
         if self.params['age'] <= self.params['sfh']['tau_quench'] :
-            Lunatt = self.csp.core.emission( self.lgrid )
-            LattMC = self.csp.core.emission( self.lgrid, attTotMC )
-            Ltot   = self.csp.core.emission( self.lgrid, attTot )
+            Lunatt, LattMC, Ltot = self.csp.core._kernel_emission( self.lgrid, attTotMC, attTot );
+            # Lunatt = self.csp.core.emission( self.lgrid )
+            # LattMC = self.csp.core.emission( self.lgrid, attTotMC )
+            # Ltot   = self.csp.core.emission( self.lgrid, attTot )
         else :
             Lunatt = self._passive_emission()
             LattMC = self._passive_emission( attTotMC )

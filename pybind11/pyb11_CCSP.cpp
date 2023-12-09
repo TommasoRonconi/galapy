@@ -49,6 +49,45 @@ namespace sed {
   
   }
 
+// ==========================================================================================
+
+  py::array_t< float >
+  get_csp_kernel_emission ( const sed::csp & ccsp,
+			    const py::array_t<
+			    std::size_t,
+			    py::array::c_style | py::array::forcecast > & il,
+			    const py::array_t<
+			    double,
+			    py::array::c_style | py::array::forcecast > & MCfact,
+			    const py::array_t<
+			    double,
+			    py::array::c_style | py::array::forcecast > & DDfact ) {
+
+    auto res0 = py::array_t<float>(il.shape(0));
+    auto res1 = py::array_t<float>(il.shape(0));
+    auto res2 = py::array_t<float>(il.shape(0));
+
+    auto ptrR0 = static_cast<float*>(res0.mutable_data());
+    auto ptrR1 = static_cast<float*>(res1.mutable_data());
+    auto ptrR2 = static_cast<float*>(res2.mutable_data());
+    auto ptrIL = static_cast<const std::size_t*>(il.data());
+    auto ptrMC = static_cast<const double*>(MCfact.data());
+    auto ptrDD = static_cast<const double*>(DDfact.data());
+
+    std::vector< double > out;
+    for ( py::ssize_t ii = 0; ii < il.shape(0); ++ii ) {
+      out = ccsp.kernel_emission( ptrIL[ii],
+				  ptrMC + ii * ccsp.tau_size(),
+				  ptrDD + ii * ccsp.tau_size() );
+      ptrR0[ii] = out[0];
+      ptrR1[ii] = out[1];
+      ptrR2[ii] = out[2];
+    }
+
+    return py::make_tuple( res0, res1, res2 );
+  
+  }
+
   // ========================================================================================
 
   py::tuple loadSSP ( const std::string & file_name ) {
@@ -116,6 +155,10 @@ PYBIND11_MODULE( CSP_core, m ) {
     .def( "emission",   &sed::get_csp_emission,
 	  "computes the composite stellar population emission",
 	  py::arg("il"), py::arg("Tfact") = py::array_t<double>() )
+    .def( "_kernel_emission",   &sed::get_csp_kernel_emission,
+	  "computes the composite stellar population emission "
+	  "along with the two phases of attenuation",
+	  py::arg("il"), py::arg("MCfact"), py::arg("DDfact") )
     .def( "RCCSN",      &sed::csp::RCCSN )
     .def( py::pickle(
 		     []( const sed::csp &o ) { //__getstate__
