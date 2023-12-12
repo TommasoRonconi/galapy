@@ -39,6 +39,7 @@ def return_extensions () :
         include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
     
     #############################################################################
@@ -56,6 +57,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
 
     #############################################################################
@@ -71,6 +73,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
 
     #############################################################################
@@ -86,6 +89,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
 
     #############################################################################
@@ -100,6 +104,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
 
     #############################################################################
@@ -114,6 +119,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )    
 
     #############################################################################
@@ -127,6 +133,7 @@ def return_extensions () :
         include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
+        extra_compile_args=[ '-std=c++17' ]
     )
 
     return [
