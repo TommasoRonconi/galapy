@@ -708,7 +708,7 @@ class GXY ( Model ) :
         #     LattMC = self._passive_emission( attTotMC )
         #     Ltot   = self._passive_emission( attTot )
         self.components['stellar'] = Lunatt
-        self.components['extinct'] = numpy.array(Ltot)
+        self.components['extinct'] = numpy.array(Ltot) # copy the value
 
         if store_attenuation or self.nff is not None :
             wn0 = Lunatt > 0.
