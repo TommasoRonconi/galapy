@@ -362,7 +362,6 @@ def sed_flux_res ( res,
                            observation.fluxes,
                            observation.errors,
                            observation.uplims )
-        # ff[lo] = 3*ee[lo]
         legend_primary.append(
             sed_obs( ll, ff, ee, lo,
                      redshift = redshift,
@@ -479,13 +478,11 @@ def sed_residuals_res ( res,
                               center=True, redshift=redshift, frame=frame, ax = ax)
         
     _ = sed_flux( lsed, numpy.zeros_like(lsed), redshift=redshift, frame=frame, ax = ax )
-    # obs_color = next(ax._get_lines.prop_cycler)['color']
     Pdata, *_ = _errorbar_with_uplims(
         ll[~lo], chi[~lo],
         numpy.zeros_like(ee[~lo]),
         numpy.zeros_like(lo[~lo]),
         ax = ax,
-        # color = obs_color
     )
     obs_color = Pdata.lines[0].get_color()
     _ = _errorbar_with_uplims(
