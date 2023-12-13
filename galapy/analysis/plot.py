@@ -171,11 +171,10 @@ def sed_layout ( redshift, frame, ax = None, **kwargs ) :
     return(ax)
 
 def _errorbar_with_uplims( xx, yy, ee, lo, ax = None, **kwargs ) :
-    
+
     if ax is None :
         ax = plt.gca()
-    if 'c' not in kwargs.keys() and 'color' not in kwargs.keys() :
-        kwargs['color'] = next(ax._get_lines.prop_cycler)['color']
+    kwargs = dict(kwargs)
     marker = 'o'
     if 'marker' in kwargs.keys() :
         marker = kwargs.pop('marker')
@@ -192,6 +191,13 @@ def _errorbar_with_uplims( xx, yy, ee, lo, ax = None, **kwargs ) :
         zorder=3,
         **kwargs
     )
+    color = None
+    if 'c' in kwargs.keys() :
+        color = kwargs.pop( 'c' )
+    elif 'color' in kwargs.keys() :
+        color = kwargs.pop( 'color' )
+    else :
+        color = Pdata.lines[0].get_color()
     Puplims = ax.errorbar(
         xx[lo], 2*ee[lo], 1*ee[lo],
         uplims=lo[lo],
@@ -202,6 +208,7 @@ def _errorbar_with_uplims( xx, yy, ee, lo, ax = None, **kwargs ) :
         marker='none', 
         linestyle='none',
         zorder=3,
+        color = color,
         **kwargs
     )
     return Pdata, Puplims
