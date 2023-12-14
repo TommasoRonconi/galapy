@@ -154,8 +154,9 @@ class PMS () :
         for key, value in kwargs.items() :
             if isinstance( value, MM ) :
                 try :
-                    ll = numpy.ascontiguousarray(value[ 'wavelengths' ])
-                    fl = numpy.ascontiguousarray(value[ 'photons' ])
+                    idx_sort = numpy.argsort( value[ 'wavelengths' ] )
+                    ll = numpy.ascontiguousarray(value[ 'wavelengths' ][idx_sort])
+                    fl = numpy.ascontiguousarray(value[ 'photons' ][idx_sort])
                     self.bpt[ key ] = BPT( ll, fl )
                 except KeyError :
                     raise ValueError(
