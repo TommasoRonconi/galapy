@@ -136,9 +136,10 @@ class PMS () :
                     raise ValueError(
                         f'Argument "{arg}" provided does not name a known filter.'
                     )
-                    
-                ll = numpy.ascontiguousarray(ll)
-                fl = numpy.ascontiguousarray(fl)
+
+                idx_sort = numpy.argsort( ll )
+                ll = numpy.ascontiguousarray(ll[idx_sort])
+                fl = numpy.ascontiguousarray(fl[idx_sort])
 
                 try :
                     self.bpt[ arg ] = BPT( ll, fl )
