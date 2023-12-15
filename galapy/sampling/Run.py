@@ -270,7 +270,7 @@ def _sample_parallel ( which_sampler = 'emcee', nwalkers = None, nsamples = None
 
     # Run the sampling
     sampler = None
-    with mp.Pool( Ncpu ) as pool :
+    with mp.get_context("fork").Pool( Ncpu ) as pool :
         sampler = sample(
             sampler = which_sampler, 
             sampler_kw = sampler_kw, 
