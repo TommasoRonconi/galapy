@@ -689,7 +689,7 @@ store_lightweight = False
 
 # Whether to pickle the sampler raw results.
 # (might be useful for analyzing run statistics)
-pickle_raw = True
+pickle_raw = False
 
 # Whether to pickle the sampler at the end-of-run state.
 # (might be useful for extending the run)
