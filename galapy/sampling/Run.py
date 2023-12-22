@@ -637,6 +637,12 @@ noise_parameters = {{
 # 'dynesty' : Dynamic Nested Sampler
 sampler = 'emcee'
 
+# EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
+# - set the number of walkers (``nwalkers``)
+# - set the chain length (``nsamples``)
+nwalkers = 32
+nsamples = 16
+
 # Sampler keyword arguments.
 # These are the parameters that will be passed to the constructor of
 # the chosen sampler. See relative documentation for further informations:
@@ -688,12 +694,6 @@ pickle_raw = True
 # Whether to pickle the sampler at the end-of-run state.
 # (might be useful for extending the run)
 pickle_sampler = False
-
-# EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
-# - set the number of walkers (``nwalkers``)
-# - set the chain length (``nsamples``)
-nwalkers = 32
-nsamples = 16
 
 #############################
 # ... and that's all folks! #
