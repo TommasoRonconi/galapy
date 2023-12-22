@@ -1,6 +1,10 @@
 GalaPy: Spectral modelling tool for Galaxies in Python
 ======================================================
 
+.. image:: https://raw.githubusercontent.com/TommasoRonconi/galapy_database/main/images/GalaPy_Example.png
+   :width: 100%
+   :alt: If the image is not directly shown in the text, it can be found in the subdirectory `logo/GalaPy_Example.png`
+
 GalaPy is an extensible API for modelling Galactic emission.
 It provides an easy-to-use Python user interface while the number-crunching is done with compiled, high-performance, object-oriented C++.
 
@@ -81,9 +85,9 @@ The steps required for running the sampling are just two:
 
 .. note::
    GalaPy, in some of its components (e.g. SSP tables, PAH template), makes use of pre-computed functions that are
-   available in the official database (`galapy_data`_). When one of the files in the database is accessed for the
+   available in the official database (`galapy_database`_). When one of the files in the database is accessed for the
    first time it will authomatically be downloaded into the user's filesystem
-   (in the default location :code:`$HOME/.galapy/data`).
+   (in the default location :code:`$HOME/.galapy/galapy_database`).
    This will of course require an internet connection and can partially slow down the computations.
    We therefore suggest, prior to first run, to download all the database by running
 
@@ -146,6 +150,6 @@ and in the `API documentation`_.
 .. _installation guide: ...
 .. _tutorials: ...
 .. _API documentation: ...
-.. _galapy_data: ...
+.. _galapy_database: https://github.com/TommasoRonconi/galapy_database/
 .. _Free parameters: ...
 
