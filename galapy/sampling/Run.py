@@ -640,8 +640,8 @@ sampler = 'emcee'
 # EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
 # - set the number of walkers (``nwalkers``)
 # - set the chain length (``nsamples``)
-nwalkers = 32
-nsamples = 16
+nwalkers = 64
+nsamples = 4096
 
 # Sampler keyword arguments.
 # These are the parameters that will be passed to the constructor of
