@@ -16,6 +16,7 @@
 
    guides/photometric_fit
    guides/parameter_file
+   guides/choose_ssp_lib
 ..   guides/results_analysis .. this will be a jupyter notebook
 
 .. toctree::
