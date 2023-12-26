@@ -66,7 +66,7 @@ The steps required for running the sampling are just two:
 
    .. code-block:: console
 
-      $ galapy-genparams [--name/-n NAME]
+      $ galapy-genparams [--name/-n NAME | --SFH_model/-sfh MODEL_NAME ]
 
    The generated file should be self-explanatory and has to be
    modified according to the fit the user has to perform.
