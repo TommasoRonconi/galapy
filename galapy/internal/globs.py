@@ -11,42 +11,9 @@ DATA_URL = 'https://raw.githubusercontent.com/TommasoRonconi/galapy_database/mai
 DATA_DIR = 'galapy_database'
 
 ################################################################
-# Bruzual and Charlot (2003) SSP libraries
+# Simple Stellar Population libraries
 
-# directory
-BC03 = ( DATA_DIR, 'SSP', 'BC03' )
-
-# BaSeL (Low Resolution) SSP + Chabrier IMF + null extension
-bc03_basel_chab_zeros = ( 'basel_chab_zero_extended.dat', BC03  )
-
-# BaSeL (Low Resolution) SSP + Chabrier IMF + null ext. + thinner lambda-grid
-bc03_basel_chab_zeros_refined = ( 'basel_chab_zero_refined.dat', BC03 )
-
-# Stelib (High Resolution) SSP + Chabrier IMF + null extension
-bc03_stelib_chab_zeros = ( 'stelib_chab_zero_extended.dat', BC03 )
-
-# Stelib (High Resolution) SSP + Chabrier IMF + extrapolation
-bc03_stelib_chab_extrap = ( 'stelib_chab_extrap.dat', BC03 )
-
-################################################################
-# PARSEC22 SSP libraries
-
-# directory
-parsec22 = ( DATA_DIR, 'SSP', 'parsec22' )
-
-# Custom SISSA SSPs including non-thermal SN emission
-parsec22_NT = ( 'parsec22_NT.dat', parsec22  )
-
-# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-parsec22_NTL = ( 'parsec22_NTL.dat', parsec22  )
-
-# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-# + thinner lambda-grid
-parsec22_NT_refined = ( 'parsec22_NT_refined.dat', parsec22  )
-
-# Custom SISSA SSPs including non-thermal SN emission + Nebular Free-free and lines
-# + thinner lambda-grid
-parsec22_NTL_refined = ( 'parsec22_NTL_refined.dat', parsec22  )
+SSP_DIR = ( DATA_DIR, 'SSP' )
 
 ################################################################
 # Photometric Filters

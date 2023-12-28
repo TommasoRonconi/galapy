@@ -8,50 +8,96 @@ import os
 import warnings
 
 # Internal imports
-from .CSP_core import loadSSP, CCSP
+from .CSP_core import loadSSP as _loadSSP, CCSP
 from .SYN_core import CSYN
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
 
-_SSP_LIB = {
-    'bc03.basel.chab.extend'  : GP_GBL.bc03_basel_chab_zeros,
-    'bc03.basel.chab.refined' : GP_GBL.bc03_basel_chab_zeros_refined,
-    'bc03.stelib.chab.extend' : GP_GBL.bc03_stelib_chab_zeros,
-    'bc03.stelib.chab.extrap' : GP_GBL.bc03_stelib_chab_extrap,
-    'parsec22.NT'  : GP_GBL.parsec22_NT,
-    'parsec22.NTL' : GP_GBL.parsec22_NTL,
-    'parsec22.NT.refined'  : GP_GBL.parsec22_NT_refined,
-    'parsec22.NTL.refined' : GP_GBL.parsec22_NTL_refined,
-    'br22.NT'  : GP_GBL.parsec22_NT,                     # keeping this for backward compatibility
-    'br22.NTL' : GP_GBL.parsec22_NTL,                    # keeping this for backward compatibility
-    'br22.NT.refined'  : GP_GBL.parsec22_NT_refined,     # keeping this for backward compatibility
-    'br22.NTL.refined' : GP_GBL.parsec22_NTL_refined,    # keeping this for backward compatibility
-    }
+def _recursive_list_ssp_libs ( root, pathline = [],
+                               outlist = [], outpath = None ) :
+    rootpath, subd, files = next(os.walk(root))
+    for f in files :
+        outlist += ['.'.join(pathline+f.split('.')[:-1])]
+        if outpath is not None :
+            outpath += [ os.path.join(rootpath, f) ]
+    for s in subd : _recursive_list_ssp_libs(os.path.join(root, s),
+                                             pathline+[s], outlist,
+                                             outpath)
+    return;
 
 def print_ssp_libs () :
-    """ Method for printing on screen the possible choices for the SSP library.
+    """Print on screen a list of the available SSP libraries.
     
     This has the only purpose of listing the possible choices.
 
-    Naming convention: **author.method[.imf].filling_schema**
+    Naming convention: **author.method[.imf.filling_schema]**
 
     #. **author**: An achronym for the authors of the SSP library
     #. **method**: if present, shows which method was used to compute the SSP
     #. **imf**: if present shows the initial mass function used to compute the SSP
     #. **filling_schema**: all the SSPs' wavelength domain has been extended to
        span from :math:`1\ \mathring{A}` to :math:`10^{10}\ \mathring{A}`. 
-       This code provides the strategy used (:code:`extend` = filled with zeros, 
+       This code provides the strategy used (plain = filled with zeros, 
        :code:`extrap` = extrapolated linearly in the logarithm, 
        :code:`refined` = thinner lambda grid obtained by 
-       linearly-interpolating the :code:`extend` equivalent)
+       linearly-interpolating the plain equivalent)
     """
+    from galapy.configuration import rcParams
+    outlist = []
+    for path in rcParams['datapath'] :
+        _recursive_list_ssp_libs( root = os.path.join( path, *GP_GBL.SSP_DIR ),
+                                  pathline = [], outlist = outlist )
     list_libs = ''
-    for k in _SSP_LIB.keys() :
+    for k in outlist :
         list_libs += f'* {k};\n'
     print( 'Available SSP formats\n'
            '---------------------\n'
            + list_libs )
-    return;
+
+def list_ssp_libs ( path = False ) :
+    """Return a list of the available SSP libraries.
+    
+    Parameters
+    ----------
+    path : bool
+        (default = False) if True, also return a list
+        with absolute paths to each of the available SSP libs.
+    
+    Returns
+    -------
+    : list
+        available SSP libraries
+    : list
+        available SPP libraries as a list of absolute paths.
+    """
+    
+    from galapy.configuration import rcParams
+    outlist = []
+    outpath = None
+    if path :
+        outpath = []
+    for path in rcParams['datapath'] :
+        _recursive_list_ssp_libs( root = os.path.join( path, *GP_GBL.SSP_DIR ),
+                                  pathline = [], outlist = outlist,
+                                  outpath = outpath )
+    if outpath is not None :
+        return outlist, outpath
+    return outlist
+
+_SSP_LIB = dict( zip( *list_ssp_libs(True) ) )
+
+def load_SSP_table ( which ) :
+    """Load a SSP library corresponding to a given name.
+    """
+
+    filepath, filename = os.path.split( _SSP_LIB[ which ] )
+    path_line = []
+    level = None
+    while level != GP_GBL.DATA_DIR :
+        filepath, level = os.path.split( filepath )
+        path_line = [ level ] + path_line
+    
+    return _loadSSP( DataFile( filename, tuple(path_line) ).get_file() )
 
 def format_SSP_table ( L, lidx, tidx, Zidx, lsize, tsize, Zsize, flat = True ) :
     """Given an input SSP table returns a version with the formatting internally
@@ -182,7 +228,7 @@ class CSP () :
                               'you can see the list of available libraries by running '
                               'galapy.CompositeStellarPopulation.print_ssp_libs()' )
         
-        self.l, self.t, self.Z, self.L = loadSSP( DataFile( *_SSP_LIB[self.ssp_lib] ).get_file() )
+        self.l, self.t, self.Z, self.L = load_SSP_table( self.ssp_lib )
         self.shape = (self.l.size, self.t.size, self.Z.size)
 
         self.CCSN = CCSN
