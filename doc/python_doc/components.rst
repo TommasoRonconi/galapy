@@ -2,7 +2,7 @@ Galaxy Components modules
 =========================
 
 These modules wrap the different components that build-up a :code:`galapy.Galaxy.GXY` and derived objects.
-Each of the galactic component can be used independently and, eventually, extended with further functionalities.
+Each of the galactic components can be used independently and, eventually, extended with further functionalities.
 
 .. autosummary::
    :toctree: _generated
@@ -15,3 +15,35 @@ Each of the galactic component can be used independently and, eventually, extend
    galapy.NebularFreeFree
    galapy.Synchrotron
    galapy.XRayBinaries
+   galapy.InterGalacticMedium
+   galapy.Cosmology
+
+Noise modelling
+===============
+
+.. autosummary::
+   :toctree: _generated
+
+   galapy.Noise
+
+Sampling
+========
+
+.. autosummary::
+   :toctree: _generated
+
+   galapy.Handlers
+   galapy.sampling.Observation
+   galapy.sampling.Results
+   galapy.sampling.Sampler
+   galapy.sampling.Statistics
+
+Analysis
+========
+
+.. autosummary::
+   :toctree: _generated
+
+   galapy.analysis.plot
+   galapy.analysis.funcs
+   

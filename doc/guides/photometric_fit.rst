@@ -1,5 +1,5 @@
-Fiting a model to photometric data
-==================================
+Fit a model to photometric data
+===============================
 
 In broad band observations of astrophysical sources, the total flux is given by the convolution of the radiation coming from the source
 with the response of the instrument.

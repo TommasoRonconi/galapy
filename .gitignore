@@ -18,6 +18,6 @@
 # *.ipynb
 
 # Sphinx-generated files
-/doc/tutorials/*
+/doc/converted_notebooks/*
 /doc/python_doc/_generated/*
 

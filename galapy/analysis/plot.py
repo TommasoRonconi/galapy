@@ -440,7 +440,7 @@ def sed_residuals_res ( res,
     ax_kwargs : dict
         (Optional) keyword arguments to pass to the function ``sed_layout``
     
-    Results
+    Returns
     -------
     : matplotlib.axes.Axes
         An instance of ``matplotlib.axes.Axes`` with the plotted fluxes
@@ -608,15 +608,19 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
         (to see defaults call ``galapy.analysis.plots.show_default_dict('getdist_settings')``)
     param_limits : str or sequence or dict
         If a string is passed it has to be one among
+
         - 'auto' : set the axes limits automatically
         - 'prior' : set the axes to the limits of the prior
+
         Otherwise it can be a 
+
         - 2D sequence (list or tuple) with dimensions (ndim, 2), where
           ndim is the number of free parameters of the sampling run. Each of the
           ndim couples will be assigned to the ordered list of free-parameters.
         - a dictionary where the keys are the names of the free parameters of the
           sampling run and the values are sequences of length = 2 with the limits
           for the corresponding free parameter.
+
     plot_titles : bool
         Whether to plot titles above the diagonal marginal posteriors with summary
         statistics computed from the corresponding posteriors (default summary is 

@@ -231,7 +231,7 @@ Nonetheless, the user should set these values according to the needs of the exam
       from galapy.CompositeStellarPopulation import print_ssp_libs
       print_ssp_libs()
 
-   A thorough description of the differences between the several SSP libraries can be found in the presentation paper or in :ref:`choose_ssp_lib`.
+   A thorough description of the differences between the several SSP libraries can be found in the presentation paper or in :ref:`/notebooks/choose_ssp_lib.ipynb`.
 
 4. ``do_Xray`` (default ``= False``) by setting this boolean to ``True`` the SED will be extended down to wavelength :math:`\lambda = 1\,\mathring{A}`.
    The choice affects both the stellar continuum (by adding the X-Ray emission due to stars in binary systems) and the eventual AGN emission (if ``do_AGN = True``).
@@ -242,7 +242,7 @@ Nonetheless, the user should set these values according to the needs of the exam
    * Nebular Free-Free emission
      
    The system authomatically accounts for the SSP library chosen, as libraries of the ``parsec22.NT`` family already include synchrotron and libraries of the ``parsec22.NTL``
-   family include both synchrotron and nebular emission (free-free and lines, see :ref:`choose_ssp_lib` for further details).
+   family include both synchrotron and nebular emission (free-free and lines, see :ref:`/notebooks/choose_ssp_lib.ipynb` for further details).
 
    .. note::
 

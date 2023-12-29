@@ -1,6 +1,6 @@
 SOURCEDIR=./
 
-LOC=/tmp
+LOC=/home/tomi/work/myrepos
 
 OUTPUTDIR=$(LOC)/galapy_doc
 

@@ -16,16 +16,16 @@
 
    guides/photometric_fit
    guides/parameter_file
-   guides/choose_ssp_lib
+   notebooks/choose_ssp_lib
 ..   guides/results_analysis .. this will be a jupyter notebook
 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials 
-	     
-   tutorials/SFH_tutorial
-   tutorials/CSP_tutorial
-   tutorials/ISM_tutorial
+
+   notebooks/SFH_tutorial
+   notebooks/CSP_tutorial
+   notebooks/ISM_tutorial
 
 .. toctree::
    :maxdepth: 2
