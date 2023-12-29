@@ -23,12 +23,11 @@ class CSM () :
       If a string is passed, it should name one of the pre-computed cosmologies available in the
       database. Available cosmologies are :code:`('WMAP7', 'WMAP9', 'Planck15', 'Planck18')`.
       If a dictionary is passed, the class expects to find 3 key-value couples:
-      * key = 'redshift', value = an array of redshift values;
-      * key = 'luminosity_distance', value = an array of luminosity distances corresponding to 
-        the redshift values of the first key-value couple;
-      * key = 'age', value = an array of ages of the Universe corresponding to the redshift 
-        values of the first key-value couple.
-      It is obvious all these arrays should have the same length.
+      (i) key = 'redshift', value = an array of redshift values; (ii) key = 'luminosity_distance', 
+      value = an array of luminosity distances corresponding to the redshift values of the first key-value couple;
+      (iii) key = 'age', value = an array of ages of the Universe corresponding to the redshift 
+      values of the first key-value couple.
+      All these arrays should have the same length.
     
     Attributes
     ----------
@@ -74,7 +73,7 @@ class CSM () :
         
         .. math::
         
-          S_{\lambda_O} = \lambda_R^2 * L_tot(\lambda_R) * (1+z)/(4 * \pi * c * D_L^2 )
+          S_{\lambda_O} = \lambda_R^2 L_\text{tot}(\lambda_R) (1+z) / (4 \pi c D_L^2 )
         
         Parameters
         ----------
@@ -88,7 +87,4 @@ class CSM () :
           a flux in milliJansky
         """
         return luminosity * restframe_wavelength**2 * self._TF( redshift ) 
-
-        
-
 
