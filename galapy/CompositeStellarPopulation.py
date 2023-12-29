@@ -195,6 +195,14 @@ def store_SSP_table ( outfile, l, t, Z, L, endianism = 'little', force = False )
         f.write( L.tobytes() )
     return;
 
+def reshape_SSP_table ( L, shape ) :
+    return numpy.transpose(
+        L.reshape(
+            (shape[2], shape[0], shape[1])
+        ),
+        axes = ( 1, 2, 0 )
+    )
+
 class CSP () :
     """ The Composite Stellar Population object handles and manipulates SSP libraries.
 
@@ -233,12 +241,7 @@ class CSP () :
 
         self.CCSN = CCSN
         self.core = CCSP( self.l, self.t, self.Z, self.L, self.CCSN )
-        self.L = numpy.transpose(
-            self.L.reshape(
-                (self.shape[2], self.shape[0], self.shape[1])
-            ),
-            axes = ( 1, 2, 0 )
-        )
+        self.L = reshape_SSP_table( self.L, self.shape )
         self._timetuple = None
 
         # steal docstrings from C-core:
