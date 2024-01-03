@@ -17,7 +17,7 @@
    guides/photometric_fit
    guides/parameter_file
    notebooks/choose_ssp_lib
-..   guides/results_analysis .. this will be a jupyter notebook
+   notebooks/results_analysis
 
 .. toctree::
    :maxdepth: 2
