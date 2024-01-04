@@ -677,9 +677,7 @@ class GXY ( Model ) :
             (Optional, default = ``False``) if set to ``True``, stores the total,
             wavelength dependent, attenuation due to ISM in an internal variable (``Aavg``)
 
-        Keyword Arguments
-        -----------------
-        **kwargs :
+        **kwargs : dictionary, optional
             arguments passed to function ``set_parameters()``
         
         Returns
@@ -816,6 +814,22 @@ class PhotoGXY ( GXY ) :
     """Galaxy class including photometric system.
     This is a class derived from ``galapy.Galaxy`` which implements authomatic computation 
     of fluxes convolved with bandpass transmission filters.
+    
+    Parameters
+    ----------
+    pms : PMS instance, optional
+      an instance of type ``galapy.PhotometricSystem.PMS``, if not passed,
+      it should be built using function ``build_photometric_system``
+    *args : tuple, optional
+      arguments to be passed to the constructor of the base class ``GXY``
+    **kwargs : dictionary, optional
+      keyword arguments to be passed to the constructor of the base class ``GXY``
+    
+    See Also
+    --------
+    galapy.PhotometricSystem.PMS : class implementing the photometric system
+    build_photometric_system : method for building a photometric system internally
+    GXY : base class
     """
 
     def __init__ ( self, *args, pms = None, **kwargs ) :
@@ -841,17 +855,21 @@ class PhotoGXY ( GXY ) :
         
         Parameters
         ----------
-        args : sequence
+        *args : sequence
             positional arguments of the PMS contructor
-        kwargs : dictionary
+        **kwargs : dictionary
             keyword arguments of the PMS constructor
+        
+        See Also
+        --------
+        galapy.PhotometricSystem.PMS : constructor of the photometric system class
         """
 
         self.pms = PMS( *args, **kwargs)
         return;
 
     def photoSED ( self ) :
-        """Computes and returns the photometric bandpass fluxes.
+        """Computes and returns the photometric bandpass fluxes in milliJansky.
         """
 
         if self.pms is None :

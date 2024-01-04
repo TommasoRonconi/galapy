@@ -37,10 +37,30 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
        defaults to the arbitrary large value of $2 \cdot 10^9$ years
     model : string
        SFH model
+    **kwargs : dictionary, optional
+       The free-parameters of the SFH model chosen (with argument ``model``)
+       The parameterization depends on the chosen model.
     
     Keyword Arguments
-    -----------------    
-    The parameterization depends on the chosen model.
+    -----------------
+    psi_max : float
+      ``model = 'insitu'``, optional, default = 100
+    tau_star : float
+      ``model = ['insitu','delayedexp', 'lognormal']``, optional, 
+      default = 3.e+8 if ``insitu`` or ``lognormal``, = 1.e+8 if ``delayedexp``
+    psi : float
+      ``model = 'constant'``, optional, default = 1.0
+    psi_norm : float
+      ``model = ['delayedexp', 'lognormal']``, optional, 
+      default = 1.0 if ``delayedexp``, = 100 if ``lognormal``
+    k_shape : float
+      ``model = 'delayedexp'``, optional, default = 0.2
+    sigma_star : float
+      ``model = 'lognormal'``, optional, default = 2.0
+    Mdust : float
+      ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 1.e+8
+    Zgxy : float
+      ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 0.01
 
     Returns
     -------
@@ -120,6 +140,31 @@ class SFH () :
       One among ( 'insitu', 'constant', 'delayedexp', 'lognormal', 'interpolated', 'burst' ).
       Default is 'insitu'.
 
+    **kwargs : dictionary, optional
+       The free-parameters of the SFH model chosen (with argument ``model``)
+       The parameterization depends on the chosen model.
+    
+    Keyword Arguments
+    -----------------
+    psi_max : float
+      ``model = 'insitu'``, optional, default = 100
+    tau_star : float
+      ``model = ['insitu','delayedexp', 'lognormal']``, optional, 
+      default = 3.e+8 if ``insitu`` or ``lognormal``, = 1.e+8 if ``delayedexp``
+    psi : float
+      ``model = 'constant'``, optional, default = 1.0
+    psi_norm : float
+      ``model = ['delayedexp', 'lognormal']``, optional, 
+      default = 1.0 if ``delayedexp``, = 100 if ``lognormal``
+    k_shape : float
+      ``model = 'delayedexp'``, optional, default = 0.2
+    sigma_star : float
+      ``model = 'lognormal'``, optional, default = 2.0
+    Mdust : float
+      ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 1.e+8
+    Zgxy : float
+      ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 0.01
+
     Note
     ----
     Not for SED fitting, use the galaxy class
@@ -174,13 +219,30 @@ class SFH () :
         tau_quench : float
           Eventual time of abrupt quenching event, stopping 
           star formation forever.
-        \**kwargs : 
-          see below
-
+        **kwargs : dictionary, optional
+          The free-parameters of the SFH model chosen (with argument ``model``)
+          The parameterization depends on the chosen model.
+    
         Keyword Arguments
         -----------------
-        All the parameters the user wants, will consider only those with
-        a valid key for the SFH model chosen.
+        psi_max : float
+          ``model = 'insitu'``, optional, default = 100
+        tau_star : float
+          ``model = ['insitu','delayedexp', 'lognormal']``, optional, 
+          default = 3.e+8 if ``insitu`` or ``lognormal``, = 1.e+8 if ``delayedexp``
+        psi : float
+          ``model = 'constant'``, optional, default = 1.0
+        psi_norm : float
+          ``model = ['delayedexp', 'lognormal']``, optional, 
+          default = 1.0 if ``delayedexp``, = 100 if ``lognormal``
+        k_shape : float
+          ``model = 'delayedexp'``, optional, default = 0.2
+        sigma_star : float
+          ``model = 'lognormal'``, optional, default = 2.0
+        Mdust : float
+          ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 1.e+8
+        Zgxy : float
+          ``model = ['constant','delayedexp','lognormal','interpolated']``, optional, default = 0.01
         
         Returns
         -------

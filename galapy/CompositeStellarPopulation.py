@@ -196,6 +196,29 @@ def store_SSP_table ( outfile, l, t, Z, L, endianism = 'little', force = False )
     return;
 
 def reshape_SSP_table ( L, shape ) :
+    """Reshapes a flattened SSP table to the original 3-dimensional shape.
+    
+    The 3D matrix has the dimensions of the 3 grids over which it varies:
+    wavelength (l_grid), age (t_grid) and metallicity (Z_grid).
+    
+    Parameters
+    ----------
+    L : 1d numpy array
+        Input flattened SSP table with length l_grid*t_grid*Z_grid
+    shape : tuple
+        Tuple of 3 integers with the sizes of
+        
+        1. wavelength grid 
+        2. age grid
+        3. metallicity grid
+    
+        The above ordering is mandatory
+    
+    Returns
+    -------
+    : 3-d numpy array
+        3D copy of the original array with shape (l_grid, t_grid, Z_grid).
+    """
     return numpy.transpose(
         L.reshape(
             (shape[2], shape[0], shape[1])
@@ -212,8 +235,8 @@ class CSP () :
     Providing an object of type galapy.StarFormationHistory the self.emission function
     computes the luminosity of the resulting Composite Stellar Population.
     
-    Keyword Arguments
-    -----------------
+    Parameters
+    -----------
     ssp_lib : string
       which SSP library to load. The default is :code:`parsec22.NT`-
       To see the list of available libraries run 
@@ -326,10 +349,7 @@ class CSP () :
           The age in years of the CSP.
         sfh : object of type SFH()
           The chosen star formation history. This has to be (or inherit from) 
-          the instance of an object of type galapy.StarFormationHistory.SFH().        
-         
-        Keyword Arguments
-        -----------------
+          the instance of an object of type galapy.StarFormationHistory.SFH().
         il : array of int
            array of indexes of the positions in the wavelength-grid
            for which to compute the emission. The default value is :code:`None`, for which 
