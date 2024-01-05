@@ -113,23 +113,58 @@ def sfh_build_params ( tau_quench = 2.e+10, model = 'insitu', **kwargs ) :
         
 
 class SFH () :
-    """ Class wrapping the C-core implementation of the Star Formation History type.   
+    r""" Class wrapping the C-core implementation of the Star Formation History type.   
  
     The possible models to choose are:
 
-    #. 'insitu'
-    #. 'constant'
-    #. 'delayedexp'
-    #. 'lognormal'
-    #. 'interpolated'
-    #. 'burst'
+    #. ``'insitu'``
+       
+       .. math ::
+          
+          \psi(\tau) = \psi_\text{max} \left[ \exp(-x) - \exp(-s\gamma x) \right]
+       
+       with :math:`x = \tau / (s\tau_\star)`, :math:`s=3`, 
+       :math:`\gamma = 1 - \mathcal{R} + 3 \psi_\text{max}^{-0.3}`, 
+       :math:`\mathcal{R} = 0.45` the instantaneous recycling factor, 
+       :math:`\tau_\star =`:code:`tau_star` and :math:`\psi_\text{max} =`:code:`psi_max`  
+    
+    #. ``'constant'``
+       
+       .. math ::
+          
+          \psi(\tau) = \psi_0
+       
+       with :math:`\psi_0 =`:code:`psi`
+    
+    #. ``'delayedexp'``
+       
+       .. math ::
+          
+          \psi(\tau) = \psi_\text{norm} \tau^{\kappa}\, \exp{(-\tau/\tau_\star)}
+       
+       with :math:`\psi_\text{norm} =`:code:`psi_norm`, 
+       :math:`\kappa =`:code:`k_shape` and :math:`\tau_\star =`:code:`tau_star`
+    
+    #. ``'lognormal'``
+       
+       .. math ::
+          
+          \psi(\tau) = \psi_\text{norm} \dfrac{1}{\tau}\, \dfrac{1}{\sqrt{2\pi\sigma_\star^2}}\, 
+          \exp\left[-\dfrac{\ln^2(\tau/\tau_\star)}{2\,\sigma_\star^2}\right]
+       
+       with :math:`\psi_\text{norm} =`:code:`psi_norm`, :math:`\sigma_\star =`:code:`sigma_star` 
+       and :math:`\tau_\star =`:code:`tau_star`
+    
+    #. ``'interpolated'``: from a pre-computed grid of SFRs computed at given times.
+       If this model is chosen, two positional arguments are mandatory, 
+       i.e. the two grids ``args = (tau,sfr)`` with ``len(tau)==len(sfr)``, see below.
 
     Parameters
     ----------
     *args :
       positional arguments are optional, if passed they should be the two-iterables 
-      corresponding to gridded values of time and SFR to interpolate over: args = (tau, sfr)
-      with len(tau)==len(sfr). Note that in this case the 'model' argument will be overridden
+      corresponding to gridded values of time and SFR to interpolate over: ``args = (tau, sfr)``
+      with ``len(tau)==len(sfr)``. Note that in this case the 'model' argument will be over-written
       and fixed to 'interpolated'
     tau_quench : float
       Eventual abrupt quenching time for star formation. 
