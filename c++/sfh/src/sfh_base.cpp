@@ -81,7 +81,9 @@ void sed::sfh_base::time_grid ( const double age,
   while ( time > 0. ) {
     next_time = age - tgrid[ out_last_idx + 1 ];
     while ( time > next_time ) {
-      _dM[++jj] = ( *this )( time ) * 1.e+5; // dt=10^5 is fixed
+      // the control factor '*( time > 0.0 )' guarantees
+      // no negative values of time are summed up in the process
+      _dM[++jj] = ( *this )( time ) * 1.e+5 * ( time > 0.0 ); // dt=10^5 is fixed
       dM += _dM[jj];
       time -= 1.e+5; // dt=10^5 is fixed
     }
