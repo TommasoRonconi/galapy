@@ -23,9 +23,8 @@
    :maxdepth: 2
    :caption: Tutorials 
 
-   notebooks/SFH_tutorial
-   notebooks/CSP_tutorial
-   notebooks/ISM_tutorial
+   notebooks/load_topcat_catalogue
+   tutorials/physics_modules
 
 .. toctree::
    :maxdepth: 2
