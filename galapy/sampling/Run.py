@@ -571,21 +571,21 @@ galaxy_parameters = {{
     ##################
     # Molecular Clouds
     
-    'ism.norm_MC' : ( [-1., 4.], True ),
+    'ism.norm_MC' : 100.,
     'ism.N_MC'    : ( [0., 5.], True ),
     'ism.R_MC'    : ( [0., 5.], True ),
     'ism.tau_esc' : ( [4., 8.], True ),
-    'ism.dMClow'  : ( [0., 5.], False ),
-    'ism.dMCupp'  : ( [0., 5.], False ),
+    'ism.dMClow'  : 1.3,
+    'ism.dMCupp'  : 1.6,
     
     ##############
     # Diffuse Dust
     
-    'ism.norm_DD' : ( [-1., 4.], True ),
+    'ism.norm_DD' : 1.0,
     'ism.Rdust'   : ( [0., 5.], True ),
     'ism.f_PAH'   : ( [0., 1.], False ),
-    'ism.dDDlow'  : ( [0., 5.], False ),
-    'ism.dDDupp'  : ( [0., 5.], False ),
+    'ism.dDDlow'  : 0.7,
+    'ism.dDDupp'  : 2.0,
 
     ###############
     # Synchrotron #
