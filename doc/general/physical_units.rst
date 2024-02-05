@@ -27,9 +27,10 @@ Even though the assumed physical units are also reported throughout the `documen
 | Mass            | Solar masses :math:`[M_\odot]`             |
 +-----------------+--------------------------------------------+
 
+Even though Inputs are to be kept consistent with what is required by the function or class being built and outputs will always be in the above units, the user can convert their quantities to their preferred units, if necessary.
 
-Compatibility with other libraries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Conversions and compatibility with other libraries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 GalaPy is compliant with the main, most popular Python libraries, both standard and external.
 We show below the example of some of the mostly used libraries in Astrophysics: NumPy (and its sibling SciPy) and astropy.
@@ -77,10 +78,30 @@ Or we can pass an array of ages:
 .. code:: ipython
 
    In [7]: import numpy
-   In [8]: gxy.sfh.Mstar( numpy.lospace( 7, 10, 10 )
+   In [8]: gxy.sfh.Mstar( numpy.lospace( 7, 10, 10 ) )
    Out[8]: array([1.42748587e+07, 6.24427121e+07, 2.65490510e+08, 1.06947300e+09,
                   3.87568658e+09, 1.15193272e+10, 2.47565283e+10, 3.54007409e+10,
                   3.62805578e+10, 3.33419941e+10])
+
+GalaPy also contains a sub-package with some useful constants in different units in the form of python dictionaries.
+If we want to convert a wavelength in a frequency (e.g. the wavelength grid used in the ``GXY`` object built above, as returned by function ``gxy.wl()``), we will have to apply the following conversion
+
+.. math::
+
+   \nu = \dfrac{c}{\lambda}
+
+where :math:`c` is the speed of light, :math:`\lambda` is the wavelength and :math:`\nu` is the frequency.
+
+We import the speed-of-light dictionary from ``galapy.internal.constants`` and apply the conversion:
+
+.. code:: ipython
+
+   In [9]: from galapy.internal.constants import clight
+   In [10]: clight['A/s'] / gxy.wl()
+   Out[10]: array([2.99792458e+18, 6.52431900e+16, 3.29804684e+16, ...,
+                   3.16009111e+08, 3.07687258e+08, 2.99792458e+08])
+
+Where ``clight['A/s']`` returns the speed-of-light in :math:`[\mathring{A}/s] \equiv [\mathring{A}\cdot\text{Hz}]` units and, therefore, the output array is in units of :math:`[\text{Hz}]`.
 
 astropy
 -------
@@ -93,33 +114,30 @@ We can first convert the luminosity array :code:`L` computed above into an astro
 		  
 .. code:: ipython
 
-   In [9]: import astropy.units as u
-   In [9]: L *= u.L_sun
-   In [10]: type(L)
-   Out[10]: astropy.units.quantity.Quantity
+   In [11]: import astropy.units as u
+   In [12]: L *= u.L_sun
+   In [13]: type(L)
+   Out[13]: astropy.units.quantity.Quantity
 
 It is now possible to convert it to whatever other luminosity unit. So if we want to convert the value in Watts, we would just do something like this:
 
 .. code:: ipython
 
-   In [11]: L.to(u.Watt)
-   Out[11]:
+   In [14]: L.to(u.Watt)
+   Out[14]:
 
 :math:`[2.2075896, 1.4990568\times10^{10}, 8.4263495\times10^{11}, ..., 3.218031\times10^{17}, 8517357, 7363246.5]\ \text{W}`
 
-Consistently, we can also use astropy to easily pass from wavelengths to frequencies, transforming with
-
-.. math::
-
-   \nu = \dfrac{c}{\lambda}
-
-where :math:`c` is the speed of light, :math:`\lambda` is the wavelength and :math:`\nu` is the frequency.
+Consistently, we can also use astropy to easily pass from wavelengths to frequencies, transforming with the expression used above:
 
 .. code:: ipython
 
-   In[12]: lambda = gxy.wl()
-   In[13]: from astropy.constants import c
-   In[14]: nu = c.to(u.AA*u.Hz)/lambda
+   In [15]: lambda = gxy.wl()
+   In [16]: from astropy.constants import c
+   In [17]: c.to(u.AA*u.Hz)/lambda
+   Out[17]:
+
+:math:`[2.9979246\times10^{18}, 6.524319\times10^{16}, ..., 3.0768726\times10^8, 2.9979246\times10^8]\ \text{Hz}`
 
 where we have used the speed of light from astropy module :code:`astropy.constants` and converted it in :math:`[\mathring{A}\cdot\text{Hz}]` units.
    
