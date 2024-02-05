@@ -1,3 +1,5 @@
+.. _APIdoc:
+
 Modelling the different physical components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

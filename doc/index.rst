@@ -6,6 +6,7 @@
    :maxdepth: 2
    :caption: General
 
+   general/flux_diagram
    general/install_guide
    general/physical_units
    general/free_parameters
@@ -23,7 +24,7 @@
    :maxdepth: 2
    :caption: Tutorials 
 
-   notebooks/load_topcat_catalogue
+   notebooks/load_catalogue
    tutorials/physics_modules
 
 .. toctree::
