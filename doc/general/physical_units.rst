@@ -31,6 +31,9 @@ Even though the assumed physical units are also reported throughout the `documen
 Compatibility with other libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+GalaPy is compliant with the main, most popular Python libraries, both standard and external.
+We show below the example of some of the mostly used libraries in Astrophysics: NumPy (and its sibling SciPy) and astropy.
+
 NumPy (and SciPy)
 -----------------
 
