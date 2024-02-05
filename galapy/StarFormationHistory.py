@@ -214,6 +214,13 @@ class SFH () :
                 model = 'interpolated'
             except :
                 raise;
+        if 'tau' in kwargs and 'sfr' in kwargs :
+            try :
+                tau = numpy.ascontiguousarray(kwargs['tau'])
+                sfr = numpy.ascontiguousarray(kwargs['sfr'])
+                model = 'interpolated'
+            except :
+                raise;            
             
         self.core = CSFH( tau_quench, model )
         self.params = sfh_build_params( tau_quench, model, **kwargs )
