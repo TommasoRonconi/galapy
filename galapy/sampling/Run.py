@@ -588,7 +588,7 @@ galaxy_parameters = {{
     'ism.dDDupp'  : ( [0., 5.], False ),
 
     ###############
-    # Synchrotorn #
+    # Synchrotron #
     ###############
 
     'syn.alpha_syn'   : 0.75,
