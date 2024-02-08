@@ -2,8 +2,18 @@
 
 [build-system]
 requires = [
-    "setuptools", "wheel",
+    "setuptools",
+    "wheel",
     "pybind11>=2.10.0",
+    'numpy',
+    'scipy',
+    'tqdm',
+    'emcee',
+    'dynesty',
+    'matplotlib',
+    'getdist',
+    'requests',
+    'h5py'
 ]
 build-backend = "setuptools.build_meta"
 
@@ -11,7 +21,7 @@ build-backend = "setuptools.build_meta"
 name = "galapy"
 authors = [{ name = "Tommaso Ronconi", email = "tronconi@sissa.it" }]
 readme = "README.rst"
-#license = { file = "LICENSE" }
+license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: POSIX :: Linux",
@@ -28,51 +38,8 @@ Source = "https://github.com/TommasoRonconi/galapy"
 test = ["pytest"]
 doc = [
     "sphinx",
-    "nbsphinx",
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.graphviz'
+    "nbsphinx"
 ]
-
-[tool.setuptools]
-py_modules = ["galapy"]
-install_requires = [
-    "numpy",
-    "scipy",
-    "emcee",
-    "dynesty",
-    "matplotlib",
-    "getdist",
-    "requests",
-    "h5py",
-    "pytest"
-]
-requires-python = ">=3.6"
-
-[tool.setuptools.extension]
-# Specify options for building pybind11 extensions
-sources = [
-    "pybind11/*.cpp",
-    "c++/utl/src/*.cpp",
-    "c++/sfh/src/*.cpp",
-    "c++/imf/src/*.cpp",
-    "c++/csp/src/*.cpp",
-    "c++/ism/src/*.cpp",
-    "c++/rad/src/*.cpp",
-]
-include_dirs = [
-    "c++/utl/include",
-    "c++/sfh/include",
-    "c++/imf/include",
-    "c++/csp/include",
-    "c++/ism/include",
-    "c++/rad/include",
-    "pybind11"
-]
-libraries = ["m"]
-extra_compile_args = ["-std=c++17"]
 
 [project.scripts]
 galapy-fit = "galapy.sampling.Run:_run"

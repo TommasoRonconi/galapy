@@ -181,6 +181,7 @@ def main():
                'pybind11',
                'numpy',
                'scipy',
+               'tqdm',
                'emcee',
                'dynesty',
                'matplotlib',
