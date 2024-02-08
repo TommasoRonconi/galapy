@@ -39,7 +39,6 @@ author = 'Tommaso Ronconi'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    #'breathe',
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
