@@ -1,21 +1,26 @@
 GalaPy: Spectral modelling tool for Galaxies in Python
 ======================================================
 
+GalaPy is an open source, extensible API for modelling and fitting the Spectral Energy Distribution (SED) of galaxies from the X-ray to the radio band,
+as well as the evolution of their components and dust attenuation/reradiation.
+It provides functions, classes and terminal commands for Bayesian inference of galaxy properties from panchromatic photometric data,
+as well as for the analysis and simulation of galaxies spectral properties.
+
 .. image:: https://raw.githubusercontent.com/TommasoRonconi/galapy_database/main/images/GalaPy_Example.png
    :width: 100%
    :alt: If the image is not directly shown in the text, it can be found in the subdirectory `logo/GalaPy_Example.png`
 
-GalaPy is an extensible API for modelling Galactic emission.
-It provides an easy-to-use Python user interface while the number-crunching is done with compiled, high-performance, object-oriented C++.
+GalaPy provides an easy-to-use Python user interface while the number-crunching is done with compiled, high-performance, object-oriented C++.
 
-It is intended for researchers in the fields of Galaxy Formation and Evolution, Observational Astrophysics and Cosmology
-but also for theoretical and computational researchers interested in a lightning fast Galactic spectra simulator.
-Galapy enables instantiating multi-component parameterized galaxy objects with a high level of customization.
-It produces Spectral Energy Distributions (SED) in a matter of milliseconds on a single core with a minimal memory consumption. 
-
-Even though the library is optimized for fitting photometric datasets, its simulation capabilities are way more flexible than this,
+The library is currently optimized for fitting photometric datasets, nevertheless, its simulation capabilities are way more flexible than this,
 as it allows for the extraction of many other physical properties of galaxies, such as attenuation curves, matter content evolution histories (divided by component),
 metallicity evolution, star formation histories and more.
+
+Galapy enables instantiating multi-component parameterized galaxy objects with a high level of customization.
+It produces SEDs in a matter of milliseconds on a single core with a minimal memory consumption.
+It has been developed with the aim of providing a fast SED simulator and, thus, to aid research in Galaxy Formation and Evolution,
+both from the perspective of observational Astrophysics and Cosmology (thanks to its Bayesian statistical framework) as well as from the perspective of
+theoretical and computational researchers interested in a modern modelling tool.
 
 +-----------------------+-------------------------------------------+
 | **Free software**     | GPLv3 license                             |
@@ -70,6 +75,8 @@ The steps required for running the sampling are just two:
 
    The generated file should be self-explanatory and has to be
    modified according to the fit the user has to perform.
+   A detailed guide to the generation and modification of the parameter file
+   can be found in `param_file`_.
   
 2. Once the parameter file has been generated and properly modified, we can run
 
@@ -82,6 +89,7 @@ The steps required for running the sampling are just two:
    NOTE THAT the two optional arguments regulate whether to run the sampling
    serially or using shared-memory parallelism.
    The default behaviour is to run parallely on all the available CPUs.
+   More details are provided in `photometric_fit`_.
 
 .. note::
    GalaPy, in some of its components (e.g. SSP tables, PAH template), makes use of pre-computed functions that are
@@ -148,6 +156,8 @@ Further details on the usage of functions and classes of the API are provided in
 and in the `API documentation`_. 
 
 .. _installation guide: ...
+.. _param_file: ...
+.. _photometric_fit: ...
 .. _tutorials: ...
 .. _API documentation: ...
 .. _galapy_database: https://github.com/TommasoRonconi/galapy_database/

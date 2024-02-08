@@ -417,7 +417,7 @@ uplims = None
 # This parameter should be an iterable containing names
 # of filters already present in the database, e.g.
 #
-# filters = ['b_goods', 'i_goods', 'v_goods', 'z_goods']
+# filters = ['GOODS.b', 'GOODS.i', 'GOODS.v', 'GOODS.z']
 #
 # NOTE that, if the bands listed in variable ``bands`` 
 # are all present in the database and have the same names

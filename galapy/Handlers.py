@@ -13,6 +13,77 @@ from galapy.internal.utils import set_nested, unwrap_items
 ########################################################################################
 
 class ModelParameters () :
+    """A class to handle model parameters for GalaPy objects of type Model.
+
+    This class provides methods for setting up and handling model parameters,
+    both fixed and free, for galaxy and noise models.
+
+    Parameters
+    ----------
+    *args : galapy.internal.abc.Model
+        The galapy.Galaxy.GXY and/or galapy.Noise.Noise models to extract parameters from.
+    sample_params : dict, optional
+        A dictionary containing fixed and free parameter values for sampling.
+        The keys are parameter names, and the values are either fixed values or tuples
+        containing (prior_distribution, log_prior), where prior_distribution is a 
+        2-elements iterables defining the limits of the uniform prior and log_prior
+        is a boolean defining whether the prior has to be considered logarithmic (base 10) 
+        or not.
+    rng_kw : dict, optional
+        Keyword arguments to be passed to numpy.random.default_rng().
+
+    Attributes
+    ----------
+    parameters : dict
+        A dictionary containing all model parameters.
+    par_free : numpy.ndarray
+        An array containing names of free parameters.
+    par_log : numpy.ndarray
+        An array containing booleans defining which of 
+        the free parameters are treated logarithmically.
+    par_prior : numpy.ndarray
+        An array containing prior distributions for free parameters.
+
+    Examples
+    --------
+    >>> from galapy.Galaxy import GXY
+    >>> from galapy.Handlers import ModelParameters
+
+    Instantiate a galaxy model
+
+    >>> gxy = GXY()
+
+    Define sample parameters
+
+    >>> sample_params = {'galaxy.age': 1.e+8, 'galaxy.sfh.psi_max': ([0., 5.], True)}
+
+    Create ModelParameters instance
+
+    >>> params = ModelParameters(gxy, sample_params)
+
+    Return nested dictionary of parameters
+
+    >>> nested = params.return_nested()
+    >>> gxy.set_parameters( **nested['galaxy'] )
+
+    Dump instance to a dictionary
+
+    >>> dumped_params = handle.dump()
+    
+    Build instance from dumped dictionary
+
+    >>> handle2 = ModelParameters.load(dumped_params)
+    
+    the 2 handlers are now equivalent:
+
+    >>> handle.return_nested() == handle2.return_nested()
+    True
+    
+    but they are not the same object
+
+    >>> handle is handle2
+    False
+    """
 
     def __init__ ( self, *args, sample_params = {}, rng_kw = {} ) :
 
@@ -69,6 +140,24 @@ class ModelParameters () :
 
     @classmethod
     def load ( cls, dictionary ) :
+        """Build a ModelParameters instance loading from a dictionary.
+
+        Parameters
+        ----------
+        dictionary : dict
+            A formatted dictionary containing stored info from which to define the 
+            new ModelParameters instance.
+
+        Returns
+        -------
+        ModelParameters
+            A ModelParameters instance with loaded parameters.
+
+        Raises
+        ------
+        KeyError
+            If an element of the input dictionary is not an attribute of the class.
+        """
         ret = cls()
         for k, v in dictionary.items() :
             if k not in ret.__dict__.keys() :
@@ -81,6 +170,13 @@ class ModelParameters () :
         return ret
         
     def dump ( self ) :
+        """Dump a ModelParameters instance to a dictionary.
+
+        Returns
+        -------
+        dict
+            A dictionary containing dumped attributes of the current instance.
+        """
         return dict(
             parameters = self.parameters,
             par_free   = '|'.join(self.par_free),
@@ -92,7 +188,7 @@ class ModelParameters () :
         """ From a list of parameters returns a nested dictionary in 
         the proper format. Here 'proper' means that such dictionary has
         the hierarchy necessary to pass it as keyword arguments dictionary
-        to an object of type galapy.Galaxy.GXY()
+        to an object of type galapy.internal.abc.Model()
         
         Parameters
         ----------
@@ -102,9 +198,9 @@ class ModelParameters () :
         Returns
         -------
         : dict
-        A nested dictionary with the proper format to be passed as keyword 
-        arguments to the constructor or to function `set_parameters` of 
-        a `galapy.Galaxy.GXY()` object.
+          A nested dictionary with the proper format to be passed as keyword 
+          arguments to the constructor or to function `set_parameters` of 
+          objects of type galapy.internal.abc.Model().
         
         Examples
         --------
@@ -125,11 +221,13 @@ class ModelParameters () :
         numpy.array( [ 'sfh.psi_max' ] )
         
         Now, assuming we want to set a new value to the 'sfh.psi_max' parameter,
+
         >>> nested = par.return_nested( [ 123. ] )
         >>> nested 
         { 'sfh' : { 'psi_max' : 123. } }
         
         This dictionary can be used to set the parameters of the galaxy model
+
         >>> gxy.set_parameters( **nested )
         """
 
@@ -157,6 +255,21 @@ class ModelParameters () :
 ########################################################################################
 
 class GXYParameters ( ModelParameters ) :
+    """A class to handle model parameters specifically for galapy.galaxie.GXY() type objects.
+
+    This class inherits from ModelParameters and provides methods tailored for galaxy models.
+
+    Parameters
+    ----------
+    gxy_model : galapy.Galaxy.GXY
+        The galaxy model to extract parameters from.
+    sample_params : dict
+        A dictionary containing fixed and free parameter values for sampling.
+        The keys are parameter names, and the values are either fixed values or tuples
+        containing (prior_distribution, log_prior).
+    rng_kw : dict, optional
+        Keyword arguments to be passed to numpy.random.default_rng().
+    """
     def __init__ ( self, gxy_model, sample_params, rng_kw = {} ) :
 
         super().__init__( gxy_model,
@@ -165,12 +278,39 @@ class GXYParameters ( ModelParameters ) :
                           rng_kw = rng_kw )
 
     def return_nested ( self, par ) :
+        """Return model parameters as a nested dictionary specifically for galaxies.
+
+        Parameters
+        ----------
+        par : array-like or iterable
+            A list of values to be assigned to free parameters.
+
+        Returns
+        -------
+        dict
+            A nested dictionary with galaxy model parameters.
+        """
         return super().return_nested( par )['galaxy']
     
 
 ########################################################################################
 
 class NoiseParameters ( ModelParameters ) :
+    """A class to handle model parameters specifically for galapy.Noise.Noise() type objects.
+
+    This class inherits from ModelParameters and provides methods tailored for noise models.
+
+    Parameters
+    ----------
+    noise_model : galapy.Noise.Noise
+        The noise model to extract parameters from.
+    sample_params : dict
+        A dictionary containing fixed and free parameter values for sampling.
+        The keys are parameter names, and the values are either fixed values or tuples
+        containing (prior_distribution, log_prior).
+    rng_kw : dict, optional
+        Keyword arguments to be passed to numpy.random.default_rng().
+    """
     def __init__ ( self, noise_model, sample_params, rng_kw = {} ) :
 
         super().__init__( noise_model,
@@ -179,6 +319,18 @@ class NoiseParameters ( ModelParameters ) :
                           rng_kw = rng_kw )
 
     def return_nested ( self, par ) :
+        """Return model parameters as a nested dictionary specifically for noise.
+
+        Parameters
+        ----------
+        par : array-like or iterable
+            A list of values to be assigned to free parameters.
+
+        Returns
+        -------
+        dict
+            A nested dictionary with noise model parameters.
+        """
         return super().return_nested( par )['noise']
 
 ########################################################################################

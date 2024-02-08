@@ -16,9 +16,9 @@
    :caption: Guides
 
    guides/photometric_fit
-   guides/parameter_file
-   notebooks/choose_ssp_lib
+   guides/parameter_file   
    notebooks/results_analysis
+   notebooks/choose_ssp_lib
 
 .. toctree::
    :maxdepth: 2

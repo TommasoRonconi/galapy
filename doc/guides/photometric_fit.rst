@@ -1,3 +1,5 @@
+.. _photometric_fit:
+
 Fit a model to photometric data
 ===============================
 
@@ -27,9 +29,36 @@ If no argument is passed the parameter file will be generated in the current dir
 
 The generated file should be self-explanatory and has to be modified according to the fit the user has to perform.
 
-.. warning::
-   The parameter file is, for obvious reasons, not ready to use and if one tries to run the fitting without having properly
-   modified it, the program will crash.
+.. Tip::
+   The parameter file, for obvious reasons, needs at least to import the observational photometric dataset for running
+   a parameter space sampling.
+   Without this fundamental step, the program will crash as it does not know against what to compare the generated models.
+
+   For testing the correct installation of the library, follow these 3 steps:
+
+   * Generate a parameter file with a SFH model of choice:
+
+     .. code-block:: console
+
+	$ galapy-genparams -sfh insitu
+
+   * open the generated parameter file with a text editor (e.g. :code:`$ emacs galapy_hyper_parameters.py`) and modify the
+     first 4 parameters with the following minimal set-up:
+
+     .. code-block:: python
+
+	bands  = ['GOODS.b']
+	fluxes = [1.0]
+	errors = [1.0]
+	uplims = [0]
+
+     save and close the file.
+
+   * By running the following command, the parameter-space sampling procedure will start using the Emcee sampler:
+
+     .. code-block:: console
+
+	$ galapy-fit galapy_hyper_parameters.py
 
 There are 4 main blocks in the parameter file:
 
@@ -74,5 +103,7 @@ The default behaviour is to run parallely on all the available CPUs.
 
 A thorough description of all the hyper-parameters that can be addressed when preparing the parameter file is provided in :ref:`param_file` page.
 
-Custom fit using the API
-........................
+Fitting through the Python API
+..............................
+
+Coming soon.

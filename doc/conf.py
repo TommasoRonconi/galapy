@@ -14,6 +14,7 @@ import subprocess
 import glob
 import os
 import sys
+from datetime import datetime
 import galapy
 import galapy.sampling
 import galapy.configuration
@@ -25,25 +26,11 @@ import galapy.analysis
 
 # Check if we're running on Read the Docs' servers
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
- 
-# -- Convert the tutorials ----------------------------------------------------
-
-# for fn in glob.glob("notebooks/*.ipynb"):
-#     name = os.path.splitext(os.path.split(fn)[1])[0]
-#     outfn = os.path.join("converted_notebooks", name + ".rst")
-#     print("Building {0}...".format(name))
-#     subprocess.check_call(
-#         "jupyter nbconvert --to rst "
-#         + fn
-#         + " --output-dir converted_notebooks",
-#         shell=True,
-#     ) #  --template tutorials/tutorial_rst
-#     subprocess.check_call("python fix_internal_links.py " + outfn, shell=True)    
 
 # -- Project information -----------------------------------------------------
 
 project = 'GalaPy'
-copyright = '2023, Tommaso Ronconi'
+copyright = f'{datetime.now().year}, Tommaso Ronconi'
 author = 'Tommaso Ronconi'
 
 # -- General configuration ---------------------------------------------------
@@ -60,6 +47,13 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.graphviz'
 ]
+
+# Autosummary configuration commands:
+autodoc_member_order = 'bysource'
+autosummary_member_order = 'bysource'
+
+# GraphViz configuration commands:
+graphviz_output_format = 'svg'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
