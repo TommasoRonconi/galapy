@@ -15,14 +15,15 @@ from galapy.internal.data import DataFile
 
 def _recursive_list_ssp_libs ( root, pathline = [],
                                outlist = [], outpath = None ) :
-    rootpath, subd, files = next(os.walk(root))
-    for f in files :
-        outlist += ['.'.join(pathline+f.split('.')[:-1])]
-        if outpath is not None :
-            outpath += [ os.path.join(rootpath, f) ]
-    for s in subd : _recursive_list_ssp_libs(os.path.join(root, s),
-                                             pathline+[s], outlist,
-                                             outpath)
+    if os.path.isdir(root) :
+        rootpath, subd, files = next(os.walk(root))
+        for f in files :
+            outlist += ['.'.join(pathline+f.split('.')[:-1])]
+            if outpath is not None :
+                outpath += [ os.path.join(rootpath, f) ]
+        for s in subd : _recursive_list_ssp_libs(os.path.join(root, s),
+                                                 pathline+[s], outlist,
+                                                 outpath)
     return;
 
 def print_ssp_libs () :
@@ -54,12 +55,12 @@ def print_ssp_libs () :
            '---------------------\n'
            + list_libs )
 
-def list_ssp_libs ( path = False ) :
+def list_ssp_libs ( return_path = False ) :
     """Return a list of the available SSP libraries.
     
     Parameters
     ----------
-    path : bool
+    return_path : bool
         (default = False) if True, also return a list
         with absolute paths to each of the available SSP libs.
     
@@ -74,7 +75,7 @@ def list_ssp_libs ( path = False ) :
     from galapy.configuration import rcParams
     outlist = []
     outpath = None
-    if path :
+    if return_path :
         outpath = []
     for path in rcParams['datapath'] :
         _recursive_list_ssp_libs( root = os.path.join( path, *GP_GBL.SSP_DIR ),
