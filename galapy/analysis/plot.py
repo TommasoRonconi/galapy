@@ -5,20 +5,26 @@ from GalaPy structures and functions.
 # External imports
 import os
 import warnings
-import fnmatch   
+import fnmatch
+import difflib
 
 # As the sane of mind do
 import numpy
 
 # For plotting
 import matplotlib.pyplot as plt
+from matplotlib.style import available as mpl_sty_av
 
 # Matplotlib setup of the GalaPy default layout
 plt.rcParams['figure.figsize'] = (7,5)
 plt.rcParams['font.size'] = 14
 plt.rcParams['lines.linewidth'] = 2.
 plt.rcParams['text.latex.preamble'] = r"\usepackage{amsmath}"
-plt.style.use('seaborn-v0_8-deep')
+
+# this should select seaborn-v0_8-deep
+# in all matplotlib installations
+# more recent than version 3.6
+plt.style.use(difflib.get_close_matches('seaborn-v0_8-deep', mpl_sty_av)[0]) 
 clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 ######################################################################################
