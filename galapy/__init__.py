@@ -3,4 +3,4 @@
 
 from galapy.configuration import rcParams
 
-__version__ = '0.2.0'
+__version__ = 'v0.2.0'
