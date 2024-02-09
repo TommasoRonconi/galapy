@@ -33,5 +33,5 @@ sphinx:
 python:
   install:
     - requirements: doc/requirements.txt
-  post_install:
-    - galapy-download-database
+#  post_install:
+#    - galapy-download-database
