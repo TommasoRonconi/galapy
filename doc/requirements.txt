@@ -1,5 +1,5 @@
 sphinx>=5
-jinja>=3
+jinja2>=3
 sphinx-rtd-theme
 nbsphinx
 graphviz
