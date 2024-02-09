@@ -14,11 +14,11 @@ Quickstart
 	  fontname="Helvetica";
 	  newrank=true;
 	  
-          a [shape=box, color="#61C0E8", style=filled, label="Install the library", href="https://galapy.readthedocs.io/en/latest/general/install_guide.html"];
-          b [shape=box, color="#61C0E8", style=filled, label="Download the database", href="https://galapy.readthedocs.io/en/latest/general/install_guide.html#after-install"];
+          a [shape=box, color="#61C0E8", style=filled, label="Install the library", href="https://galapy.readthedocs.io/en/latest/general/install_guide.html", target="_blank"];
+          b [shape=box, color="#61C0E8", style=filled, label="Download the database", href="https://galapy.readthedocs.io/en/latest/general/install_guide.html#after-install", target="_blank"];
           c [shape=box, color="#B2C600", style=filled, label="Generate the parameter file", href="https://galapy.readthedocs.io/en/latest/guides/parameter_file.html", target="_blank" ];
-          d [shape=box, color="#B2C600", style=filled, label="Run the fit", href="https://galapy.readthedocs.io/en/latest/guides/photometric_fit.html"];
-          e [shape=box, color="#E78A61", style=filled, label="Results analysis", href="https://galapy.readthedocs.io/en/latest/notebooks/results_analysis.html"];
+          d [shape=box, color="#B2C600", style=filled, label="Run the fit", href="https://galapy.readthedocs.io/en/latest/guides/photometric_fit.html", target="_blank"];
+          e [shape=box, color="#E78A61", style=filled, label="Results analysis", href="https://galapy.readthedocs.io/en/latest/notebooks/results_analysis.html", target="_blank"];
 	  
 	  install_command [shape=box, color="#61C0E8", label="pip install galapy", fontname="Verbatim", fontsize=12];
 	  download_command [shape=box, color="#61C0E8", label="galapy-download-database", fontname="Verbatim", fontsize=12];
