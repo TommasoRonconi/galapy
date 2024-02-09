@@ -6,7 +6,7 @@
    :maxdepth: 2
    :caption: General
 
-   general/flux_diagram
+   general/quickstart
    general/install_guide
    general/physical_units
    general/free_parameters
