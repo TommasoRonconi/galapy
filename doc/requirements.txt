@@ -1,3 +1,5 @@
+ipython
+notebook
 sphinx>=5
 jinja2>=3
 sphinx-rtd-theme
