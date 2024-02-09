@@ -1,0 +1,8 @@
+numpy
+scipy
+emcee
+dynesty
+matplotlib
+getdist
+requests
+h5py
