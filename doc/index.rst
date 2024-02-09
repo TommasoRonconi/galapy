@@ -29,7 +29,7 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Documentation
+   :caption: Python Documentation
 
    python_doc/api_toctree
 

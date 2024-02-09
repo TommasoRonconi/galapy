@@ -1,5 +1,14 @@
+GalaPy API Documentation
+========================
+
+Here the documentation of modules, sub-packages, classes and functions delivered with the GalaPy API can be found.
+
+.. warning::
+
+   Coverage is not complete yet.
+
 Galaxy Components modules
-=========================
+-------------------------
 
 These modules wrap the different components that build-up a :code:`galapy.Galaxy.GXY` and derived objects.
 Each of the galactic components can be used independently and, eventually, extended with further functionalities.
@@ -19,7 +28,7 @@ Each of the galactic components can be used independently and, eventually, exten
    galapy.Cosmology
 
 Noise modelling
-===============
+---------------
 
 .. autosummary::
    :toctree: _generated
@@ -27,7 +36,7 @@ Noise modelling
    galapy.Noise
 
 Sampling
-========
+--------
 
 .. autosummary::
    :toctree: _generated
@@ -39,7 +48,7 @@ Sampling
    galapy.sampling.Statistics
 
 Analysis
-========
+--------
 
 .. autosummary::
    :toctree: _generated
