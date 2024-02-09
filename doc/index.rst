@@ -31,7 +31,7 @@
    :maxdepth: 2
    :caption: API Documentation
 
-   python_doc/components
+   python_doc/api_toctree
 
 Indices and tables
 ==================

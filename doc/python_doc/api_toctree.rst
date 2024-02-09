@@ -1,9 +1,3 @@
-The following pages contain the documentation of the modules, classes and functions of the GalaPy API.
-
-.. warning::
-
-   Documentation of the functions is not complete yet.
-
 Galaxy Components modules
 =========================
 
