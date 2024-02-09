@@ -33,7 +33,7 @@ sphinx:
 python:
   install:
     - method: pip
-    - path: .
+      path: .
     - requirements: doc/requirements.txt
   post_install:
     - galapy-download-database
