@@ -5,9 +5,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "devel" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "devel" ]
 
 jobs:
   build:
@@ -31,7 +31,8 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install library
       run: |
-        python setup.py install
+        python -m pip install .
+        # python setup.py install
         galapy-download-database
     - name: Test with pytest
       run: |
