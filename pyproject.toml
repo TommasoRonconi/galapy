@@ -32,7 +32,7 @@ dynamic = ["version", "description"]
 
 [project.urls]
 Source = "https://github.com/TommasoRonconi/galapy"
-# Documentation = "https://galapy.readthedocs.io"
+Documentation = "http://galapy.readthedocs.io/"
 
 [project.optional-dependencies]
 test = ["pytest"]

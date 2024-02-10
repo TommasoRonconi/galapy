@@ -1,4 +1,4 @@
-name: Build
+name: Build distribution
 
 on:
   push:
@@ -19,9 +19,9 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
-        # env:
-        #   CIBW_SOME_OPTION: value
-        #    ...
+        env:
+          # Disable building PyPy wheels on all platforms
+          CIBW_SKIP: pp*
         with:
           package-dir: .
           output-dir: wheelhouse
