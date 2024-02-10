@@ -58,10 +58,13 @@ def test_xrb_build_params_hm () :
     different ones.
 
     """
-    assert gpxrb.xrb_build_params('hm') == {'psi': 1.,
-                                            'Zstar': 0.02 }
+    assert gpxrb.xrb_build_params('hm') == pytest.approx({
+        'psi': 1., 'Zstar': 0.02
+    })
 
-    assert gpxrb.xrb_build_params('hm', psi = 1.5, Zstar = 0.05 ) == {'psi': 1.5,  'Zstar': 0.05 }
+    assert gpxrb.xrb_build_params('hm', psi = 1.5, Zstar = 0.05 ) == pytest.approx({
+        'psi': 1.5,  'Zstar': 0.05
+    })
 
 #------------------------------------------------------------------------------#
 
@@ -72,10 +75,12 @@ def test_xrb_build_params_lm () :
     different ones.
 
     """
-    assert gpxrb.xrb_build_params('lm') == { 'Mstar' : 1.e+10
-                                             ,'age'   : 1.e+8 }
-
-    assert gpxrb.xrb_build_params('lm', Mstar = 1.e+8, age = 1.e+7 ) == { 'Mstar' : 1.e+8,'age'   : 1.e+7 }
+    assert gpxrb.xrb_build_params('lm') == pytest.approx({
+        'Mstar' : 1.e+10, 'age' : 1.e+8
+    })
+    assert gpxrb.xrb_build_params('lm', Mstar = 1.e+8, age = 1.e+7 ) == pytest.approx({
+        'Mstar' : 1.e+8, 'age' : 1.e+7
+    })
 
 #------------------------------------------------------------------------------#
 
@@ -112,7 +117,7 @@ def test_xrb_hm_set_parameters ( xrb ) :
     """
 
     xrb.hm.set_parameters( psi = 1.5 )
-    assert xrb.hm.params == {'psi': 1.5, 'Zstar': 0.02 }
+    assert xrb.hm.params == pytest.approx({'psi': 1.5, 'Zstar': 0.02 })
 
 #------------------------------------------------------------------------------#
  
@@ -124,7 +129,7 @@ def test_xrb_lm_set_parameters ( xrb ):
     """
 
     xrb.lm.set_parameters( Mstar = 1.e+8 )
-    assert xrb.lm.params ==  { 'Mstar' : 1.e+8, 'age' : 1.e+8 }
+    assert xrb.lm.params ==  pytest.approx({ 'Mstar' : 1.e+8, 'age' : 1.e+8 })
 
 #------------------------------------------------------------------------------#
 

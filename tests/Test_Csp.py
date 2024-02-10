@@ -95,7 +95,7 @@ def test_csp_SSP_wavelengths ( csp ) :
     """
     
     assert len(csp.l) == 2223
-    assert csp.l[1000] == 14025.
+    assert csp.l[1000] == pytest.approx( 14025. )
     
 #------------------------------------------------------------------------------#
 
@@ -108,7 +108,7 @@ def test_csp_SSP_time ( csp ) :
 
     """
     assert len(csp.t) == 221
-    assert csp.t[100] == 3.7e+7
+    assert csp.t[100] == pytest.approx( 3.7e+7 )
     
 #------------------------------------------------------------------------------#
 
@@ -121,7 +121,7 @@ def test_csp_SSP_metallicity ( csp ) :
     """
 
     assert len(csp.Z) == 7
-    assert csp.Z[3] == 0.008
+    assert csp.Z[3] == pytest.approx( 0.008 )
     
 #------------------------------------------------------------------------------#
 

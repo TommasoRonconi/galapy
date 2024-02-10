@@ -65,7 +65,7 @@ def test_nff_build_params () :
     """
     ll = ( 1.e+0, 1.e+10 )
     nff = gpnff.NFF( ll, Zgas = 0.01 )
-    assert nff.params == { 'Zgas' : 0.01, 'Zi' : 1.0 }
+    assert nff.params == pytest.approx({ 'Zgas' : 0.01, 'Zi' : 1.0 })
 
 #------------------------------------------------------------------------------#
 
@@ -77,7 +77,7 @@ def test_nff_set_params ( nff ) :
     """
 
     nff.set_parameters( Zgas = 0.01 )
-    assert nff.params == { 'Zgas' : 0.01, 'Zi' : 1.0 }
+    assert nff.params == pytest.approx({ 'Zgas' : 0.01, 'Zi' : 1.0 })
 
 #------------------------------------------------------------------------------#
 
@@ -89,7 +89,7 @@ def test_nff_Te ( nff ) :
     """
 
     Tem = nff.Te( Zgas = 0.1 )
-    assert Tem == 3502.185479394832
+    assert Tem == pytest.approx(3502.185479394832)
 
 #------------------------------------------------------------------------------#
 

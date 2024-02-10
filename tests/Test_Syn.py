@@ -36,11 +36,12 @@ def test_syn_build_params () :
 
     """
     
-    assert gpsyn.syn_build_params()  == { 'alpha_syn' : 0.75,
-                                          'nu_self_syn' : 0.2 }
-    assert gpsyn.syn_build_params( alpha_syn = 0.5 ,
-                                   nu_self_syn = 0.1 ) == {'alpha_syn' : 0.5,
-                                                           'nu_self_syn' : 0.1 }
+    assert gpsyn.syn_build_params()  == pytest.approx({
+        'alpha_syn' : 0.75, 'nu_self_syn' : 0.2
+    })
+    assert gpsyn.syn_build_params( alpha_syn = 0.5 , nu_self_syn = 0.1 ) == pytest.approx({
+        'alpha_syn' : 0.5, 'nu_self_syn' : 0.1
+    })
     
 #------------------------------------------------------------------------------#
 
@@ -78,7 +79,7 @@ def test_syn_set_params ( syn ):
     """
 
     syn.set_parameters( alpha_syn = 0.5 )
-    assert syn.params == { 'alpha_syn' : 0.5, 'nu_self_syn' : 0.2 }
+    assert syn.params == pytest.approx({ 'alpha_syn' : 0.5, 'nu_self_syn' : 0.2 })
 
 #------------------------------------------------------------------------------#
 
@@ -140,5 +141,5 @@ def test_snsyn_init():
 def test_snsyn_emission():
 
     ll = np.logspace(6,13,5)
-    assert np.all( gpsyn.SNSYN(ll).emission() == 0)
+    assert np.all( gpsyn.SNSYN(ll).emission() == pytest.approx(0))
 

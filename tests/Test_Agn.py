@@ -37,6 +37,12 @@ import galapy
 from galapy import ActiveGalacticNucleus as gpagn
 from galapy.internal.constants import Ang_to_keV
 
+def check_2leveldict_approxequal ( A, B ) :
+    return np.all([
+        va == pytest.approx( vb )
+        for va, vb in zip( A.values(), B.values() )
+    ])
+        
 
 def test_agn_wrong_key () :
 
@@ -69,21 +75,27 @@ def test_agn_build_params () :
 
     """
 
-    assert gpagn.agn_build_params( 1.e-3 ) == { 'fAGN': 0.001,
-                                                'template': { 'ct': 40,
-                                                              'al': 0.0,
-                                                              'be': -0.5,
-                                                              'ta': 6.0,
-                                                              'rm': 60,
-                                                              'ia': 0.001 } }
+    assert check_2leveldict_approxequal(
+        gpagn.agn_build_params( 1.e-3 ),
+        { 'fAGN': 0.001,
+          'template': { 'ct': 40,
+                        'al': 0.0,
+                        'be': -0.5,
+                        'ta': 6.0,
+                        'rm': 60,
+                        'ia': 0.001 } }
+    )
 
-    assert gpagn.agn_build_params( 1.e-3, ct = 60 ) == { 'fAGN': 0.001,
-                                               'template': { 'ct': 60,
-                                                             'al': 0.0,
-                                                             'be': -0.5,
-                                                             'ta': 6.0,
-                                                             'rm': 60,
-                                                             'ia': 0.001 } }
+    assert check_2leveldict_approxequal(
+        gpagn.agn_build_params( 1.e-3, ct = 60 ),
+        { 'fAGN': 0.001,
+          'template': { 'ct': 60,
+                        'al': 0.0,
+                        'be': -0.5,
+                        'ta': 6.0,
+                        'rm': 60,
+                        'ia': 0.001 } }
+    )
 
 #------------------------------------------------------------------------------#
 
@@ -138,12 +150,16 @@ def test_agn_set_parameters (agn) :
     """
 
     agn.set_parameters( fAGN = 0.1, ia = 65.1 )
-    assert agn.params == { 'fAGN': 0.1, 'template': { 'ct': 40,
-                                                      'al': 0.0,
-                                                      'be': -0.5,
-                                                      'ta': 6.0,
-                                                      'rm': 60,
-                                                      'ia': 60.1 } }
+    assert check_2leveldict_approxequal(
+        agn.params,
+        { 'fAGN': 0.1,
+          'template': { 'ct': 40,
+                        'al': 0.0,
+                        'be': -0.5,
+                        'ta': 6.0,
+                        'rm': 60,
+                        'ia': 60.1 } }
+    )
 
 #------------------------------------------------------------------------------#
 

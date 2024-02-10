@@ -107,8 +107,8 @@ def test_sfh_insitu_parameters ( ):
 
     """
     sfh_insitu = gpsfh.SFH( model = 'insitu' )
-    assert sfh_insitu.params == { 'tau_quench': 2.e+20, 'model': 'insitu',
-                                  'psi_max': 100.0, 'tau_star': 3.e+8 }
+    assert sfh_insitu.params == pytest.approx({ 'tau_quench': 2.e+20, 'model': 'insitu',
+                                                'psi_max': 100.0, 'tau_star': 3.e+8 })
 
 #------------------------------------------------------------------------------#
 
@@ -136,7 +136,7 @@ def test_sfh_insitu_psimax ( sfh_insitu ) :
     sfh_insitu.set_parameters( psi_max = 0. )
     tau = np.logspace( 6, 10, 50 )
     psi_insitu = sfh_insitu( tau )
-    assert all ( [ a == 0. for a in psi_insitu ] )
+    assert all ( [ a == pytest.approx(0.) for a in psi_insitu ] )
 
 #------------------------------------------------------------------------------#
 
@@ -148,7 +148,7 @@ def test_sfh_insitu_quench ( sfh_insitu ) :
     """
     tau = np.logspace( 9, 11, 100 )
     psi_insitu = sfh_insitu( tau )
-    assert all ( [ a == 0. for a in psi_insitu ] )
+    assert all ( [ a == pytest.approx(0.) for a in psi_insitu ] )
     
 #------------------------------------------------------------------------------#
 
@@ -170,7 +170,7 @@ def test_sfh_insitu_Mdust ( sfh_insitu ) :
 
     """
     assert sfh_insitu.Mdust( 8.e+8 ) == pytest.approx( 140171330.69560972 ) 
-    assert sfh_insitu.Mdust( 1.e+9 ) == 0.
+    assert sfh_insitu.Mdust( 1.e+9 ) == pytest.approx(0.)
     
 #------------------------------------------------------------------------------#
 
@@ -181,7 +181,7 @@ def test_sfh_insitu_Mgas ( sfh_insitu ) :
     
     """
     assert sfh_insitu.Mgas( 8.e+8 ) == pytest.approx( 5702802608.720548 ) 
-    assert sfh_insitu.Mgas( 1.e+9 ) == 0.
+    assert sfh_insitu.Mgas( 1.e+9 ) == pytest.approx(0.)
     
 #------------------------------------------------------------------------------#
 
@@ -248,8 +248,8 @@ def test_sfh_const_parameters( ):
     """
     
     sfh_const = gpsfh.SFH( model = 'constant' )
-    assert sfh_const.params == { 'tau_quench': 2e+20, 'model': 'constant',
-                                 'psi': 1.0, 'Mdust': 100000000.0, 'Zgxy': 0.01 }
+    assert sfh_const.params == pytest.approx({ 'tau_quench': 2e+20, 'model': 'constant',
+                                               'psi': 1.0, 'Mdust': 100000000.0, 'Zgxy': 0.01 })
 
 #------------------------------------------------------------------------------#
 
@@ -259,7 +259,7 @@ def test_sfh_const_call ( sfh_const ) :
     Test calling the class at specific time ( array-like or float type ) .
 
     """
-    assert sfh_const( 1.e+8 ) == 1.
+    assert sfh_const( 1.e+8 ) == pytest.approx(1.)
     tau = np.logspace( 6, 10, 4 )
     assert np.all( sfh_const( tau ) == pytest.approx( [ 1., 1., 1., 0. ] ) )
 
@@ -274,7 +274,7 @@ def test_sfh_const_quench ( sfh_const ) :
     
     tau = np.logspace( 9, 11, 100 )
     psi_const = sfh_const( tau )
-    assert all ( [ a == 0. for a in psi_const ] )
+    assert all ( [ a == pytest.approx(0.) for a in psi_const ] )
     
 #------------------------------------------------------------------------------#
 
@@ -296,8 +296,8 @@ def test_sfh_const_Mdust ( sfh_const ) :
     ( must be equal to md ) .
 
     """
-    assert sfh_const.Mdust( 8.e+8 ) == md 
-    assert sfh_const.Mdust( 1.e+9 ) == md
+    assert sfh_const.Mdust( 8.e+8 ) == pytest.approx(md) 
+    assert sfh_const.Mdust( 1.e+9 ) == pytest.approx(md)
     
 #------------------------------------------------------------------------------#
 
@@ -318,7 +318,7 @@ def test_sfh_const_Zstar ( sfh_const ) :
     ( must be equal to zz ) .
 
     """
-    assert sfh_const.Zstar( 1.e+9 ) == zz
+    assert sfh_const.Zstar( 1.e+9 ) == pytest.approx(zz)
     
 #------------------------------------------------------------------------------#
 
@@ -328,7 +328,7 @@ def test_sfh_const_Zgas ( sfh_const ) :
     Check the value of the Gas Metallicity at present time 
     ( must be equal to zz ) .
     """
-    assert sfh_const.Zgas( 1.e+9 ) == zz 
+    assert sfh_const.Zgas( 1.e+9 ) == pytest.approx(zz) 
 
 #------------------------------------------------------------------------------#
 
@@ -376,10 +376,10 @@ def test_sfh_dexp_parameters () :
     """
     
     sfh_dexp = gpsfh.SFH( model = 'delayedexp' )
-    assert sfh_dexp.params == { 'tau_quench': 2e+20, 'model': 'delayedexp',
-                                'psi_norm': 1.0, 'k_shape': 0.2,
-                                'tau_star': 100000000.0, 'Mdust': 100000000.0,
-                                'Zgxy': 0.01 }
+    assert sfh_dexp.params == pytest.approx({ 'tau_quench': 2e+20, 'model': 'delayedexp',
+                                              'psi_norm': 1.0, 'k_shape': 0.2,
+                                              'tau_star': 100000000.0, 'Mdust': 100000000.0,
+                                              'Zgxy': 0.01 })
 
 #------------------------------------------------------------------------------#
 
@@ -389,7 +389,7 @@ def test_sfh_dexp_call ( sfh_dexp ) :
     Test calling the class at specific time ( array-like or float type ) .
 
     """
-    assert sfh_dexp( 1.e+8 ) == 14.645544342956468
+    assert sfh_dexp( 1.e+8 ) == pytest.approx(14.645544342956468)
     tau = np.logspace( 6, 10, 4 )
     assert np.all( sfh_dexp( tau ) == pytest.approx( [ 15.69123242, 23.61025931,
                                                        0.52181543, 0. ] ) )
@@ -404,7 +404,7 @@ def test_sfh_dexp_quench ( sfh_dexp ) :
     """
     tau = np.logspace( 9, 11, 100 )
     psi_dexp = sfh_dexp( tau )
-    assert all ( [ a == 0. for a in psi_dexp ] )
+    assert all ( [ a == pytest.approx(0.) for a in psi_dexp ] )
     
 #------------------------------------------------------------------------------#
 
@@ -426,8 +426,8 @@ def test_sfh_dexp_Mdust ( sfh_dexp ) :
     ( must be equal to md ) .
 
     """
-    assert sfh_dexp.Mdust( 8.e+8 ) == md 
-    assert sfh_dexp.Mdust( 1.e+9 ) == md
+    assert sfh_dexp.Mdust( 8.e+8 ) == pytest.approx(md)
+    assert sfh_dexp.Mdust( 1.e+9 ) == pytest.approx(md)
     
 #------------------------------------------------------------------------------#
 
@@ -448,7 +448,7 @@ def test_sfh_dexp_Zstar ( sfh_dexp ) :
     ( must be equal to zz ) .
 
     """
-    assert sfh_dexp.Zstar( 1.e+9 ) == zz
+    assert sfh_dexp.Zstar( 1.e+9 ) == pytest.approx(zz)
     
 #------------------------------------------------------------------------------#
 
@@ -458,7 +458,7 @@ def test_sfh_dexp_Zgas ( sfh_dexp ) :
     Check the value of the gas metallicity at present time 
     ( must be equal to zz ) .
     """
-    assert sfh_dexp.Zgas( 1.e+9 ) == zz 
+    assert sfh_dexp.Zgas( 1.e+9 ) == pytest.approx(zz) 
 
 #------------------------------------------------------------------------------#
 
@@ -507,10 +507,10 @@ def test_sfh_lnorm_parameters () :
     """
     
     sfh_lnorm = gpsfh.SFH( model = 'lognormal' )
-    assert sfh_lnorm.params == { 'tau_quench': 2e+20, 'model': 'lognormal',
-                                 'psi_norm': 100.0, 'sigma_star': 2.0,
-                                 'tau_star': 300000000.0, 'Mdust': 100000000.0,
-                                 'Zgxy': 0.01 }
+    assert sfh_lnorm.params == pytest.approx({ 'tau_quench': 2e+20, 'model': 'lognormal',
+                                               'psi_norm': 100.0, 'sigma_star': 2.0,
+                                               'tau_star': 300000000.0, 'Mdust': 100000000.0,
+                                               'Zgxy': 0.01 })
 
 
 #------------------------------------------------------------------------------#
@@ -521,7 +521,7 @@ def test_sfh_lnorm_call ( sfh_lnorm ) :
     Test calling the class at specific time ( array-like or float type ) .
 
     """
-    assert sfh_lnorm( 1.e+8 ) == 17.153733592792385
+    assert sfh_lnorm( 1.e+8 ) == pytest.approx(17.153733592792385)
     tau = np.logspace( 6, 10, 4 )
     assert np.all( sfh_lnorm( tau ) == pytest.approx( [ 0.34179049, 8.38175995,
                                                         19.47777367, 0. ] ) )
@@ -536,7 +536,7 @@ def test_sfh_lnorm_quench ( sfh_lnorm ) :
     """
     tau = np.logspace( 9, 11, 100 )
     psi_lnorm = sfh_lnorm( tau )
-    assert all ( [ a == 0. for a in psi_lnorm ] )
+    assert all ( [ a == pytest.approx(0.) for a in psi_lnorm ] )
     
 #------------------------------------------------------------------------------#
 
@@ -558,8 +558,8 @@ def test_sfh_lnorm_Mdust ( sfh_lnorm ) :
     ( must be equal to md ) .
 
     """
-    assert sfh_lnorm.Mdust( 8.e+8 ) == md 
-    assert sfh_lnorm.Mdust( 1.e+9 ) == md
+    assert sfh_lnorm.Mdust( 8.e+8 ) == pytest.approx(md) 
+    assert sfh_lnorm.Mdust( 1.e+9 ) == pytest.approx(md)
     
 #------------------------------------------------------------------------------#
 
@@ -580,7 +580,7 @@ def test_sfh_lnorm_Zstar ( sfh_lnorm ) :
     ( must be equal to zz ) .
 
     """
-    assert sfh_lnorm.Zstar( 1.e+9 ) == zz
+    assert sfh_lnorm.Zstar( 1.e+9 ) == pytest.approx(zz)
     
 #------------------------------------------------------------------------------#
 
@@ -590,6 +590,6 @@ def test_sfh_lnorm_Zgas ( sfh_lnorm ) :
     Check the value of the Gas Metallicity at present time 
     ( must be equal to zz ) .
     """
-    assert sfh_lnorm.Zgas( 1.e+9 ) == zz 
+    assert sfh_lnorm.Zgas( 1.e+9 ) == pytest.approx(zz) 
 
 #------------------------------------------------------------------------------#

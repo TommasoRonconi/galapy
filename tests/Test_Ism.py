@@ -67,13 +67,15 @@ def test_ism_dd_parameters ( ism ) :
     
     """
     
-    assert gpism.ism_build_params( phase = 'dd' ) == { 'f_MC': 0.5,
-                                                      'norm_DD': 1.0,
-                                                      'Mdust': 10000000.0,
-                                                      'Rdust': 1000.0,
-                                                       'f_PAH': 0.2,
-                                                       'dDDlow': 0.7,
-                                                       'dDDupp': 2.0 }
+    assert gpism.ism_build_params( phase = 'dd' ) == pytest.approx( {
+        'f_MC': 0.5,
+        'norm_DD': 1.0,
+        'Mdust': 10000000.0,
+        'Rdust': 1000.0,
+        'f_PAH': 0.2,
+        'dDDlow': 0.7,
+        'dDDupp': 2.0
+    } )
     
 #------------------------------------------------------------------------------#
 
@@ -153,7 +155,7 @@ def test_ism_dd_A_V ( ism ) :
     """
     
     ism.dd.set_temperature( 38. )
-    assert ism.dd.A_V() == 0.1
+    assert ism.dd.A_V() == pytest.approx( 0.1 )
 
 
     
@@ -169,15 +171,17 @@ def test_ism_mc_parameters ( ism ) :
     
     """
     
-    assert gpism.ism_build_params( phase = 'mc' ) == { 'f_MC': 0.5,
-                                                      'norm_MC': 100.0,
-                                                      'N_MC': 1000.0,
-                                                      'R_MC': 10.0,
-                                                      'Zgas': 0.01,
-                                                      'tau_esc': 10000000.0,
-                                                       'Mgas': 1000000000.0,
-                                                       'dMClow': 1.3,
-                                                       'dMCupp': 1.6 }
+    assert gpism.ism_build_params( phase = 'mc' ) == pytest.approx( {
+        'f_MC': 0.5,
+        'norm_MC': 100.0,
+        'N_MC': 1000.0,
+        'R_MC': 10.0,
+        'Zgas': 0.01,
+        'tau_esc': 10000000.0,
+        'Mgas': 1000000000.0,
+        'dMClow': 1.3,
+        'dMCupp': 1.6
+    } )
     
 #------------------------------------------------------------------------------#
 
@@ -267,9 +271,9 @@ def test_ism_mc_eta (ism) :
 
     """
     
-    assert ism.mc.eta( 1.e+6 ) == 1.
-    assert ism.mc.eta( 1.5e+7 ) == 0.5
-    assert ism.mc.eta( 1.e+8 ) == 0.
+    assert ism.mc.eta( 1.e+6 ) == pytest.approx( 1. )
+    assert ism.mc.eta( 1.5e+7 ) == pytest.approx( 0.5 )
+    assert ism.mc.eta( 1.e+8 ) == pytest.approx( 0. )
 
 ################################################################################
 ############################## TOTAL ATTENUATION ###############################
