@@ -1,9 +1,15 @@
 GalaPy: Spectral modelling tool for Galaxies in Python
 ======================================================
 
+.. image:: https://github.com/TommasoRonconi/galapy/actions/workflows/tests.yml/badge.svg
+   :alt: Testing Status
+
+.. image:: https://github.com/TommasoRonconi/galapy/actions/workflows/build-wheels.yml/badge.svg
+   :alt: Building
+
 .. image:: https://readthedocs.org/projects/galapy/badge/?version=latest
-    :target: https://galapy.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
+   :target: https://galapy.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 GalaPy is an open source, extensible API for modelling and fitting the Spectral Energy Distribution (SED) of galaxies from the X-ray to the radio band,
 as well as the evolution of their components and dust attenuation/reradiation.
