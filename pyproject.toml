@@ -49,3 +49,12 @@ doc = [
 galapy-fit = "galapy.sampling.Run:_run"
 galapy-genparams = "galapy.sampling.Run:_generate_parameter_file"
 galapy-download-database = "galapy.internal.data:_entrypoint_download_database"
+
+[bumpver]
+current_version = "v0.4.0"
+version_pattern = "vMAJOR.MINOR.PATCH"
+
+[bumpver.file_patterns]
+"galapy/__init__.py" = [
+    "__version__ = '{version}'",
+]

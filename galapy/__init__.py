@@ -31,4 +31,4 @@ __all__ = [
     'Noise', 'Handlers',
     'sampling', 'internal', 'io', 'analysis',
 ]
-__version__ = 'v0.3.0'
+__version__ = 'v0.4.0'
