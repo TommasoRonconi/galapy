@@ -5,6 +5,15 @@ requires = [
     "setuptools",
     "wheel",
     "pybind11>=2.10.0",
+    'numpy',
+    'scipy',
+    'tqdm',
+    'emcee',
+    'dynesty',
+    'matplotlib',
+    'getdist',
+    'requests',
+    'h5py'
 ]
 build-backend = "setuptools.build_meta"
 
