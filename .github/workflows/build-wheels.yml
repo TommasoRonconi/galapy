@@ -1,4 +1,6 @@
-name: Build distribution
+# This workflow builds bdist and sdist for Manylinux and MacOS 
+
+name: build
 
 on:
   push:
