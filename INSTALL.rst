@@ -9,7 +9,7 @@ From the Python Package Index (PyPI)
 
 .. code-block:: console
 
-   $ pip install galapy
+   $ pip install galapy-fit
 
 PyPI deals with pre-requisites.
 

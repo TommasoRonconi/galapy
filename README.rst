@@ -68,7 +68,7 @@ The preferred method to install the package is through :code:`pip` as it will in
   
 .. code-block:: console
      
-   $ pip install galapy
+   $ pip install galapy-fit
 
 for further details, please refer to the `installation guide`_.
 

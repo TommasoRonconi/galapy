@@ -18,7 +18,7 @@ Quickstart
           d [shape=box, color="#B2C600", style=filled, label="Run the fit", href="https://galapy.readthedocs.io/en/latest/guides/photometric_fit.html", target="_blank"];
           e [shape=box, color="#E78A61", style=filled, label="Results analysis", href="https://galapy.readthedocs.io/en/latest/notebooks/results_analysis.html", target="_blank"];
 	  
-	  install_command [shape=box, color="#61C0E8", label="pip install galapy", fontname="Verbatim", fontsize=12];
+	  install_command [shape=box, color="#61C0E8", label="pip install galapy-fit", fontname="Verbatim", fontsize=12];
 	  download_command [shape=box, color="#61C0E8", label="galapy-download-database", fontname="Verbatim", fontsize=12];
 	  genparams_command [shape=box, color="#B2C600", label="galapy-genparams", fontname="Verbatim", fontsize=12];
 	  fit_command [shape=box, color="#B2C600", label="galapy-fit", fontname="Verbatim", fontsize=12];
@@ -58,7 +58,7 @@ be performed only once:
 
    .. code:: console
 
-      $ pip install galapy
+      $ pip install galapy-fit
 
 2. Download the database through the dedicated terminal command:
 

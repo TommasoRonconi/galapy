@@ -151,9 +151,9 @@ def main():
     #############################################################################
     # Call setup
     
-    setup( name        = "galapy",
+    setup( name        = "galapy-fit",
            version     = get_version( os.path.join('galapy', '__init__.py') ),
-           description = "GalaPy - Spectral analysis tools for galaxies in Python",
+           description = "GalaPy - Spectral modelling tool for galaxies in Python",
            package_dir = {
                'galapy' : 'galapy',
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
