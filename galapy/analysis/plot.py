@@ -14,6 +14,8 @@ import numpy
 # For plotting
 import matplotlib.pyplot as plt
 from matplotlib.style import available as mpl_sty_av
+from matplotlib import get_backend
+_mpl_backend = get_backend()
 
 # Matplotlib setup of the GalaPy default layout
 plt.rcParams['figure.figsize'] = (7,5)
@@ -655,6 +657,8 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
     """
     from getdist import plots, MCSamples
     import getdist
+    # necessary to fix the hard-coded matplotlib.use('Agg') forced by getdist
+    plt.switch_backend(_mpl_backend)
 
     ############################################################################
     # Set default kwarg-dictionaries

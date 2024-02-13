@@ -4,7 +4,7 @@ name: build
 
 on:
   push:
-    branches: ["devel"]
+    branches: ["main"]
 
 jobs:
   build_wheels:
