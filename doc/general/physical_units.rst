@@ -1,3 +1,5 @@
+.. _physical_units:
+
 Physical Units (used in functions Input/Output)
 ===============================================
 
@@ -40,7 +42,7 @@ NumPy (and SciPy)
 
 All objects and functions in GalaPy are compliant with NumPy and SciPy (i.e. input and output values are ND-arrays and/or can be transformed into ND-arrays).
 
-Taking the ``galapy.Galaxy.GXY`` class as an example:
+Taking the :py:class:`galapy.Galaxy.GXY` class as an example:
 
 .. code:: ipython
 
@@ -92,7 +94,7 @@ If we want to convert a wavelength in a frequency (e.g. the wavelength grid used
 
 where :math:`c` is the speed of light, :math:`\lambda` is the wavelength and :math:`\nu` is the frequency.
 
-We import the speed-of-light dictionary from ``galapy.internal.constants`` and apply the conversion:
+We import the speed-of-light dictionary from :py:mod:`galapy.internal.constants` and apply the conversion:
 
 .. code:: ipython
 

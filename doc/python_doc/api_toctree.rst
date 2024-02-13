@@ -27,6 +27,15 @@ Each of the galactic components can be used independently and, eventually, exten
    galapy.InterGalacticMedium
    galapy.Cosmology
 
+Photometric System
+------------------
+   
+.. autosummary::
+   :toctree: _generated
+
+   galapy.BandpassTransmission
+   galapy.PhotometricSystem
+
 Noise modelling
 ---------------
 
@@ -55,4 +64,13 @@ Analysis
 
    galapy.analysis.plot
    galapy.analysis.funcs
+   
+Helpers Functions
+-----------------
+
+.. autosummary::
+   :toctree: _generated
+
+   galapy.internal.utils
+   galapy.internal.constants
    

@@ -95,15 +95,14 @@ class PMS () :
     
     Parameters
     ----------
-    *args : strings
+    *args : tuple of strings
        As many strings as necessary. Each string has to name
        one of the available filters already present in the database.
-    **kwargs : 'named' dictionaries
+    **kwargs : dictionary
        Keyword arguments can be used for providing user-defined 
        transmissions. 
        Custom transmissions are passed as properly formatted dictionaries:
-       keyword = { 'wavelengths' : array-like,
-                   'photons' : array-like }
+       ``keyword = { 'wavelengths' : array-like,'photons' : array-like }``
        The two arrays provided, as the keys suggest, must define the
        wavelength grid and the corresponding transmission in photon units
        (and thus they must have the same size).

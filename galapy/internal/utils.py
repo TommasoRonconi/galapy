@@ -6,7 +6,7 @@ import numpy
 ###################################################################################
 
 def trap_int ( xx, yy ) :
-    """ Trapezoid integration
+    r""" Trapezoid integration
 
     Parameters
     ----------
@@ -38,7 +38,7 @@ class FlagVal () :
 ###################################################################################
 
 def find_nearest ( array, value ) :
-    """ Function finding the indexes of array closer to the
+    r""" Function finding the indexes of array closer to the
     values in value.
     
     Parameters
@@ -75,7 +75,7 @@ def find_nearest ( array, value ) :
 ###################################################################################
 
 def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
-    """ Returns a powerlaw with exponential cut-off of the form
+    r""" Returns a powerlaw with exponential cut-off of the form
 
     .. math::
       
@@ -99,7 +99,7 @@ def powerlaw_exp_cutoff ( El, gamma, Ecut ) :
 ###################################################################################
 
 def poly_N ( xx, coeff ) :
-    """ Method for computing N-order polynomia.
+    r""" Method for computing N-order polynomia.
     The order of the polynomium is set by the length of the `coeff` list.
     
     The method computes
@@ -131,10 +131,10 @@ def poly_N ( xx, coeff ) :
 ###################################################################################
 
 def unwrap_keys ( d ) :
-    """ Generator yielding the keys of a nested dictionary
+    r""" Generator yielding the keys of a nested dictionary
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     d : dictionary
       A nested dictionary (whathever object inheriting from 'dict' 
       or collections.abc.MutableMapping or similar)
@@ -160,10 +160,10 @@ def unwrap_keys ( d ) :
             yield [ k ]
 
 def unwrap_values ( d ) :
-    """ Generator yielding the values of a nested dictionary
+    r""" Generator yielding the values of a nested dictionary
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     d : dictionary
       A nested dictionary (whathever object inheriting from 'dict' 
       or collections.abc.MutableMapping or similar)
@@ -189,10 +189,10 @@ def unwrap_values ( d ) :
             yield v
 
 def unwrap_items ( d ) :
-    """ Generator yielding the items of a nested dictionary
+    r""" Generator yielding the items of a nested dictionary
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     d : dictionary
       A nested dictionary (whathever object inheriting from 'dict' 
       or collections.abc.MutableMapping or similar)
@@ -222,7 +222,7 @@ def unwrap_items ( d ) :
 ###################################################################################
 
 def set_nested ( d, kl, v ) :
-    """ Recursive function for setting values in a nested dictionary.
+    r""" Recursive function for setting values in a nested dictionary.
     
     Parameters
     ----------
@@ -247,15 +247,14 @@ def set_nested ( d, kl, v ) :
     >>> set_nested(d,kl1, 3.)
     >>> set_nested(d,kl2, True)
     >>> d
-    {'first': {'second': {'third': 3.0}}, 
-     'a': {'b': True}}
+    {'first': {'second': {'third': 3.0}}, 'a': {'b': True}}
     
     If we want to add a new key-value pair to an already existing level:
+    
     >>> kl3 = ['first', 'second', 'fourth']
     >>> set_nested(d, kl3, 4.)
     >>> d
-    {'first': {'second': {'third': 3.0, 'fourth': 4.0}}, 
-     'a': {'b': True}}
+    {'first': {'second': {'third': 3.0, 'fourth': 4.0}},'a': {'b': True}}
     """
     k = kl.pop(0)
     if len(kl) == 0 :
@@ -294,10 +293,9 @@ def func_scalar_or_array ( var, function, *args, **kwargs ) :
     Returns
     -------
     : scalar or ndarray
-        Depending on the shape of ``var``, it is the result of 
-        - if ``var`` is a scalar it is the result of ``function(var)``
-        - if ``var`` is an ndarray it is the result of 
-          ``array([function(v) for v in var])``
+        Depends on the shape of ``var``: (i) if ``var`` is a scalar it is the result 
+        of ``function(var)``; (ii) if ``var`` is an ndarray it is the result of 
+        ``array([function(v) for v in var])``
     """
     var = numpy.asarray(var)
     scalar = False
@@ -316,7 +314,7 @@ def quantile_weighted ( values, quantiles, weights = None,
                         axis=-1 ) :
     """ Very close to numpy.percentile, but supports weights.
     (partially stolen from stackoverflow: 
-     https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy)
+    https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy)
 
     Parameters
     ----------
@@ -460,8 +458,8 @@ def now_string () :
 def filter_strings ( inlist, fields ) :
     """Function for filtering a list of strings (uses ``fnmatch``)
     
-    Paramters
-    ---------
+    Parameters
+    ----------
     inlist : sequence of str
         A list of strings to filter
     fields : str or sequence of str
@@ -494,8 +492,8 @@ def filter_strings ( inlist, fields ) :
 def shorten_string ( string, maxlength = 10, splitchar = '.' ) :
     """Function for shortening a string, splitting it in components.
     
-    Paramters
-    ---------
+    Parameters
+    ----------
     string : str
         Input string
     maxlength : int
