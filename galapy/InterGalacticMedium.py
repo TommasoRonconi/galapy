@@ -1,3 +1,8 @@
+"""Approximated IGM attenuation.
+"""
+
+########################################################################################
+
 # External imports
 import numpy
 
@@ -5,11 +10,31 @@ import numpy
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
 
+########################################################################################
+
 class IGM () :
+    r"""Class for handling intergalactic medium (IGM) properties.
+    
+    Implements the approximated model from Eqs. (20-21-25-26-27-28-29) in 
+    `Inoue et al., 2014 <https://doi.org/10.1093/mnras/stu936>`_
+    given in terms of the piece-wise equation
+    
+    .. math::
+    
+       \tau_\text{IGM}(\lambda_\text{O}, z) = \tau_\text{LC}^\text{LAF}(\lambda_\text{O}, z) + 
+                                              \tau_\text{LS}^\text{LAF}(\lambda_\text{O}, z) + 
+                                              \tau_\text{LC}^\text{DLA}(\lambda_\text{O}, z) + 
+                                              \tau_\text{LS}^\text{DLA}(\lambda_\text{O}, z)
+    
+    provided in terms of the equations for the Lyman-series (LS) and Lyman-continuum (LC) absorption 
+    from Damped Lyman-:math:`\alpha` systems (DLA) and from the Lyman-:math:`\alpha` Forest (LAF).
+    """
     
     LymanLimit = 912.
+    """float: Wavelength corresponding to the Lyman limit in Angstroms."""
 
     def __init__ ( self ) :
+        """Initialize the IGM object."""
         import os
         
         # Shorter version for convenience
@@ -24,6 +49,21 @@ class IGM () :
         self.j_lambda = 1. / self.lambda_j
         
     def LS_LAF ( self, lobs, zobs ) :
+        """Compute the optical depth due to Lyman series absorption for the 
+        Lyman-alpha forest contribute.
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Lyman series optical depth due to Lyman-alpha forest.
+        """
         
         opt_depth = numpy.zeros_like(lobs)
         
@@ -43,6 +83,21 @@ class IGM () :
         return opt_depth
     
     def LS_DLA ( self, lobs, zobs ) :
+        """Compute the optical depth due to Lyman series absorption for the 
+        Damped Lyman-alpha systems contribute.
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Lyman series optical depth due to Damped Lyman-alpha systems.
+        """
         
         opt_depth = numpy.zeros_like(lobs)
         
@@ -60,6 +115,21 @@ class IGM () :
         return opt_depth
 
     def LC_LAF ( self, lobs, zobs ) :
+        """Compute the optical depth due to Lyman continuum absorption for the 
+        Lyman-alpha forest contribute.
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Lyman continuum optical depth due to Lyman-alpha forest.
+        """
     
         # preparing quantities
         opt_depth = numpy.zeros_like(lobs)
@@ -128,6 +198,21 @@ class IGM () :
         raise Exception
         
     def LC_DLA ( self, lobs, zobs ) :
+        """Compute the optical depth due to Lyman continuum absorption for the 
+        Damped Lyman-alpha systems contribute.
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            Lyman continuum optical depth due to Damped Lyman-alpha systems.
+        """
     
         # preparing quantities
         opt_depth = numpy.zeros_like(lobs)
@@ -174,6 +259,22 @@ class IGM () :
         raise Exception
 
     def optical_depth ( self, lobs, zobs ) :
+        r"""Overall contribution to the optical depth, damping ultra-violet photons due 
+        to the absorption from the intergalactic medium (IGM) using the piece-wise fitting 
+        functions from Inoue et al., 2014.
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            IGM optical depth.
+        """
         return (
             self.LS_LAF( lobs, zobs ) +
             self.LC_LAF( lobs, zobs ) + 
@@ -182,4 +283,25 @@ class IGM () :
         )
     
     def transmission ( self, lobs, zobs ) :
+        r"""Overall transmission of IGM.
+        
+        computed as :math:`e^{-\tau_\text{IGM}(\lambda_\text{O}, z)}`
+        where :math:`\tau_\text{IGM}` is computed with equation 
+        :py:func:`galapy.InterGalacticMedium.IGM.optical_depth`
+        
+        Parameters
+        ----------
+        lobs : numpy.ndarray
+            Observed wavelengths.
+        zobs : float
+            Redshift of the source.
+            
+        Returns
+        -------
+        numpy.ndarray
+            IGM transmission.
+        """
+        
         return numpy.exp( -self.optical_depth( lobs, zobs ) )
+
+########################################################################################
