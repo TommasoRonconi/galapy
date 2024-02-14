@@ -528,7 +528,7 @@ def cat_to_dict ( infile, id_field = 'id', err_field = '_err', meta_fields = [],
     Parameters
     ----------
     infile : str
-        Path to the csv file
+        Path to the ASCII file
     id_field : str
         (Optional, default='id') header name of the field containing the sources' ID
     err_field : str
