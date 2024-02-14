@@ -1,3 +1,6 @@
+"""Handlers objects allow to manage the free-parameters and their priors in a sampling run. 
+"""
+
 ########################################################################################
 
 # External imports
