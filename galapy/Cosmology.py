@@ -1,5 +1,8 @@
-""" The Cosmology module defines a Cosmology class whose just a wrapper for interpolation on grid of Luminosity Distances and Ages
+""" The Cosmology module defines a Cosmology class whose just a wrapper for 
+interpolation on grid of Luminosity Distances and Ages
 """
+
+########################################################################################
 
 # External imports
 import numpy
@@ -11,9 +14,10 @@ from galapy.internal.constants import Lsun, clight, Mpc_to_cm
 from galapy.internal.interp import lin_interp
 from galapy.internal.data import DataFile
 
+########################################################################################
 
 class CSM () :
-    """ Class for cosmological computations. It is built using pre-computed redshift-dependent
+    r""" Class for cosmological computations. It is built using pre-computed redshift-dependent
     quantities useful for transforming energies radiated per unit wavelength into fluxes from
     objects at a given distance.
     
@@ -23,24 +27,29 @@ class CSM () :
       If a string is passed, it should name one of the pre-computed cosmologies available in the
       database. Available cosmologies are :code:`('WMAP7', 'WMAP9', 'Planck15', 'Planck18')`.
       If a dictionary is passed, the class expects to find 3 key-value couples:
-      (i) key = 'redshift', value = an array of redshift values; (ii) key = 'luminosity_distance', 
-      value = an array of luminosity distances corresponding to the redshift values of the first key-value couple;
+      (i) key = 'redshift', value = an array of redshift values; 
+      (ii) key = 'luminosity_distance', value = an array of luminosity distances corresponding 
+      to the redshift values of the first key-value couple;
       (iii) key = 'age', value = an array of ages of the Universe corresponding to the redshift 
       values of the first key-value couple.
       All these arrays should have the same length.
     
     Attributes
     ----------
-    At construction the class builds 2 interpolator-objects: :code:`CSM.DL` and :code:`CSM.age`.
-    These objects provide an interpolation interface to the pre-computed values of luminosity 
-    distance and age of the Universe.
-    They can be called as functions:
-    
-    .. code ::
-      
-      $ csm = CSM('Planck18')
-      $ csm.DL(1.0)
-      6791.26894
+    DL : :py:class:`galapy.internal.interp.lin_interp`
+       interpolator interface to luminosity distance
+    UA : :py:class:`galapy.internal.interp.lin_interp`
+       interpolator interface to age of the universe
+
+    Examples
+    --------
+    Interpolator attributes can be called as functions that take as input a redshift value 
+    (or an array of redshift values):
+
+    >>> from galapy.Cosmology import CSM
+    >>> csm = CSM('Planck18')
+    >>> csm.DL(1.0)
+    6791.26894
 
     The returned value is in MegaParsecs for the luminosity distance and in years for the age.
     """
@@ -68,7 +77,7 @@ class CSM () :
         self._TF = lin_interp( zz, TF )
 
     def to_flux ( self, redshift, restframe_wavelength, luminosity )  :
-        """ Converts a restframe luminosity to the flux received at 
+        r"""Converts a restframe luminosity to the flux received at 
         a given redshift.
         
         .. math::
@@ -78,8 +87,11 @@ class CSM () :
         Parameters
         ----------
         redshift : float
+           redshift of the source
         restframe_wavelength : array-like 
+           rest-frame wavelength grid
         luminosity : array-like
+           rest-frame luminosity grid
         
         Returns
         -------
@@ -87,4 +99,6 @@ class CSM () :
           a flux in milliJansky
         """
         return luminosity * restframe_wavelength**2 * self._TF( redshift ) 
+
+########################################################################################
 

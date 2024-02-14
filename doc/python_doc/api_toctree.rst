@@ -73,4 +73,5 @@ Helpers Functions
 
    galapy.internal.utils
    galapy.internal.constants
+   galapy.internal.interp
    
