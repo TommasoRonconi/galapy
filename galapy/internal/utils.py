@@ -521,7 +521,7 @@ def shorten_string ( string, maxlength = 10, splitchar = '.' ) :
 ###################################################################################
 
 def cat_to_dict ( infile, id_field = 'id', err_field = '_err', meta_fields = [], skip_fields = [] ) :
-    """Converts a Topcat-like catalogue into a 2-levels dictionary.
+    """Converts an ASCII (e.g. Topcat-like) catalogue into a 2-levels dictionary.
     The 1st order dictionary contains a 2nd order dictionary for each entry in the catalogue.
     Each 2nd order dictionary contains data and meta-data about the named entry. 
     
