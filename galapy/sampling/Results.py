@@ -373,7 +373,9 @@ class Results () :
             model   = dict( dictionary['model'] ),
             handler = dict( dictionary['handler'] ),
             data    = dict( dictionary['data'] ),
-            noise   = dict( dictionary['noise'] ),
+            noise   = ( dict( dictionary['noise'] )
+                        if dictionary['noise'] is not None
+                        else None ),
             sampler_name = dictionary['sampler_name'],
             sample_res     = [],
             sample_logl    = [],
