@@ -57,7 +57,7 @@ When we compute the emission from an object of type ``GXY``, the output luminosi
    In [4]: type(L)
    Out[4]: numpy.ndarray
 
-This means that, knowing that luminosities are given in Solar masses, :math:`L_\odot`, if we want to convert the array in some other units (e.g. Watts, :math:`\text{W}`),
+This means that, knowing that luminosities are given in Solar units, :math:`L_\odot`, if we want to convert the array in some other units (e.g. Watts, :math:`\text{W}`),
 we only have to multiply :code:`L` by the conversion factor (i.e. :math:`L_\odot = 3.828\times10^{26} \text{Watt}`).
 Since :code:`L` is a NumPy array, multiplication by a constant is automatically broadcasted to the whole array:
 
