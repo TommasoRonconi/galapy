@@ -25,6 +25,7 @@
    :caption: Tutorials 
 
    notebooks/load_catalogue
+   notebooks/interpolated_gxy
    tutorials/physics_modules
 
 .. toctree::
