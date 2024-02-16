@@ -1,3 +1,29 @@
+"""Class and tools for building the photometric system and inspecting the filters database
+
+.. Tip::
+   The ``PMS`` class is implemented to receive a variable number of arguments 
+   (i.e. all the filters necessary, either from the database or custom).
+   Given that
+   
+   - the filters from the database can be given as input to the ``PMS`` class as a sequence 
+     of strings, each with the unique name of a filter;
+   - the function :py:func:`galapy.PhotometricSystem.list_filters` returns
+     a list of filters that can be selected by experiment (i.e. instrument) 
+   
+   a convenient way for passing all the filters from a selected instrument as arguments
+   of the ``PMS`` class builder is to unpack the list returned by the list_filters function,
+   e.g.:
+   
+   .. code:: python
+      
+      pms = PMS( *list_filters( 'Herschel.PACS' ), 'Herschel.SPIRE.PMW' )
+
+   will build a PMS object with all the PACS filters and the PMW filter from the SPIRE
+   experiment.
+"""
+
+########################################################################################
+
 # External imports
 import numpy
 import os
@@ -8,6 +34,8 @@ import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
 from galapy.internal.utils import FlagVal
 from galapy.BandpassTransmission import BPT
+
+########################################################################################
 
 def _recursive_print_filters ( root, pathline = [] ) :
     _, subd, files = next(os.walk(root))
@@ -26,9 +54,7 @@ def print_filters ( experiment = None ) :
     Examples
     --------
     >>> print_filters(experiment='Herschel.SPIRE')
-    
     # Path: /path/to/.galapy
-    
     Herschel.SPIRE.PSW
     Herschel.SPIRE.PLW
     Herschel.SPIRE.PMW
@@ -90,6 +116,8 @@ def list_filters ( experiment = None ) :
                 raise AttributeError( f'experiment {experiment} not in database.' )
     return outlist
 
+########################################################################################
+
 class PMS () :
     """ Builds the Photometric System 
     
@@ -108,6 +136,33 @@ class PMS () :
        (and thus they must have the same size).
        Note that the chosen keyword will be used as unique identifier of
        the custom transmission.
+
+    Examples
+    --------
+    >>> from galapy.PhotometricSystem import PMS
+    >>> pms = PMS( 'Herschel.PACS.green', 'ALMA.B3' )
+    
+    builds a photometric system from two filters in the database, namely
+    ALMA Band 3 and the green filter from the PACS experiment of the Herschel satellite
+    
+    >>> pms = PMS(
+    ...     custom1 = {
+    ...             'wavelengths' : [999., 1000., 1001., 1999., 2000., 2001.],
+    ...             'photons' : [0., 1., 1., 1., 1., 0.]
+    ...     }
+    ... )
+    
+    builds a photometric system from a custom top-hat filter between 1000 to 2000 Angstrom,
+    It is also possible to build heterogeneous objects, with the only caveat of providing
+    the names of filters from the database first and then all the custom ones:
+    
+    >>> pms = PMS(
+    ...     'Herschel.PACS.green', 'ALMA.B3',
+    ...     custom1 = {
+    ...             'wavelengths' : [999., 1000., 1001., 1999., 2000., 2001.],
+    ...             'photons' : [0., 1., 1., 1., 1., 0.]
+    ...     }
+    ... )
     """
 
     def __init__ ( self, *args, **kwargs ) :
@@ -154,9 +209,11 @@ class PMS () :
         for key, value in kwargs.items() :
             if isinstance( value, MM ) :
                 try :
-                    idx_sort = numpy.argsort( value[ 'wavelengths' ] )
-                    ll = numpy.ascontiguousarray(value[ 'wavelengths' ][idx_sort])
-                    fl = numpy.ascontiguousarray(value[ 'photons' ][idx_sort])
+                    ll = numpy.asarray( value[ 'wavelengths' ] )
+                    fl = numpy.asarray( value[ 'photons' ] )
+                    idx_sort = numpy.argsort( ll )
+                    ll = numpy.ascontiguousarray(ll[idx_sort])
+                    fl = numpy.ascontiguousarray(fl[idx_sort])
                     self.bpt[ key ] = BPT( ll, fl )
                 except KeyError :
                     raise ValueError(
@@ -203,6 +260,7 @@ class PMS () :
         self.keys = tuple( self.keys[idxsort] )
 
     def dump ( self ) :
+        """Dump the Photometric System to formatted dictionary."""
         return {
             k : { 'wavelengths' : numpy.asarray( v.get_xaxis() ),
                   'photons'     : (
@@ -214,14 +272,17 @@ class PMS () :
 
     @classmethod
     def load ( cls, dictionary ) :
+        """Load the Photometric System from a formatted dictionary"""
         return cls( **dictionary )
 
     def __len__ ( self ) :
+        """Return number of filters"""
         return len( self.bpt )
 
     def get_intervals ( self ) :
-        """
-        """
+        # not implemented yet:
+        # should return the intervals within which there are filters
+        # avoiding overlaps
         pass
     
     def get_fluxes ( self, ll, fl ) :
@@ -230,12 +291,15 @@ class PMS () :
         Parameters
         ----------
         ll : array-like
-        
+           wavelength grid 
         fl : array-like
+           fluxes defined on the wavelength grid
         
         Returns
         -------
         : list
+        the fluxes from the input array trasmitted by each
+        filter in the photometric system
         """
         fluxes = []
         for key in self.keys :
