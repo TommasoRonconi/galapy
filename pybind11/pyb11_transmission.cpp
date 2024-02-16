@@ -30,10 +30,10 @@ PYBIND11_MODULE( BandpassTransmission, m ) {
 				 return o.get_bandpass_flux( ll, fl, LL.shape(0) );
 				 
 			       } )
-    .def_readonly( "lmin", &utl::transmission::lmin )
-    .def_readonly( "lmax", &utl::transmission::lmax )
-    .def_readonly( "lpiv", &utl::transmission::lpiv )
-    .def_readonly( "norm", &utl::transmission::norm )
+    .def_readonly( "lmin", &utl::transmission::lmin, "minimum wavelength of the grid" )
+    .def_readonly( "lmax", &utl::transmission::lmax, "maximum wavelength of the grid" )
+    .def_readonly( "lpiv", &utl::transmission::lpiv, "pivot wavelength of the filter" )
+    .def_readonly( "norm", &utl::transmission::norm, "normalisation of the transmission" )
     .def( "get_lmin", [] ( const utl::transmission & o ) { return o.lmin; } )
     .def( "get_lmax", [] ( const utl::transmission & o ) { return o.lmax; } )
     .def( "get_lpiv", [] ( const utl::transmission & o ) { return o.lpiv; } )
