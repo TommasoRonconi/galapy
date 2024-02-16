@@ -90,7 +90,7 @@ def setup(app):
     app.add_css_file("theme_overrides.css")  # path relative to static
 
 # Define position of the logo
-html_logo = '../logo/galapy_logo_noback.png'
+html_logo = '../logo/galapy_logo_rtdtheme.png'
 
 # -- Options for LaTeX output ---------------------------------------------
 
