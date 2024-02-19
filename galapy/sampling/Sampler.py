@@ -20,7 +20,7 @@ emcee_default_sampling_kw = { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : N
 #############################################################################################
 
 dynesty_default_sampler_kw = { 'bound' : 'multi', 'sample' : 'rwalk',
-                               'update_interval' : 0.6, 'walks' : 25,
+                               'update_interval' : 0.6, 'walks' : 50,
                                'bootstrap' : 0 }
 dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
                                 'maxcall_init' : None, 'dlogz_init' : 0.02,
@@ -29,7 +29,7 @@ dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
                                 'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
                                 'maxbatch' : sys.maxsize,
                                 'n_effective' : None, 'print_progress' : True,
-                                'stop_kwargs' : { 'target_n_effective' : 10000 } }
+                                'stop_kwargs' : { 'target_n_effective' : int(5e6) } }
 
 #############################################################################################
 

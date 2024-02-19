@@ -647,7 +647,9 @@ nsamples = 4096
 # These are the parameters that will be passed to the constructor of
 # the chosen sampler. See relative documentation for further informations:
 # - emcee :
-# - dynesty :
+# - dynesty : e.g. to decrease the number of walkers
+# sampler_kw = {{'walks':25}}  # default is 'walks' : 50
+# ( 'walks' : >= 50 is recommended for 15 < ndim < 25 )
 sampler_kw = {{}}
 
 # Sampling keyword arguments
