@@ -30,7 +30,9 @@ def return_extensions () :
     import sys
 
     extra_compile_args = None
-    if sys.platform not in { 'win32', 'cygwin', 'msys' } :
+    if sys.platform in { 'win32', 'cygwin', 'msys' } :
+        extra_compile_args = [ '/std:c++17' ]
+    else :
         extra_compile_args = [ '-std=c++17' ]        
     
     #############################################################################
