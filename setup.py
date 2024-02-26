@@ -27,6 +27,11 @@ def get_version( rel_path ):
 
 def return_extensions () :
     from pybind11.setup_helpers import Pybind11Extension
+    import sys
+
+    extra_compile_args = None
+    if sys.platform not in { 'win32', 'cygwin', 'msys' } :
+        extra_compile_args = [ '-std=c++17' ]        
     
     #############################################################################
     # C++ implementation of the interpolation class
@@ -39,7 +44,7 @@ def return_extensions () :
         include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
     
     #############################################################################
@@ -57,7 +62,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
 
     #############################################################################
@@ -73,7 +78,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
 
     #############################################################################
@@ -89,7 +94,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
 
     #############################################################################
@@ -104,7 +109,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
 
     #############################################################################
@@ -119,7 +124,7 @@ def return_extensions () :
                                  os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )    
 
     #############################################################################
@@ -133,7 +138,7 @@ def return_extensions () :
         include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
                                  os.path.join( 'pybind11' ) ] ),
         libraries = [ "m" ],
-        extra_compile_args=[ '-std=c++17' ]
+        extra_compile_args=extra_compile_args
     )
 
     return [
