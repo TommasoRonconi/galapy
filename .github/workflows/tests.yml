@@ -29,7 +29,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pybind11 pytest
-        # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install library
       run: |
         python -m pip install .
