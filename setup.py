@@ -29,12 +29,12 @@ def return_extensions () :
     from pybind11.setup_helpers import Pybind11Extension
     import sys
 
-    extra_compile_args = [ '-std=c++17' ]
-    # extra_compile_args = None
-    # if sys.platform in { 'win32', 'cygwin', 'msys' } :
-    #     extra_compile_args = [ '/std:c++17' ]
-    # else :
-    #     extra_compile_args = [ '-std=c++17' ]
+    # extra_compile_args = [ '-std=c++17' ]
+    extra_compile_args = None
+    if sys.platform in { 'win32', 'cygwin', 'msys' } :
+        extra_compile_args = [ '-std:c++17' ]
+    else :
+        extra_compile_args = [ '-std=c++17' ]
     
     #############################################################################
     # C++ implementation of the interpolation class
