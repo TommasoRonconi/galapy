@@ -31,7 +31,7 @@ def return_extensions () :
 
     extra_compile_args = None
     if sys.platform in { 'win32', 'cygwin', 'msys' } :
-        extra_compile_args = [ '/std:c++17' ]
+        extra_compile_args = [ '/std:c++latest' ]
     else :
         extra_compile_args = [ '-std=c++17' ]        
     
