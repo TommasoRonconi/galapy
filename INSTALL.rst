@@ -120,4 +120,25 @@ A table with the dependencies of the library follows. We also provide a short de
 | `pytest <https://pypi.org/project/pytest/>`_         | simple powerful testing with Python                                                |
 +------------------------------------------------------+------------------------------------------------------------------------------------+
 
+Windows Users
+-------------
+
+Even though a specific installation for Windows systems is not supported yet, Windows>=11 users can easily work this around by exploiting the
+`Windows Subsystem for Linux <https://learn.microsoft.com/en-us/windows/wsl/about>`_ (WSL).
+The WSL can be activated from the control panel or from the Powershell App with the following
+
+.. code::
+   
+   wsl --install
+
+After enabling the WSL it is possible to download Linux distributions to run on a Windows machine from the Windows store
+(some of them, e.g. Ubuntu, are free of charge).
+These apps provide users with a Linux shell (e.g. BASH) running on a Linux sub-system, without the need of a separate virtual-machine
+(therefore bypassing the typical over-head of VMs).
+
+Once the above actions have been performed, from the newly installed Linux shell it is possible to set up a work environment
+by installing :code:`python3` and :code:`pip` with the user's preferred method.
+
+With this minimal set-up is now possible to follow the instructions presented previously in this guide to get a working installation of GalaPy.
+
 .. _galapy_database: https://github.com/TommasoRonconi/galapy_database
