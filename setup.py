@@ -184,7 +184,7 @@ def main():
                'tqdm',
                'emcee',
                'dynesty',
-               'matplotlib',
+               'matplotlib>=3.6',
                'getdist',
                'requests',
                'h5py',
