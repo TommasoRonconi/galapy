@@ -429,13 +429,13 @@ filters = list(bands)
 # This parameter should be a nested dictionary with user-defined transmissions.
 # Such transmissions are passed as properly formatted dictionaries
 # 
-# filters = {{ 'filter_1' : {{ 'wavelengths' : array-like,
-#                            'photons' : array-like }},
-#             'filter_2' : {{ 'wavelengths' : array-like,
-#                            'photons' : array-like }},
-#             ...
-#             'filter_N' : {{ 'wavelengths' : array-like,
-#                            'photons' : array-like }} }}
+# filters_custom = {{ 'filter_1' : {{ 'wavelengths' : array-like,
+#                                     'photons' : array-like }},
+#                     'filter_2' : {{ 'wavelengths' : array-like,
+#                                     'photons' : array-like }},
+#                     ...
+#                     'filter_N' : {{ 'wavelengths' : array-like,
+#                                     'photons' : array-like }} }}
 #
 # As the keywords in the lower level dictionaries suggest,
 # the two arrays provided, must define the
