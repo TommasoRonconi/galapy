@@ -635,7 +635,7 @@ noise_parameters = {{
 # Choose the sampler, valid options are
 # 'emcee' : Affine Invariant MCMC ensemble sampler
 # 'dynesty' : Dynamic Nested Sampler
-sampler = 'emcee'
+sampler = 'dynesty'
 
 # EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
 # - set the number of walkers (``nwalkers``)
