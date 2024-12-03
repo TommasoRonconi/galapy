@@ -7,6 +7,7 @@ import os
 import warnings
 import fnmatch
 import difflib
+from collections.abc import MutableMapping as MM
 
 # As the sane of mind do
 import numpy

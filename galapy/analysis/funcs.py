@@ -10,6 +10,7 @@ from galapy.sampling.Results import Results
 from galapy.Handlers import ModelParameters 
 from galapy.Galaxy import gxy_params_defaults 
 from galapy.Noise import noise_params_defaults
+from galapy.internal.utils import get_credible_interval
 param_defaults = dict( **{'.'.join(['galaxy',k]):v for k,v in gxy_params_defaults.items()},
                        **{'.'.join(['noise',k]):v for k,v in noise_params_defaults.items()} )
 
@@ -43,6 +44,14 @@ def get_parameters_summary_statistics ( res, stat_type = 'quantiles', quantile =
         - if ``stat_type='quantiles'`` each row is an array with size = ``len(quantile)``
         - if ``stat_type='mean_and_std'`` each row is an array of size = 2 where the
           first element is the mean and the second element is the standard deviation.
+
+    Note
+    ----
+    When choosing stat_type='bestfit_and_interval' infinite values could appear either
+    in the lower uncertainty or in the higher untertainty. This happens when it was not possible
+    to close the requested quantile region (default = 0.68, i.e. 68 per cent) around the best-fit
+    value. In this case then, the constraint has to be interpreted as an higher or lower limit, 
+    respectively.
     """
     
     if stat_type not in ('bestfit_and_interval', 'mean_and_std', 'quantiles') :
@@ -59,12 +68,12 @@ def get_parameters_summary_statistics ( res, stat_type = 'quantiles', quantile =
             quantile = float( quantile )
         except :
             raise
-        summary = numpy.empty([self.ndim,3], dtype=float)
-        idcentre = self.logl[self.wnot0].argmax()
-        for i, sample in enumerate( self.samples.T ) :
-            summary[i,0] = sample[idcentre]
+        summary = numpy.empty([res.ndim,3], dtype=float)
+        idcentre = res.logl[res.wnot0].argmax()
+        for i, sample in enumerate( res.samples.T ) :
+            summary[i,0] = sample[res.wnot0][idcentre]
             low, upp = get_credible_interval(
-                sample, idcentre, quantile, self.weights[self.wnot0]
+                sample[res.wnot0], idcentre, quantile, res.weights[res.wnot0]
             )
             if low is None : low = -numpy.inf
             if upp is None : upp = +numpy.inf
