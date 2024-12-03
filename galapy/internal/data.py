@@ -228,7 +228,7 @@ def download_database ( loc = None, name = None, version = None,
     elif version == 'latest' :
         pass
     elif version == 'default' :
-        version = f'v{DATA_VERSION}'
+        version = 'latest' # f'v{DATA_VERSION}'
     else :
         version = f'v{version}'
 
@@ -359,9 +359,21 @@ def _entrypoint_download_database () :
                              'The database version to download. ' +
                              'DEFAULT: "latest"'
                          ) )
+    parser.add_argument( '--update', '-u',
+                         dest = 'update',
+                         type = bool,
+                         default = False,
+                         help = (
+                             'Update existing database. ' +
+                             'DEFAULT: False'
+                         ) )
     args = parser.parse_args()
     
     ####################################################################
+
+    # Work in Progress
+    # if args.update :
+    #     data_version = 
 
     return download_database(
         loc = args.loc,
