@@ -147,6 +147,11 @@ namespace utl {
   }
 
   template < typename T, typename V >
+  T sigmoid ( T x, V k ) {
+    return 1.0 / ( 1.0 + std::exp( -k * x ) );
+  } 
+
+  template < typename T, typename V >
   T heaviside ( V x, V delay ) {
     return 0.5 * ( 1 + sgn( x - delay ) );
   }
