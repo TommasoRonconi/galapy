@@ -146,6 +146,8 @@ gxy_params_defaults = {
     # Active Galactic Nucleus #
     ###########################
 
+    # Fritz+2006 model
+
     'agn.fAGN' : ( 'Fraction with respect to the total dust IR luminosity contributed by the AGN',
                    [-3., 3.], True, 'f_\\mathrm{AGN}' ),
     
@@ -155,6 +157,23 @@ gxy_params_defaults = {
     'agn.ta' : ( 'Optical depth at 9.7 mum', 6., None, '\\tau_{9.7}^\\mathrm{AGN}' ),
     'agn.rm' : ( 'Radial ratio of the torus', 60, None, 'R_\\mathrm{torus}^\\mathrm{AGN}' ),
     'agn.ia' : ( 'Inclination angle', 0.001, None, '\\Psi_\\mathrm{los}^\\mathrm{AGN}' ),
+
+    # Panchromatic model
+
+    'agn.Lbol'       : ( 'Bolometric luminosity of the AGN',
+                         [+40, +48], True, 'L_\\mathrm{bol}' ),
+    'agn.theta_view' : ( 'Line-of-sight angle with respect to the AGN axis.',
+                         [0.0, 0.5*numpy.pi], False, '\\theta_\\mathrm{view}' ),
+    'agn.delta'      : ( 'Modification of power-law in correspondence of the big-blue bump',
+                         [-1, +1], False, '\\delta_\\mathrm{AD}' ),
+    'agn.TH'         : ( 'Temperature of the hot dust',
+                         [+2, +4], True, 'T_\\mathrm{hot}' ),
+    'agn.Delta'      : ( 'Torus half-aperture angle',
+                         [0.0, 0.5*numpy.pi], False, '\\Delta' ),
+    'agn.EBV'        : ( 'Extinction normalization parameter',
+                         [-3, +0], True, 'E_\\mathrm{B-V}' ),
+    'agn.RL'         : ( 'Radio loudness parameter',
+                         [+2, +4], True, 'R_L' ),
 
 }
 
@@ -337,9 +356,8 @@ class GXY ( Model ) :
         self.agn = None
         if do_AGN :
             if agn is None :
-                agn = {}
-            self.agn = AGN( lmin = self.csp.l.min(),
-                            lmax = self.csp.l.max(),
+                agn = { 'model' : 'Panchromatic' }
+            self.agn = AGN( self.csp.l,
                             do_Xray = do_Xray,
                             **agn )
             self.params[ 'agn' ] = self.agn.params
@@ -732,7 +750,10 @@ class GXY ( Model ) :
 
         # emission from AGN
         if self.agn is not None :
-            self.components['AGN'] = self.agn.emission( self.wl(), (EDD+EMC) * sunL )
+            agnargs = []
+            if self.agn.model == 'Fritz2006' :
+                agnargs += [ (EDD+EMC) * sunL ]
+            self.components['AGN'] = self.agn.emission( self.wl(), *agnargs )
             Ltot += self.components['AGN']
 
         # emission from X-Ray binaries
@@ -808,6 +829,20 @@ class GXY ( Model ) :
             k : self.cosmo.to_flux( self.redshift, self.wl(), c ) 
             for k, c in self.components.items()
         }
+
+    def get_fAGN ( self ) :
+
+        if self.agn is None :
+            return 0.0
+
+        if self.agn.model == 'Fritz2006' :
+            return self.params['agn']['fAGN']
+        
+        wn0 = self.components['stellar'] > 0
+        return self.params['agn']['Lbol']*sunL / (
+            self.params['agn']['Lbol']*sunL +
+            trap_int( self.wl()[wn0], self.components['stellar'][wn0] )
+        )
     
 
 class PhotoGXY ( GXY ) :
