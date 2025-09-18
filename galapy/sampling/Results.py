@@ -72,6 +72,7 @@ def dump_results ( model, handler, data, sampler,
     if not isinstance( sampler, Sampler ) :
         raise ValueError( "Argument ``sampler`` should be an instance of type Sampler" )
     sample_res, sample_logl, sample_weights = sampler.return_samples_logl_weights()
+    sample_logz, sample_logzerr = sampler.return_logz_logzerr()
 
     if not isinstance( model, GXY ) :
         raise ValueError( "Argument ``model`` should be an instance of type GXY" )
@@ -102,6 +103,8 @@ def dump_results ( model, handler, data, sampler,
                     'sample_res' : sample_res,
                     'sample_logl' : sample_logl,
                     'sample_weights' : sample_weights,
+                    'sample_logz' : sample_logz,
+                    'sample_logzerr' : sample_logzerr,
                     'data' : None if data is None else data.dump(),
                     'noise' : None if noise is None else noise.dump(),
                     'sampler_name' : sampler.which_sampler,
@@ -119,6 +122,8 @@ def dump_results ( model, handler, data, sampler,
     results = Results( model, handler,
                        sample_res, sample_logl,
                        sample_weights = sample_weights,
+                       sample_logz = sample_logz,
+                       sample_logzerr = sample_logzerr,
                        data = data, noise = noise,
                        sampler_name = sampler.which_sampler )
     ndur = time() - tstart
@@ -174,6 +179,16 @@ def load_results ( infile, method = None, lightweight = None ) :
                     if 'sample_weights' in res_dict['results']
                     else None
                 ),
+                sample_logz = (
+                    res_dict['results']['sample_logz']
+                    if 'sample_logz' in res_dict['results']
+                    else None
+                ),
+                sample_logzerr = (
+                    res_dict['results']['sample_logzerr']
+                    if 'sample_logzerr' in res_dict['results']
+                    else None
+                ),
                 data = (
                     Observation.load( res_dict['results']['data'] )
                     if 'data' in res_dict['results']
@@ -201,7 +216,8 @@ def load_results ( infile, method = None, lightweight = None ) :
 
 class Results () :
     def __init__ ( self, model, handler, sample_res, sample_logl,
-                   sample_weights = None, data = None, noise = None,
+                   sample_weights = None, sample_logz = None, sample_logzerr = None,
+                   data = None, noise = None,
                    sampler_name = 'dynesty' ) :
         """ A class for storing the results of a sampling run.
         
@@ -221,6 +237,8 @@ class Results () :
             (Optional) 1D array with the weight of each sample in the run. 
             Default is ``None``, in which case the array will be padded with ones
             (i.e. all samples have the same weight)
+        sample_logz :
+        sample_logzerr :
         data : galapy.sampling.Observation.Observation
             (Optional) An instance of type ``Observation`` with the fluxes 
             measurements used in the sampling run
@@ -256,6 +274,12 @@ class Results () :
 
         if sample_weights is None :
             sample_weights = numpy.ones_like( sample_logl )
+
+        if sample_logz is None :
+            sample_logz = numpy.ones_like( sample_logl )
+
+        if sample_logzerr is None :
+            sample_logzerr = numpy.ones_like( sample_logl )
         
         # Store the observation
         self.Ndof = 1
@@ -298,7 +322,9 @@ class Results () :
         self.logl    = numpy.asarray( sample_logl )
         self.samples = numpy.asarray( sample_res )
         self.weights = numpy.asarray( sample_weights )
-        self.wnot0 = ( self.weights > 0. )
+        self.logz    = numpy.asarray( sample_logz )
+        self.logzerr = numpy.asarray( sample_logzerr )
+        self.wnot0  = ( self.weights > 0. )
         self.SED    = numpy.empty(shape=(self.size, 
                                          *model.wl().shape))
         self.Mstar  = numpy.empty(shape=(self.size,))
@@ -353,6 +379,8 @@ class Results () :
             samples = self.samples,
             weights = self.weights,
             wnot0   = self.wnot0,
+            logz    = self.logz,
+            logzerr = self.logzerr,
             # Derived quantities
             SED     = self.SED,
             Mstar   = self.Mstar,
@@ -379,13 +407,17 @@ class Results () :
             sampler_name = dictionary['sampler_name'],
             sample_res     = [],
             sample_logl    = [],
-            sample_weights = []
+            sample_weights = [],
+            sample_logz    = [],
+            sample_logzerr = []
         )
         # Sampling run stored quantities
         ret.logl    = dictionary['logl']
         ret.samples = dictionary['samples']
         ret.weights = dictionary['weights']
         ret.wnot0   = dictionary['wnot0']
+        ret.logz    = dictionary['logz']
+        ret.logzerr = dictionary['logzerr']
 
         # Additional hyperparameters
         ret.Ndof    = dictionary['Ndof']
