@@ -355,8 +355,8 @@ def _run () :
     if args.serial :
         _sample_serial(
             which_sampler = hyperpar.sampler,
-            nwalkers = hyperpar.nwalkers,
-            nsamples = hyperpar.nsamples, 
+            nwalkers = getattr( hyperpar, 'nwalkers', None ),
+            nsamples = getattr( hyperpar, 'nsamples', None ), 
             sampler_kw = hyperpar.sampler_kw, 
             logl_kw = { 'method_uplims' : hyperpar.method_uplims }, 
             run_sampling_kw = hyperpar.sampling_kw,
@@ -370,8 +370,8 @@ def _run () :
     else :
         _sample_parallel(
             which_sampler = hyperpar.sampler,
-            nwalkers = hyperpar.nwalkers,
-            nsamples = hyperpar.nsamples, 
+            nwalkers = getattr( hyperpar, 'nwalkers', None ),
+            nsamples = getattr( hyperpar, 'nsamples', None ), 
             sampler_kw = hyperpar.sampler_kw, 
             logl_kw = { 'method_uplims' : hyperpar.method_uplims }, 
             run_sampling_kw = hyperpar.sampling_kw,
@@ -496,6 +496,17 @@ do_Radio = False
 # Whether to build a galaxy containing an AGN (True) or not (False).
 do_AGN = False
 
+# The Active Galactic Nucleus emission model to use for building the galaxy
+# Available models are:
+# - 'Fritz2006' : templated model; NOT recommended for fitting when
+#                 * the AGN component is dominant
+#                 * radio information is available
+#                 * information on the AGN geometry cannot be safely assumed
+# - 'Panchromatic' : analytical model; always recommended for fitting: 
+#                    provides a self-consistent and multi-wavelength model
+#                    accounting for all the AGN building blocks, including radio-jets
+agn_model = '{2:s}'
+
 # Sub-sampling of the wavelength grid.
 # If lstep is an integer it will consider a wavelength grid entry every lstep values.
 # If lstep is a sequence of integers or a mask, only the wavelength grid entries
@@ -604,16 +615,7 @@ galaxy_parameters = {{
     ###########################
     # Active Galactic Nucleus #
     ###########################
-
-    'agn.fAGN' : ( [-3., 3.], True ),
-    
-    'agn.ct' : 40,
-    'agn.al' : 0.,
-    'agn.be' : -0.5,
-    'agn.ta' : 6.,
-    'agn.rm' : 60,
-    'agn.ia' : 0.001,
-    
+{3:s}    
 }}
 
 noise_parameters = {{
@@ -737,6 +739,16 @@ def _generate_parameter_file () :
                              ' insitu, constant, delayedexp, lognormal. ' +
                              'DEFAULT: None'
                          ) )
+    parser.add_argument( '--AGN_model', '-agn',
+                         dest = 'agn_model',
+                         type = str,
+                         default = None,
+                         help = (
+                             'Choose an AGN model. ' +
+                             'Available models are:' +
+                             ' Fritz2006, Panchromatic. ' +
+                             'DEFAULT: None'
+                         ) )
     args = parser.parse_args()
     
     ####################################################################
@@ -785,9 +797,55 @@ def _generate_parameter_file () :
             sfh_params_string += sfh_params[sfh]
     else :
         sfh_params_string = sfh_params[args.sfh_model]
+    
+    ####################################################################
+
+    agn_models = set(['Fritz2006', 'Panchromatic'])
+    agn_params = {
+        'Fritz2006' : """
+    # Fritz2006 model
+    'agn.fAGN' : ( [-3., 3.], True ),
+    
+    'agn.ct' : 40,
+    'agn.al' : 0.,
+    'agn.be' : -0.5,
+    'agn.ta' : 6.,
+    'agn.rm' : 60,
+    'agn.ia' : 0.001,
+        """,
+        'Panchromatic' : """
+    # Panchromatic model
+    'agn.Lbol'       : ( [+40, +48], True ),
+    'agn.theta_view' : ( [0.0, 1.57], False ),
+    'agn.delta'      : ( [-1, +1], False ),
+    'agn.TH'         : ( [+2, +4], True ),
+    'agn.Delta'      : ( [0.0, 1.57], False ),
+    'agn.EBV'        : ( [-3, +0], True ),
+    'agn.RL'         : ( [+2, +4], True ),
+        """,
+    }
+
+    agn_params_string = ''
+    if args.agn_model not in agn_models and args.agn_model is not None :
+        raise RuntimeError(
+            'The chosen model is not available. '
+            'To see a list of the available choices call '
+            'this function with the --help argument'
+        )
+    elif args.agn_model is None :
+        args.agn_model = 'insitu'
+        for sfh in agn_models :
+            agn_params_string += agn_params[sfh]
+    else :
+        agn_params_string = agn_params[args.agn_model]
+    
+    ####################################################################
 
     with open( args.name + '.py', 'w' ) as paramfile :
-        paramfile.write( default_parameter_file.format(args.sfh_model, sfh_params_string) )
+        paramfile.write( default_parameter_file.format(
+            args.sfh_model, sfh_params_string,
+            args.agn_model, agn_params_string
+        ) )
 
     return;
 
