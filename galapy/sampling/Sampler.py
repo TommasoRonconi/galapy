@@ -148,6 +148,20 @@ class Sampler () :
         
         return outtuple
 
+    def return_logz_logzerr ( self ) :
+        
+        if self.which_sampler == 'dynesty' and hasattr( self.sampler.results, 'logz' ):
+            logz = self.sampler.results.logz
+            logzerr = getattr( self.sampler.results, 'logzerr', None )
+            return logz, logzerr
+        else :
+            warnings.warn(
+                'something went wrong and the log-evidence is not available',
+                category=RuntimeWarning
+            )
+            return None, None
+        return None, None
+
     def save_results ( self, outbase = '',
                        pickle_sampler = False,
                        pickle_raw = True ) :
