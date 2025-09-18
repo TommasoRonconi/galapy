@@ -79,7 +79,7 @@ def find_template_par ( key, value ) :
         raise AttributeError( f"Parameter '{key}' is not a valid template parameter." )
 
 def agn_build_params ( fAGN, **kwargs ) :
-    """ Standard function for building the parameters dictionary of class AGN()
+    """ Standard function for building the parameters dictionary of class Fritz2006()
     """
     out = {
         'fAGN' : fAGN,
@@ -101,7 +101,7 @@ def agn_build_params ( fAGN, **kwargs ) :
 # AGN class
 #################################################################################
 
-class AGN () :
+class Fritz2006 () :
     r""" AGN component class
     This class implements the templated emission from an Active Galactic Nucleus
     within the galaxy.
@@ -121,11 +121,11 @@ class AGN () :
     
     Parameters
     ----------
-    lmin, lmax : float
-      minimum and maximum values of the wavelength-domain. The original templates
+    lgrid : ndarray
+      wavelength grid, defines the domain of the templates interpolation. The original templates
       are computed within the 10-10^7 Angstrom interval. At build time this domain
       is extended with `pad` padding values before and after the limits of the 
-      template's wavelength domain to match the requested limits.
+      template's wavelength domain to match the requested gridding.
     pad : integer
       number of padding values to match the requested wavelength domain
     fAGN : float
@@ -152,7 +152,7 @@ class AGN () :
       while :code:`ia = 0` to a type 2 AGN.
     """
     
-    def __init__ ( self, lmin, lmax, pad = 16, fAGN = 1.e-3, do_Xray = True, **kwargs ) :
+    def __init__ ( self, lgrid, pad = 16, fAGN = 1.e-3, do_Xray = True, **kwargs ) :
         import galapy.internal.globs as GP_GBL
         import os
 
@@ -161,7 +161,8 @@ class AGN () :
             raise RuntimeError( 'trying to set fAGN>=1.0 not allowed.' )
         
         # store the argument variables
-        self.lmin, self.lmax = lmin, lmax
+        self.lgrid = lgrid # shallow copy
+        self.lmin, self.lmax = self.lgrid.min(), self.lgrid.max()
         self._pad = pad
         self.do_Xray = do_Xray
         
@@ -179,7 +180,8 @@ class AGN () :
             self.compute_X_template()
 
     def load_template ( self ) :
-        """ Loads the template corresponding to the current parameters (mostly intended for internal usage).
+        """ Loads the template corresponding to the current parameters 
+        (mostly intended for internal usage).
         """
 
         # load template from closest file to the parameters chosen
@@ -295,7 +297,7 @@ class AGN () :
             self.load_template()
         return;
 
-    def emission ( self, ll, Lref ) :
+    def __call__ ( self, ll, Lref ) :
         """ Computes the emission coming from the AGN adding the X-ray part 
         if the internal variable do_Xray has been set to :code:`True` at build time
         
@@ -320,6 +322,8 @@ class AGN () :
                                    self.f_norm_X( ll ) *
                                    self.X_bolometric_correction( Lref ) )
         return  fact * Lref * self.f_norm_tot( ll )
-    
-        
 
+    def emission ( self, *args, **kwargs ) :
+        return self.__call__( *args, **kwargs )
+        
+#######################################################################################
