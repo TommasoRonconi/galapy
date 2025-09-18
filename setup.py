@@ -164,6 +164,7 @@ def main():
            description = "GalaPy - Spectral modelling tool for galaxies in Python",
            package_dir = {
                'galapy' : 'galapy',
+               'galapy.AGN_core' : os.path.join( 'galapy', 'AGN_core' ),
                'galapy.sampling' : os.path.join( 'galapy', 'sampling' ),
                'galapy.configuration' : os.path.join( 'galapy', 'configuration' ),
                'galapy.internal' : os.path.join( 'galapy', 'internal' ),
@@ -171,6 +172,7 @@ def main():
                'galapy.io' : os.path.join( 'galapy', 'io' ),
            },
            packages = [ 'galapy',
+                        'galapy.AGN_core',
                         'galapy.configuration',
                         'galapy.internal',
                         'galapy.sampling',
