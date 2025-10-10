@@ -1,8 +1,10 @@
 numpy
 scipy
+tqdm
 emcee
 dynesty
 matplotlib>=3.6
 getdist
 requests
 h5py
+pytest
