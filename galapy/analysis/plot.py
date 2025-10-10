@@ -231,18 +231,22 @@ def sed_obs ( ll, ff, ee, lo, redshift = None, frame = 'rest', ax = None, ax_kwa
     return Pdata
 
 def sed_components ( ll, components,
-                     redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+                     redshift = None, frame = 'rest', ax = None, ax_kwargs = {}, **kwargs ) :
     ax = sed_layout(redshift, frame, ax, **ax_kwargs)
     Pcomp = []
+    kw = dict(ls='-', lw=1.5, )
+    kw.update(**kwargs)
     for k,L in components.items() :
-        Pcomp.append(ax.plot(ll, L, '-', lw = 1.5, label=k)[0])
+        Pcomp.append(ax.plot(ll, L, label=k, **kw)[0])
     return Pcomp
 
 def sed_flux ( ll, flux,
                color = 'black', label = 'total', 
-               redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
+               redshift = None, frame = 'rest', ax = None, ax_kwargs = {}, **kwargs ) :
     ax = sed_layout(redshift, frame, ax, **ax_kwargs)
-    return ax.plot( ll, flux, ls='-', color=color, lw=1.5, label=label)[0]
+    kw = dict(ls='-', lw=1.5, )
+    kw.update(**kwargs)
+    return ax.plot( ll, flux, color=color, label=label, **kw)[0]
 
 def sed_1sigma2sigma ( ll, flux, err, center = False, color = 'gray', center_label = 'mean', 
                        redshift = None, frame = 'rest', ax = None, ax_kwargs = {} ) :
