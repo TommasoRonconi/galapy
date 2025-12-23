@@ -87,7 +87,7 @@ class Sampler () :
             raise AttributeError( f'The sampler chosen "{self.which_sampler}" is not valid.'
                                   'Valid samplers are ["dynesty", "emcee"].' )
             
-    def run_sampling ( self, pos = None, nsample = None,
+    def run_sampling ( self, pos = None, nsample = None, print_summary = True,
                        dynesty_sampling_kw = {}, emcee_sampling_kw = {} ) :
         """ Run the sampling with the chosen sampler.
         
@@ -110,7 +110,7 @@ class Sampler () :
             ndur = time() - tstart
             print( f'\nDone dynesty (dynamic) in {ndur} seconds' )
             # Print summary of the results:
-            self.sampler.results.summary()
+            if print_summary : self.sampler.results.summary()
             
         if self.which_sampler == 'emcee' :
             if pos is None :
