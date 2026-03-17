@@ -313,9 +313,9 @@ class agn_jets () :
     ) :
         self.lgrid = lgrid
         self.llgrid = numpy.log(lgrid)
-        self.smooth = lambda x : gaussian_filter(
-            x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
-        )
+        # self.smooth = lambda x : gaussian_filter(
+        #     x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
+        # )
         self._ngrid5GHz = clight['A/s']/(self.lgrid*5.e+9)
         self._view_fact30 = get_view_fact(numpy.radians(30.0))
         self._glorentz2 = numpy.sqrt(type(self).glorentz*type(self).glorentz-1)
@@ -342,6 +342,11 @@ class agn_jets () :
             self.lgrid, self.smooth(
                 self._weight * self._fsteep * type(self).Rext * self._ngrid5GHz**(1-type(self).asteep) * self._nfact
             )
+        )
+        
+    def smooth ( self, x ) :
+        return gaussian_filter(
+            x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
         )
             
     def set_params ( self, RL = None, theta_view = None, LAD2500 = None ) :
@@ -388,9 +393,9 @@ class agn_xray () :
         self.El = Ang_to_keV(self.lgrid)
         self.norm = norm
         self.iso = isotropic
-        self.smooth = lambda x : gaussian_filter(
-            x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
-        )
+        # self.smooth = lambda x : gaussian_filter(
+        #     x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
+        # )
 
         if self.El.max() < 2. :
             raise RuntimeError( "Cannot build the X-ray spectrum for "
@@ -419,6 +424,12 @@ class agn_xray () :
         self._fcall = lin_interp( self.lgrid, self.smooth( ret ) )
         
         _ = self.set_params( Lbol = Lbol, theta_view = theta_view )
+
+        
+    def smooth ( self, x ) :
+        return gaussian_filter(
+            x, 0.3 / ((self.llgrid.max()-self.llgrid.min())/self.llgrid.size) * numpy.log(10.)
+        )
         
     def get_normalization ( self, norm = None ) :
         
