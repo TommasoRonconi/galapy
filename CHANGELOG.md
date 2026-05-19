@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Note:** pre-release tags are marked as vX.Y.Z-lw for "light-weight" on GitHub;
 > the `-lw` tag suffix was used for pre-stable releases and dropped from v0.4.0 onwards.
 
-
 ## [Unreleased]
+
+---
+
+## [0.5.4] - 2026-05-19
 
 ### Fixed
 - Renamed AGN Fritz+2006 template parameters from `agn.ct`, `agn.al`, `agn.be`,
