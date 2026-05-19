@@ -149,12 +149,12 @@ gxy_params_defaults = {
     'agn.fAGN' : ( 'Fraction with respect to the total dust IR luminosity contributed by the AGN',
                    [-3., 3.], True, 'f_\\mathrm{AGN}' ),
     
-    'agn.ct' : ( 'Torus half-aperture angle', 40, None, '\\Theta' ),
-    'agn.al' : ( 'Density parameter (exponential part)', 0., None, '\\alpha' ),
-    'agn.be' : ( 'Density parameter (power-law part)', -0.5, None, '\\beta' ),
-    'agn.ta' : ( 'Optical depth at 9.7 mum', 6., None, '\\tau_{9.7}^\\mathrm{AGN}' ),
-    'agn.rm' : ( 'Radial ratio of the torus', 60, None, 'R_\\mathrm{torus}^\\mathrm{AGN}' ),
-    'agn.ia' : ( 'Inclination angle', 0.001, None, '\\Psi_\\mathrm{los}^\\mathrm{AGN}' ),
+    'agn.template.ct' : ( 'Torus half-aperture angle (template parameter)', 40, None, '\\Theta' ),
+    'agn.template.al' : ( 'Density parameter, exponential part (template parameter)', 0., None, '\\alpha' ),
+    'agn.template.be' : ( 'Density parameter, power-law part (template parameter)', -0.5, None, '\\beta' ),
+    'agn.template.ta' : ( 'Optical depth at 9.7 mum (template parameter)', 6., None, '\\tau_{9.7}^\\mathrm{AGN}' ),
+    'agn.template.rm' : ( 'Radial ratio of the torus (template parameter)', 60, None, 'R_\\mathrm{torus}^\\mathrm{AGN}' ),
+    'agn.template.ia' : ( 'Inclination angle (template parameter)', 0.001, None, '\\Psi_\\mathrm{los}^\\mathrm{AGN}' ),
 
 }
 

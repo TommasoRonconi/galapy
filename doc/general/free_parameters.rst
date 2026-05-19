@@ -115,18 +115,24 @@ the mathematical symbol and short description of the parameter, consistently wit
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
 | ``agn.fAGN``        | :math:`10^{-3}`                  | :math:`f_\text{AGN}`               : AGN fraction                                                                            |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.ct``          | :math:`40\ \text{deg}`           | :math:`\Theta`                     : Torus half-aperture angle                                                               |
+| ``agn.template.ct`` | :math:`40\ \text{deg}`           | :math:`\Theta`                     : Torus half-aperture angle *(template)*                                                  |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.al``          | :math:`0`                        | :math:`\alpha`                     : Density parameter (exponential part)                                                    |
+| ``agn.template.al`` | :math:`0`                        | :math:`\alpha`                     : Density parameter (exponential part) *(template)*                                       |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.be``          | :math:`-0.5`                     | :math:`\beta`                      : Density parameter (power-law part)                                                      |
+| ``agn.template.be`` | :math:`-0.5`                     | :math:`\beta`                      : Density parameter (power-law part) *(template)*                                         |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.ta``          | :math:`6`                        | :math:`\tau_{9.7}^\text{AGN}`      : Optical depth at :math:`9.7 \mu m`                                                      |
+| ``agn.template.ta`` | :math:`6`                        | :math:`\tau_{9.7}^\text{AGN}`      : Optical depth at :math:`9.7 \mu m` *(template)*                                        |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.rm``          | :math:`60`                       | :math:`R_\text{torus}^\text{AGN}`  : Radial ratio of the torus                                                               |
+| ``agn.template.rm`` | :math:`60`                       | :math:`R_\text{torus}^\text{AGN}`  : Radial ratio of the torus *(template)*                                                  |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
-| ``agn.ia``          | :math:`0.001\ \text{deg}`        | :math:`\Psi_\text{los}^\text{AGN}` : Inclination angle                                                                       |
+| ``agn.template.ia`` | :math:`0.001\ \text{deg}`        | :math:`\Psi_\text{los}^\text{AGN}` : Inclination angle *(template)*                                                         |
 +---------------------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------+
+
+.. warning::
+
+   Parameters marked *(template)* select one of the 24000 pre-computed Fritz et al. (2006) templates by snapping to the nearest point on a coarse discrete grid.
+   **Sampling over these parameters is strongly discouraged**: the likelihood surface will be discontinuous and the sampler cannot explore a continuous prior volume.
+   They should be treated as fixed configuration choices made before the fit.
 
 .. note::
 

@@ -606,13 +606,16 @@ galaxy_parameters = {{
     ###########################
 
     'agn.fAGN' : ( [-3., 3.], True ),
-    
-    'agn.ct' : 40,
-    'agn.al' : 0.,
-    'agn.be' : -0.5,
-    'agn.ta' : 6.,
-    'agn.rm' : 60,
-    'agn.ia' : 0.001,
+
+    # Template-selecting parameters: these select one of the 24000 pre-computed
+    # Fritz+2006 templates by snapping to the nearest discrete grid value.
+    # Sampling over these parameters is discouraged.
+    'agn.template.ct' : 40,
+    'agn.template.al' : 0.,
+    'agn.template.be' : -0.5,
+    'agn.template.ta' : 6.,
+    'agn.template.rm' : 60,
+    'agn.template.ia' : 0.001,
     
 }}
 
