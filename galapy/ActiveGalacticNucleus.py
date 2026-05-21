@@ -4,7 +4,6 @@ import numpy
 
 ########################################################################################
 
-from galapy.internal.constants import sunL
 from galapy import AGN_core
 # from galapy.internal.abc import Model
 
@@ -36,7 +35,7 @@ class AGN () :
         return self.core.set_parameters( **kwargs )
 
     def emission ( self, *args, **kwargs ) :
-        return self.core.emission( *args, **kwargs ) * sunL
+        return self.core.emission( *args, **kwargs )
 
     def __call__ ( self, *args, **kwargs ) :
         return self.core.__call__( *args, **kwargs )

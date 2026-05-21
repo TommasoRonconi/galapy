@@ -54,7 +54,7 @@ import numpy
 # Internal imports
 import galapy.internal.globs as GP_GBL
 from galapy.internal.utils import find_nearest, trap_int, powerlaw_exp_cutoff
-from galapy.internal.constants import Ang_to_keV, Lsun
+from galapy.internal.constants import Ang_to_keV
 from galapy.internal.interp import lin_interp
 from galapy.internal.data import DataFile
 
@@ -317,10 +317,10 @@ class Fritz2006 () :
         ll = numpy.ascontiguousarray( ll, dtype = numpy.float64 )
         fact = self.params['fAGN']/(1-self.params['fAGN'])
         if self.do_Xray :
-            return Lsun * fact * Lref * ( self.f_norm_tot( ll ) +
+            return fact * Lref * ( self.f_norm_tot( ll ) +
                                           self.f_norm_X( ll ) *
                                           self.X_bolometric_correction( Lref ) )
-        return  Lsun * fact * Lref * self.f_norm_tot( ll )
+        return  fact * Lref * self.f_norm_tot( ll )
 
     def emission ( self, *args, **kwargs ) :
         return self.__call__( *args, **kwargs )

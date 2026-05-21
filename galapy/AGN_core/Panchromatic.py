@@ -14,7 +14,7 @@ hc_k = 1.e+10 * h * c / k
 from galapy.internal.utils import find_nearest, trap_int
 from galapy.internal.interp import lin_interp
 # from galapy.internal.abc import Model
-from galapy.internal.constants import clight, Lsun, Ang_to_keV
+from galapy.internal.constants import clight, Lsun, Ang_to_keV, sunL
 
 #######################################################################################
 # Support functions
@@ -536,13 +536,13 @@ class Panchromatic () :
         self.components['jets_obs'] = self.jets( ll )
         if self.xray is not None :
             self.components['xray_obs'] = self.xray( ll )
-            return (
+            return sunL * (
                 self.components['disk_obs'] +
                 self.components['dust_obs'] +
                 self.components['jets_obs'] +
                 self.components['xray_obs']
             ) / ll
-        return (
+        return sunL * (
             self.components['disk_obs'] +
             self.components['dust_obs'] +
             self.components['jets_obs']
