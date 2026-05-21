@@ -64,6 +64,16 @@ AGN_PARAMS = {
     'agn.template.ia' : 0.001,
 }
 
+PANCHROMATIC_PARAMS = {
+    'agn.Lbol'       : ([42., 48.], True),
+    'agn.theta_view' : 0.0,
+    'agn.delta'      : -0.36,
+    'agn.TH'         : 1500.,
+    'agn.Delta'      : 0.7,
+    'agn.EBV'        : 0.02,
+    'agn.RL'         : 1.e4,
+}
+
 NOISE_PARAMS = {'f_cal': ([-10., 1.], True)}
 
 
@@ -125,8 +135,15 @@ class TestInitialize:
         assert gd['noise'] is not None
 
     def test_with_agn(self):
-        gd = _init(do_AGN=True, extra_params=AGN_PARAMS)
+        gd = _init(do_AGN=True, extra_params=AGN_PARAMS,
+                   gxy_kwargs={'agn': {'model': 'Fritz2006'}})
         assert 'AGN' in gd['model'].components
+
+    def test_initialize_agn_default_is_panchromatic(self):
+        gd = _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
+        assert 'AGN' in gd['model'].components
+        free = list(gd['handler'].par_free)
+        assert 'galaxy.agn.Lbol' in free
 
     def test_with_radio(self):
         gd = _init(do_Radio=True)
@@ -180,7 +197,8 @@ class TestParameterRegistration:
         import warnings
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter('always')
-            _init(do_AGN=True, extra_params=AGN_PARAMS)
+            _init(do_AGN=True, extra_params=AGN_PARAMS,
+                  gxy_kwargs={'agn': {'model': 'Fritz2006'}})
         agn_template_warnings = [
             w for w in record
             if 'agn.template' in str(w.message)
@@ -188,9 +206,15 @@ class TestParameterRegistration:
         assert len(agn_template_warnings) == 0
 
     def test_agn_fAGN_is_free(self):
-        _init(do_AGN=True, extra_params=AGN_PARAMS)
+        _init(do_AGN=True, extra_params=AGN_PARAMS,
+              gxy_kwargs={'agn': {'model': 'Fritz2006'}})
         free = list(Run.global_dict['handler'].par_free)
         assert 'galaxy.agn.fAGN' in free
+
+    def test_panchromatic_free_param_registered(self):
+        _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
+        free = list(Run.global_dict['handler'].par_free)
+        assert 'galaxy.agn.Lbol' in free
 
     def test_agn_old_keys_trigger_warning(self):
         old_key_params = dict(BASE_PARAMS)
@@ -292,7 +316,14 @@ class TestLoglikelihood:
         assert np.isfinite(Run.loglikelihood(par))
 
     def test_agn_model(self):
-        _init(do_AGN=True, extra_params=AGN_PARAMS)
+        _init(do_AGN=True, extra_params=AGN_PARAMS,
+              gxy_kwargs={'agn': {'model': 'Fritz2006'}})
+        par = Run.global_dict['handler'].par_prior.mean(axis=1)
+        ll  = Run.loglikelihood(par)
+        assert isinstance(float(ll), float)
+
+    def test_panchromatic_agn_model(self):
+        _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
         par = Run.global_dict['handler'].par_prior.mean(axis=1)
         ll  = Run.loglikelihood(par)
         assert isinstance(float(ll), float)
