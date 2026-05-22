@@ -14,7 +14,7 @@ hc_k = 1.e+10 * h * c / k
 from galapy.internal.utils import find_nearest, trap_int
 from galapy.internal.interp import lin_interp
 # from galapy.internal.abc import Model
-from galapy.internal.constants import clight, Lsun, Ang_to_keV, sunL
+from galapy.internal.constants import clight, Ang_to_keV
 
 #######################################################################################
 # Support functions
@@ -120,7 +120,7 @@ class agn_disk ( piecewise_powerlaw ) :
     
     def __init__ (
             self, *args,
-            Lbol = 1.e+44, theta_view = 0.0, delta = -0.36,
+            Lbol = 1.e+11, theta_view = 0.0, delta = -0.36,
             **kwargs ) :
         kwargs.update(
             expnt = [1.2, 0.8, -0.5+delta, -3.0], 
@@ -381,11 +381,11 @@ class agn_xray () :
     Ecut = 3.e+2
     gamma = 1.8
     
-    def __init__ ( 
-        self, lgrid, 
-        Lbol = 1.e+44, theta_view = 0.0,
-        norm = 'bolometric', isotropic = True, 
-        sigma = 0.3 
+    def __init__ (
+        self, lgrid,
+        Lbol = 1.e+11, theta_view = 0.0,
+        norm = 'bolometric', isotropic = True,
+        sigma = 0.3
     ) :
         
         self.lgrid = lgrid
@@ -434,7 +434,7 @@ class agn_xray () :
     def get_normalization ( self, norm = None ) :
         
         if self.norm == 'bolometric' :
-            return 10.96 * ( 1. + ( numpy.log10( self.Lbol/Lsun ) / 11.48 )**17.79 )
+            return 10.96 * ( 1. + ( numpy.log10( self.Lbol ) / 11.48 )**17.79 )
            
     def set_params ( self, Lbol = None, theta_view = None ) :
         changed = False
@@ -457,7 +457,7 @@ def agn_build_params ( **kwargs ) :
     """
 
     return {
-        'Lbol'       : kwargs.get('Lbol',       1.e+44),
+        'Lbol'       : kwargs.get('Lbol',       1.e+11),
         'theta_view' : kwargs.get('theta_view', 0.0   ),
         'delta'      : kwargs.get('delta',     -0.36  ),
         'TH'         : kwargs.get('TH',      1500.    ),
@@ -470,7 +470,7 @@ class Panchromatic () :
 
     def __init__ (
             self, lgrid,
-            Lbol = 1.e+44, theta_view = 0.0, delta = -0.36,
+            Lbol = 1.e+11, theta_view = 0.0, delta = -0.36,
             TH = 1500.,
             Delta = 0.7, EBV = .02,
             RL = 1.e+4,
@@ -536,13 +536,13 @@ class Panchromatic () :
         self.components['jets_obs'] = self.jets( ll )
         if self.xray is not None :
             self.components['xray_obs'] = self.xray( ll )
-            return sunL * (
+            return (
                 self.components['disk_obs'] +
                 self.components['dust_obs'] +
                 self.components['jets_obs'] +
                 self.components['xray_obs']
             ) / ll
-        return sunL * (
+        return (
             self.components['disk_obs'] +
             self.components['dust_obs'] +
             self.components['jets_obs']

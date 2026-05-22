@@ -37,10 +37,14 @@ import galapy
 from galapy import ActiveGalacticNucleus as gpagn
 from galapy.AGN_core.Fritz2006 import Fritz2006, find_template_par, agn_build_params
 from galapy.AGN_core.Panchromatic import Panchromatic
-from galapy.internal.constants import Ang_to_keV
+from galapy.internal.constants import Ang_to_keV, Lsun
 
 # Shared lgrid used throughout
 _LGRID = np.logspace(0, 10, 500)
+
+# Lbol used in Panchromatic tests: exact L☉ equivalent of old 1e44 erg/s default,
+# kept fixed so the emission reference values remain stable across refactors.
+_LBOL_LSOL = 1.e+44 / Lsun
 
 def check_2leveldict_approxequal ( A, B ) :
     return np.all([
@@ -196,7 +200,7 @@ def test_agn_invalid_model () :
 @pytest.fixture
 def agn_pan () :
     """Panchromatic AGN instance shared across tests."""
-    return gpagn.AGN( _LGRID, model = 'Panchromatic' )
+    return gpagn.AGN( _LGRID, model = 'Panchromatic', Lbol = _LBOL_LSOL )
 
 
 def test_agn_panchromatic_init ( agn_pan ) :
@@ -220,8 +224,8 @@ def test_agn_panchromatic_set_parameters ( agn_pan ) :
 
     """set_parameters updates the internal state without error."""
 
-    agn_pan.set_parameters( Lbol = 1.e+45, theta_view = 0.5 )
-    assert agn_pan.params['Lbol'] == pytest.approx( 1.e+45 )
+    agn_pan.set_parameters( Lbol = 1.e+13, theta_view = 0.5 )
+    assert agn_pan.params['Lbol'] == pytest.approx( 1.e+13 )
     assert agn_pan.params['theta_view'] == pytest.approx( 0.5 )
 
 

@@ -818,7 +818,7 @@ def _generate_parameter_file () :
         """,
         'Panchromatic' : """
     # Panchromatic model
-    'agn.Lbol'       : ( [+40, +48], True ),
+    'agn.Lbol'       : ( [+6.5, +14.5], True ),
     'agn.theta_view' : ( [0.0, 1.57], False ),
     'agn.delta'      : ( [-1, +1], False ),
     'agn.TH'         : ( [+2, +4], True ),

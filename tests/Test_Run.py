@@ -65,7 +65,7 @@ AGN_PARAMS = {
 }
 
 PANCHROMATIC_PARAMS = {
-    'agn.Lbol'       : ([42., 48.], True),
+    'agn.Lbol'       : ([8.5, 14.5], True),
     'agn.theta_view' : 0.0,
     'agn.delta'      : -0.36,
     'agn.TH'         : 1500.,
