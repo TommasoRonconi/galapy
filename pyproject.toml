@@ -57,8 +57,12 @@ galapy-genparams = "galapy.sampling.Run:_generate_parameter_file"
 galapy-download-database = "galapy.internal.data:_entrypoint_download_database"
 
 [bumpver]
-current_version = "v0.5.3"
+current_version = "v0.5.4"
 version_pattern = "vMAJOR.MINOR.PATCH"
+commit = true
+tag = true
+push = false
+commit_message = "bump version to {new_version}\n\nNote: rename [Unreleased] to [{new_version}] in CHANGELOG.md before running bumpver."
 
 [bumpver.file_patterns]
 "galapy/__init__.py" = [
