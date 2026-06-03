@@ -18,7 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
----
+### Added
+- `galapy-download-database` gains two new flags:
+  - `--update` / `-u`: compares the version recorded in the installed
+    database's `version` file against the target release (latest by default)
+    and re-downloads only when they differ. Prints an informative message
+    when the database is already up to date.
+  - `--force` / `-f`: unconditionally re-downloads and overwrites whatever
+    is already present on disk.
+
+### Fixed
+- `download_file()` no longer silently swallows `HTTPError`: the exception
+  is now re-raised after printing, preventing an empty file from being
+  written to disk when a requested resource (e.g. a filter band) does not
+  exist at the remote URL. As a result, requesting a filter band absent from
+  the database now fails immediately with the correct message
+  *"Filter … provided is not present in galapy database."* instead of
+  leaving a zero-byte file that would poison subsequent lookups.
 
 ## [0.5.5] - 2026-06-03
 
