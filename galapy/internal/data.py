@@ -165,6 +165,28 @@ class DataFile () :
 #     pass
 ################################################################################
 
+def _read_installed_version ( destpath ) :
+    """Return the version string from destpath/version, or None if absent."""
+    version_file = os.path.join( destpath, 'version' )
+    if os.path.exists( version_file ) :
+        with open( version_file, 'r' ) as f :
+            return f.read().strip()
+    return None
+
+def _fetch_release_list ( database = None ) :
+    """Fetch the list of releases from GitHub and return it as a list of dicts."""
+    if database is None :
+        database = GP_GBL.DATABASE
+    _headers = {}
+    _token = os.environ.get( 'GITHUB_TOKEN' )
+    if _token :
+        _headers[ 'Authorization' ] = f'token {_token}'
+    response = requests.get( database, headers = _headers )
+    response.raise_for_status()
+    return response.json()
+
+################################################################################
+
 def download_database ( loc = None, name = None, version = None,
                         database = None, overwrite = False, verbose = True ) :
     """ A function for downloading the database from a github repository.
@@ -260,16 +282,9 @@ def download_database ( loc = None, name = None, version = None,
     #######################################################################
     # Download database
 
-    # Use GITHUB_TOKEN if available to avoid unauthenticated rate limits (60/hr)
-    _headers = {}
-    _token = os.environ.get('GITHUB_TOKEN')
-    if _token:
-        _headers['Authorization'] = f'token {_token}'
-
-    # Request for a given release and check the URL is correct and working
-    release = requests.get( database, headers=_headers )
+    # Fetch the release list and build a lookup dict
     try :
-        release.raise_for_status()
+        releaselist = _fetch_release_list( database )
     except requests.exceptions.HTTPError as http_err :
         print( f'HTTP error occurred: {http_err}' )
         raise
@@ -278,7 +293,6 @@ def download_database ( loc = None, name = None, version = None,
         raise
 
     # converting json from list to dict
-    releaselist = release.json()
     releasedict = {'latest' : releaselist[0]}
     releasedict.update(
         { rel['tag_name'] : rel for rel in releaselist }
@@ -328,7 +342,7 @@ def download_database ( loc = None, name = None, version = None,
         os.path.join( loc, archive_root ), # previous name
         destpath                           # new name
     )
-    
+
     return;
 
 ################################################################################
@@ -337,7 +351,7 @@ def _entrypoint_download_database () :
 
     ####################################################################
     # Read command-line arguments:
-    
+
     parser = argparse.ArgumentParser( description = 'options' )
     parser.add_argument( '--location', '-l',
                          dest = 'loc',
@@ -351,11 +365,11 @@ def _entrypoint_download_database () :
     parser.add_argument( '--name', '-n',
                          dest = 'name',
                          type = str,
-                         default = 'galapy_database',
+                         default = GP_GBL.DATA_DIR,
                          help = (
                              'Name to assign to the directory inside ``loc`` where ' +
                              'the database will be extracted. ' +
-                             'DEFAULT: "galapy_database"'
+                             f'DEFAULT: "{GP_GBL.DATA_DIR}"'
                          ) )
     parser.add_argument( '--version', '-v',
                          dest = 'version',
@@ -367,19 +381,78 @@ def _entrypoint_download_database () :
                          ) )
     parser.add_argument( '--update', '-u',
                          dest = 'update',
-                         type = bool,
-                         default = False,
+                         action = 'store_true',
                          help = (
-                             'Update existing database. ' +
+                             'Update the existing database to the target version '
+                             '(latest by default). Does nothing if the installed '
+                             'version already matches. '
+                             'DEFAULT: False'
+                         ) )
+    parser.add_argument( '--force', '-f',
+                         dest = 'force',
+                         action = 'store_true',
+                         help = (
+                             'Force re-download of the target version, overwriting '
+                             'whatever is already present on disk. '
                              'DEFAULT: False'
                          ) )
     args = parser.parse_args()
-    
+
     ####################################################################
 
-    # Work in Progress
-    # if args.update :
-    #     data_version = 
+    if args.force :
+        print( f'Forcing re-download of database (version: {args.version}) ...' )
+        return download_database(
+            loc = args.loc,
+            name = args.name,
+            version = args.version,
+            database = GP_GBL.DATABASE,
+            overwrite = True,
+            verbose = True,
+        )
+
+    if args.update :
+        # Resolve the effective installation directory the same way download_database does
+        _loc = args.loc if args.loc is not None else rcParams[ 'datapath' ][ -1 ]
+        destpath = os.path.join( _loc, args.name )
+        installed = _read_installed_version( destpath )
+
+        # Resolve target version tag without doing the full download
+        try :
+            releaselist = _fetch_release_list( GP_GBL.DATABASE )
+        except Exception as err :
+            print( f'Could not fetch release list: {err}' )
+            raise
+        releasedict = { rel[ 'tag_name' ] : rel for rel in releaselist }
+
+        _ver = args.version
+        if _ver in ( 'latest', 'default' ) :
+            target_tag = releaselist[ 0 ][ 'tag_name' ]
+        else :
+            target_tag = _ver if _ver.startswith( 'v' ) else f'v{_ver}'
+
+        if target_tag not in releasedict :
+            raise ValueError( f'Version {target_tag!r} not found in available releases: '
+                              + ', '.join( releasedict ) )
+
+        if installed == target_tag.lstrip( 'v' ) :
+            print( f'Database is already at version {installed}. Nothing to do.' )
+            return
+
+        if installed is None :
+            print( f'No version info found at {destpath}. '
+                   f'Downloading version {target_tag} ...' )
+        else :
+            print( f'Updating database from {installed} to {target_tag.lstrip("v")} ...' )
+
+        return download_database(
+            loc = args.loc,
+            name = args.name,
+            version = args.version,
+            database = GP_GBL.DATABASE,
+            overwrite = True,
+            verbose = True,
+        )
 
     return download_database(
         loc = args.loc,
@@ -387,7 +460,7 @@ def _entrypoint_download_database () :
         version = args.version,
         database = GP_GBL.DATABASE,
         overwrite = False,
-        verbose = True
+        verbose = True,
     )
 
 ################################################################################
