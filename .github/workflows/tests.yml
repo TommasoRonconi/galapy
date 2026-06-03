@@ -3,6 +3,9 @@
 
 name: test
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [ "main", "devel" ]
@@ -30,10 +33,17 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install pybind11 pytest
+    - name: Cache galapy database
+      uses: actions/cache@v4
+      with:
+        path: ~/.galapy/galapy_database
+        key: galapy-database-${{ runner.os }}-v1
     - name: Install library
       run: |
         python -m pip install .
         galapy-download-database
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Test with pytest
       run: |
         pytest tests/*.py

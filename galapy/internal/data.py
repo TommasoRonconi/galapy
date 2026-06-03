@@ -260,8 +260,14 @@ def download_database ( loc = None, name = None, version = None,
     #######################################################################
     # Download database
 
+    # Use GITHUB_TOKEN if available to avoid unauthenticated rate limits (60/hr)
+    _headers = {}
+    _token = os.environ.get('GITHUB_TOKEN')
+    if _token:
+        _headers['Authorization'] = f'token {_token}'
+
     # Request for a given release and check the URL is correct and working
-    release = requests.get( database )
+    release = requests.get( database, headers=_headers )
     try :
         release.raise_for_status()
     except requests.exceptions.HTTPError as http_err :
