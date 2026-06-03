@@ -20,6 +20,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.5] - 2026-06-03
+
+### Added
+- Comprehensive test suite for `galapy.internal` subpackage:
+  `Test_Internal_Constants.py` (physical constants and unit-conversion
+  functions), `Test_Internal_Utils.py` (utility functions: numerical
+  integration, interpolation helpers, string/dict utilities, statistics),
+  and `Test_Internal_Interp.py` (pybind11 `lin_interp` — construction,
+  interpolation accuracy, extrapolation, integration, input variants).
+- Test suite for `galapy.SFH_core` pybind11 binding (`Test_SFH_core.py`):
+  covers all five SFH models (`insitu`, `constant`, `delayedexp`,
+  `lognormal`, `interpolated`), pinned reference values for SFR and
+  stellar/dust/gas mass, quenching behaviour, and pickle round-trip.
+  Designed to be implementation-agnostic so it will validate a future
+  pure-Python reimplementation of the same interface.
+
+### Fixed
+- `galapy-download-database` (and `download_database()`) now reads
+  `GITHUB_TOKEN` from the environment and passes it as an
+  `Authorization` header to the GitHub Releases API. Eliminates
+  the 403 rate-limit errors that caused macOS CI jobs to fail when
+  multiple matrix runs hit the API simultaneously.
+
+### CI
+- GitHub Actions `tests.yml`: cache `~/.galapy/galapy_database` with
+  `actions/cache@v4` so the database is downloaded only on cold-cache
+  runs; expose `GITHUB_TOKEN` to the install step for authenticated
+  API access.
+- Both workflow files opt into Node.js 24 via
+  `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`, resolving the
+  Node.js 20 deprecation warning ahead of the September 2026
+  forced cutover.
+
 ## [0.5.4] - 2026-05-19
 
 ### Fixed
