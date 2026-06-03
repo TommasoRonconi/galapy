@@ -80,6 +80,7 @@ def download_file ( url, out_file, overwrite = False, verbose = True, get_kw = {
         response.raise_for_status()
     except requests.exceptions.HTTPError as http_err :
         print( f'HTTP error occurred: {http_err}' )
+        raise
     except Exception as err :
         print( f'Other error occurred: {err}' )
         raise
