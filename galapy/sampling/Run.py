@@ -651,19 +651,22 @@ nwalkers = 64
 nsamples = 4096
 
 # Sampler keyword arguments.
-# These are the parameters that will be passed to the constructor of
-# the chosen sampler. See relative documentation for further informations:
-# - emcee :
-# - dynesty : e.g. to decrease the number of walkers
+# These are the parameters passed to the constructor of the chosen sampler.
+# Keys must match the chosen sampler; unrecognised keys will cause an error
+# from the underlying library. See the relevant documentation:
+# - emcee   (EnsembleSampler): https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler
+# - dynesty (DynamicNestedSampler): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler
+# Example for dynesty — decrease the number of random-walk steps:
 # sampler_kw = {{'walks':25}}  # default is 'walks' : 50
 # ( 'walks' : >= 50 is recommended for 15 < ndim < 25 )
 sampler_kw = {{}}
 
-# Sampling keyword arguments
-# These are the parameters that will be passed to the routine running the
-# parameter-space sampling. See relative documentation for further informations:
-# - emcee :
-# - dynesty :
+# Sampling keyword arguments.
+# These are the parameters passed to the method that runs the sampling.
+# Keys must match the chosen sampler; unrecognised keys will cause an error
+# from the underlying library. See the relevant documentation:
+# - emcee   (run_mcmc): https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler.run_mcmc
+# - dynesty (run_nested): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler.run_nested
 sampling_kw = {{}}
 
 # Output directory (note that if the directory does not exist it will be created)

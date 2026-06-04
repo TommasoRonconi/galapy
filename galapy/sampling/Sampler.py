@@ -11,25 +11,26 @@ from galapy.internal.utils import now_string
 
 #############################################################################################
 
-emcee_default_sampler_kw = { 'moves' : None, 'args' : None, 'kwargs' : None }
-emcee_default_sampling_kw = { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
-                              'tune' : False, 'skip_initial_state_check' : False,
-                              'thin_by' : 1, 'thin' : None, 'store' : True,
-                              'progress' : True, 'progress_kwargs' : None }
+_default_sampler_kw = {
+    'emcee' : { 'moves' : None, 'args' : None, 'kwargs' : None },
+    'dynesty' : { 'bound' : 'multi', 'sample' : 'rwalk',
+                  'update_interval' : 0.6, 'walks' : 50, 'bootstrap' : 0 },
+}
 
-#############################################################################################
-
-dynesty_default_sampler_kw = { 'bound' : 'multi', 'sample' : 'rwalk',
-                               'update_interval' : 0.6, 'walks' : 50,
-                               'bootstrap' : 0 }
-dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
-                                'maxcall_init' : None, 'dlogz_init' : 0.02,
-                                'nlive_batch' : 1024, 'maxiter_batch' : None,
-                                'maxcall_batch' : None,
-                                'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
-                                'maxbatch' : sys.maxsize,
-                                'n_effective' : None, 'print_progress' : True,
-                                'stop_kwargs' : { 'target_n_effective' : int(5e6) } }
+_default_sampling_kw = {
+    'emcee' : { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
+                'tune' : False, 'skip_initial_state_check' : False,
+                'thin_by' : 1, 'thin' : None, 'store' : True,
+                'progress' : True, 'progress_kwargs' : None },
+    'dynesty' : { 'nlive_init' : 1024, 'maxiter_init' : None,
+                  'maxcall_init' : None, 'dlogz_init' : 0.02,
+                  'nlive_batch' : 1024, 'maxiter_batch' : None,
+                  'maxcall_batch' : None,
+                  'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
+                  'maxbatch' : sys.maxsize,
+                  'n_effective' : None, 'print_progress' : True,
+                  'stop_kwargs' : { 'target_n_effective' : int(5e6) } },
+}
 
 #############################################################################################
 
@@ -54,7 +55,7 @@ class Sampler () :
                 raise RuntimeError( 'You have to pass a function to `prior_transform` '
                                     'when running with the dynesty sampler.')
 
-            kw = dict( dynesty_default_sampler_kw )
+            kw = dict( _default_sampler_kw['dynesty'] )
             kw.update( sampler_kw )
             from dynesty import DynamicNestedSampler
             self.sampler = DynamicNestedSampler(
@@ -71,7 +72,7 @@ class Sampler () :
             if nwalkers is None :
                 raise RuntimeError( 'You have to pass an integer number of walkers to `nwalkers` '
                                     'when running with the emcee sampler.')
-            kw = dict( emcee_default_sampler_kw )
+            kw = dict( _default_sampler_kw['emcee'] )
             kw.update( sampler_kw )
             from emcee import EnsembleSampler
             self.sampler = EnsembleSampler( nwalkers = nwalkers,
@@ -102,7 +103,7 @@ class Sampler () :
         from time import time
 
         if self.which_sampler == 'dynesty' :
-            kw = dict( dynesty_default_sampling_kw )
+            kw = dict( _default_sampling_kw['dynesty'] )
             kw.update( sampling_kw )
             tstart = time()
             self.sampler.run_nested( **kw )
@@ -118,7 +119,7 @@ class Sampler () :
             if nsample is None :
                 raise RuntimeError( '`nsample = None` but you should provide a number '
                                     'of samples to draw when running with emcee.')
-            kw = dict( emcee_default_sampling_kw )
+            kw = dict( _default_sampling_kw['emcee'] )
             kw.update( sampling_kw )
             tstart = time()
             self.emcee_state = self.sampler.run_mcmc( pos, nsample, **kw )
