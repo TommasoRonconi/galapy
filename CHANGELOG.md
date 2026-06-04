@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `galapy.sampling.Sampler`: the `__init__` and `run_sampling` methods now
+  accept a single `sampler_kw` / `sampling_kw` dict instead of separate
+  `dynesty_sampler_kw` / `emcee_sampler_kw` (and their `run_sampling`
+  counterparts). The four flat module-level default dicts have been
+  consolidated into two nested dicts (`_default_sampler_kw`,
+  `_default_sampling_kw`) keyed by sampler name, making it straightforward
+  to register a new sampler without adding module-level names.
+- All `if/if` dispatch chains in `Sampler` and `Run.sample()` converted to
+  `if/elif/else`; unknown sampler names now raise an explicit error at
+  construction time rather than silently falling through.
+- Parameter file template (`galapy-genparams`): `sampler_kw` and
+  `sampling_kw` comments now include links to the upstream library API
+  reference (emcee, dynesty) and note that keys must match the chosen
+  sampler.
+
 ### Added
 - `galapy-download-database` gains two new flags:
   - `--update` / `-u`: compares the version recorded in the installed
