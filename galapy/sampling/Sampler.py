@@ -35,19 +35,18 @@ dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
 
 class Sampler () :
     
-    def __init__ ( self, loglikelihood, ndim, 
+    def __init__ ( self, loglikelihood, ndim,
                    sampler = 'dynesty',
                    prior_transform = None,
                    nwalkers = None,
                    pool = None,
-                   dynesty_sampler_kw = {}, 
-                   emcee_sampler_kw = {} ) :
+                   sampler_kw = {} ) :
         """
         """
-        
+
         self.sampler = None
         self.which_sampler = sampler
-        
+
         ######################################################################################
         # Dynamic Nested-Sampling with dynesty
         if self.which_sampler == 'dynesty' :
@@ -55,72 +54,72 @@ class Sampler () :
                 raise RuntimeError( 'You have to pass a function to `prior_transform` '
                                     'when running with the dynesty sampler.')
 
-            kw = dynesty_default_sampler_kw
-            kw.update( dynesty_sampler_kw )
+            kw = dict( dynesty_default_sampler_kw )
+            kw.update( sampler_kw )
             from dynesty import DynamicNestedSampler
-            self.sampler = DynamicNestedSampler( 
+            self.sampler = DynamicNestedSampler(
                 loglikelihood = loglikelihood,
                 prior_transform = prior_transform,
                 ndim = ndim,
                 pool = pool,
                 **kw
             )
-            
+
         ######################################################################################
         # MCMC Ensemble sampling with emcee
-        if self.which_sampler == 'emcee' :
+        elif self.which_sampler == 'emcee' :
             if nwalkers is None :
                 raise RuntimeError( 'You have to pass an integer number of walkers to `nwalkers` '
                                     'when running with the emcee sampler.')
-            kw = emcee_default_sampler_kw
-            kw.update( emcee_sampler_kw )
+            kw = dict( emcee_default_sampler_kw )
+            kw.update( sampler_kw )
             from emcee import EnsembleSampler
             self.sampler = EnsembleSampler( nwalkers = nwalkers,
-                                            ndim = ndim, 
-                                            log_prob_fn = loglikelihood, 
-                                            pool = pool, 
+                                            ndim = ndim,
+                                            log_prob_fn = loglikelihood,
+                                            pool = pool,
                                             **kw )
-        
+
         ######################################################################################
-        # Maybe in the future we'll add more sampling options ...    
-        if self.sampler is None :
-            raise AttributeError( f'The sampler chosen "{self.which_sampler}" is not valid.'
+        # Maybe in the future we'll add more sampling options ...
+        else :
+            raise AttributeError( f'The sampler chosen "{self.which_sampler}" is not valid. '
                                   'Valid samplers are ["dynesty", "emcee"].' )
             
     def run_sampling ( self, pos = None, nsample = None,
-                       dynesty_sampling_kw = {}, emcee_sampling_kw = {} ) :
+                       sampling_kw = {} ) :
         """ Run the sampling with the chosen sampler.
-        
+
         Parameters
         ----------
         pos : iterable
         nsample : int
-        
+
         Returns
         -------
         : None
         """
         from time import time
-        
+
         if self.which_sampler == 'dynesty' :
-            kw = dynesty_default_sampling_kw
-            kw.update( dynesty_sampling_kw )
+            kw = dict( dynesty_default_sampling_kw )
+            kw.update( sampling_kw )
             tstart = time()
             self.sampler.run_nested( **kw )
             ndur = time() - tstart
             print( f'\nDone dynesty (dynamic) in {ndur} seconds' )
             # Print summary of the results:
             self.sampler.results.summary()
-            
-        if self.which_sampler == 'emcee' :
+
+        elif self.which_sampler == 'emcee' :
             if pos is None :
                 raise RuntimeError( '`pos = None` but you should provide an initial position '
                                     'for the walkers when running with emcee.')
             if nsample is None :
                 raise RuntimeError( '`nsample = None` but you should provide a number '
                                     'of samples to draw when running with emcee.')
-            kw = emcee_default_sampling_kw
-            kw.update( emcee_sampling_kw )
+            kw = dict( emcee_default_sampling_kw )
+            kw.update( sampling_kw )
             tstart = time()
             self.emcee_state = self.sampler.run_mcmc( pos, nsample, **kw )
             ndur = time() - tstart
@@ -130,23 +129,16 @@ class Sampler () :
 
     def return_samples_logl_weights ( self ) :
 
-        outtuple = None
         if self.which_sampler == 'dynesty' :
             weights = numpy.exp( self.sampler.results.logwt -
                                  self.sampler.results.logz[-1] )
-            outtuple = ( self.sampler.results.samples,
-                         self.sampler.results.logl,
-                         weights )
-        if self.which_sampler == 'emcee' :
-            outtuple = ( self.sampler.flatchain,
-                         self.sampler.flatlnprobability,
-                         numpy.ones_like( self.sampler.flatlnprobability ) )
-        if outtuple is None :
-            raise RuntimeError(
-                "Function must be called after sampling run"
-            )
-        
-        return outtuple
+            return ( self.sampler.results.samples,
+                     self.sampler.results.logl,
+                     weights )
+        elif self.which_sampler == 'emcee' :
+            return ( self.sampler.flatchain,
+                     self.sampler.flatlnprobability,
+                     numpy.ones_like( self.sampler.flatlnprobability ) )
 
     def save_results ( self, outbase = '',
                        pickle_sampler = False,
@@ -186,7 +178,7 @@ class Sampler () :
                 with open( '_'.join( [ outbase, 'dynesty_sampler.pickle' ] ), 'wb' ) as f :
                     pickle.dump( self.sampler, f )
 
-        if self.which_sampler == 'emcee' :
+        elif self.which_sampler == 'emcee' :
             if pickle_raw :
                 # Pickling sampler-state:
                 with open( '_'.join( [ outbase, 'emcee_state.pickle' ] ), 'wb' ) as f :

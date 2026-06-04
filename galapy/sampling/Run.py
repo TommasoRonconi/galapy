@@ -150,34 +150,34 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
     sampler_kw = dict( sampler_kw )
     
     # Sampling keywords
-    sampling_kw = dict(_default_sampling_kw[sampler])
+    sampling_kw = dict(_default_sampling_kw.get(sampler, {}))
     sampling_kw.update(run_sampling_kw)
     
     # It's run-time!
     if sampler == 'dynesty' :
-        
+
         # Define prior-transform to map parameters in the unit-cube
         from galapy.sampling.Statistics import transform_to_prior_unit_cube
-    
+
         # Build sampler
         sampler_kw.update(
             { 'ptform_args' : ( global_dict['handler'].par_prior, ),
               'logl_kwargs' : logl_kw,
               'queue_size' : Ncpu
             }
-        ) 
+        )
         sampler = Sampler( loglikelihood = loglikelihood,
                            ndim = len( global_dict['handler'].par_free ),
                            sampler = sampler,
                            prior_transform = transform_to_prior_unit_cube,
                            pool = pool,
-                           dynesty_sampler_kw = sampler_kw )
+                           sampler_kw = sampler_kw )
 
         # Run sampling
-        sampler.run_sampling( dynesty_sampling_kw = sampling_kw )
-    
-    if sampler == 'emcee' :
-        
+        sampler.run_sampling( sampling_kw = sampling_kw )
+
+    elif sampler == 'emcee' :
+
         # Build sampler
         sampler_kw.update( { 'kwargs' : logl_kw } )
         sampler = Sampler( loglikelihood = logprob,
@@ -185,7 +185,7 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
                            sampler = sampler,
                            nwalkers = nwalkers,
                            pool = pool,
-                           emcee_sampler_kw = sampler_kw )
+                           sampler_kw = sampler_kw )
 
         # Define initial position for walkers
         pos_init = global_dict['handler'].rng.uniform(*global_dict['handler'].par_prior.T,
@@ -194,8 +194,12 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
 
         # Run sampling
         sampler.run_sampling( pos_init, nsamples,
-                              emcee_sampling_kw = sampling_kw )
-    
+                              sampling_kw = sampling_kw )
+
+    else :
+        raise ValueError( f'The sampler chosen "{sampler}" is not valid. '
+                          'Valid samplers are ["dynesty", "emcee"].' )
+
     # return the sampler for storing
     return sampler
 
