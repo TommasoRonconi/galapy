@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> Nothing new
+
+## [0.5.6 - 2026-06-08]
+
 ### Changed
 - `galapy.sampling.Sampler`: the `__init__` and `run_sampling` methods now
   accept a single `sampler_kw` / `sampling_kw` dict instead of separate
