@@ -23,6 +23,8 @@ _default_sampling_kw = {
         stop_kwargs = {'target_n_effective': int(5e6)}
     ),
     'emcee' : {},
+    'nautilus' : { 'f_live' : 0.01, 'n_eff' : 8000,
+                   'discard_exploration' : True, 'verbose' : True },
 }    
 
 global_dict = None
@@ -196,9 +198,32 @@ def sample ( sampler = 'emcee', nwalkers = None, nsamples = None,
         sampler.run_sampling( pos_init, nsamples,
                               sampling_kw = sampling_kw )
 
+    elif sampler == 'nautilus' :
+
+        # Define prior-transform to map parameters in the unit-cube
+        from galapy.sampling.Statistics import transform_to_prior_unit_cube
+
+        # Build sampler — likelihood_kwargs and prior_kwargs go to the constructor.
+        # prior_kwargs is used (not prior_args) so that par_prior is passed by name
+        # and nautilus does not prepend it ahead of the unit-cube vector.
+        sampler_kw.update(
+            { 'prior_kwargs' : { 'prior_limits' : global_dict['handler'].par_prior },
+              'likelihood_kwargs' : logl_kw,
+            }
+        )
+        sampler = Sampler( loglikelihood = loglikelihood,
+                           ndim = len( global_dict['handler'].par_free ),
+                           sampler = sampler,
+                           prior_transform = transform_to_prior_unit_cube,
+                           pool = pool,
+                           sampler_kw = sampler_kw )
+
+        # Run sampling
+        sampler.run_sampling( sampling_kw = sampling_kw )
+
     else :
         raise ValueError( f'The sampler chosen "{sampler}" is not valid. '
-                          'Valid samplers are ["dynesty", "emcee"].' )
+                          'Valid samplers are ["dynesty", "emcee", "nautilus"].' )
 
     # return the sampler for storing
     return sampler
@@ -639,9 +664,10 @@ noise_parameters = {{
 # Parameters for the sampler #
 ##############################
 
-# Choose the sampler, valid options are
-# 'emcee' : Affine Invariant MCMC ensemble sampler
-# 'dynesty' : Dynamic Nested Sampler
+# Choose the sampler. Valid options are:
+# 'emcee'    : Affine Invariant MCMC ensemble sampler
+# 'dynesty'  : Dynamic Nested Sampler
+# 'nautilus' : Neural Network-Boosted Nested Sampler
 sampler = 'dynesty'
 
 # EMCEE SAMPLER-SPECIFIC MANDATORY PARAMETERS
@@ -654,8 +680,9 @@ nsamples = 4096
 # These are the parameters passed to the constructor of the chosen sampler.
 # Keys must match the chosen sampler; unrecognised keys will cause an error
 # from the underlying library. See the relevant documentation:
-# - emcee   (EnsembleSampler): https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler
-# - dynesty (DynamicNestedSampler): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler
+# - emcee    (EnsembleSampler)     : https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler
+# - dynesty  (DynamicNestedSampler): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler
+# - nautilus (Sampler)             : https://nautilus-sampler.readthedocs.io/en/latest/api.html#nautilus.Sampler
 # Example for dynesty — decrease the number of random-walk steps:
 # sampler_kw = {{'walks':25}}  # default is 'walks' : 50
 # ( 'walks' : >= 50 is recommended for 15 < ndim < 25 )
@@ -665,8 +692,9 @@ sampler_kw = {{}}
 # These are the parameters passed to the method that runs the sampling.
 # Keys must match the chosen sampler; unrecognised keys will cause an error
 # from the underlying library. See the relevant documentation:
-# - emcee   (run_mcmc): https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler.run_mcmc
-# - dynesty (run_nested): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler.run_nested
+# - emcee    (run_mcmc)  : https://emcee.readthedocs.io/en/stable/user/api/#emcee.EnsembleSampler.run_mcmc
+# - dynesty  (run_nested): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler.run_nested
+# - nautilus (run)       : https://nautilus-sampler.readthedocs.io/en/latest/api.html#nautilus.Sampler.run
 sampling_kw = {{}}
 
 # Output directory (note that if the directory does not exist it will be created)
