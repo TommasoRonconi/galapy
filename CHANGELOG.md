@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | --- |
 |  **1.** Fill in the [Unreleased] section below. |
 |  **2.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
-|  **3.** Rename [Unreleased] → [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
+|  **3.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
 |  **4.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
 |  **5.** Push: git push origin main && git push origin --tags |
 
@@ -18,7 +18,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> Nothing new
+### Added
+- `galapy.sampling.Run`: `PipelineState` class encapsulates all per-object
+  fitting state (`data`, `model`, `noise`, `handler`), replacing the module-level
+  `global_dict`. Multiple independent fits can now coexist in the same Python
+  process without shared mutable global state.
+- `galapy.sampling.Run`: `_expand_hyperpar()` decomposes a single parameter
+  file into a flat list of NxK single-job specifications, where N is the number
+  of sources (inferred from the shape of `fluxes`) and K is the number of model
+  variants (`models` list). All NxK jobs are dispatched in parallel via a
+  forked process pool.
+- `galapy.sampling.Run`: `_model_suffixes()` generates descriptive output-file
+  suffixes encoding only the topology keys that vary across model variants (e.g.
+  `AGNFalse`, `SFHinsitu_AGNTrue`).
+- `galapy-fit`: catalogue-level parallel fitting — pass a 2-D `fluxes` array (shape NxM)
+  to fit N sources simultaneously, one serial fit per worker process.
+- `galapy-fit`: multi-model runs — add a `models` list to the parameter file
+  to test K model configurations on every source, launching NxK jobs in total.
+  Intended for Bayesian model comparison via the nested-sampling log-evidence.
+- `galapy-genparams`: `--catalogue` / `-cat` flag generates a multi-source
+  parameter file template with 2-D array inputs, a `models` list, and examples
+  for both AGN toggling and multi-SFH comparison (showing the correct pattern
+  of keeping topology-shared parameters in the base `galaxy_parameters` and
+  SFH-specific parameters inside each variant).
+- Per-source fixed parameter overrides: a plain list of N values in
+  `galaxy_parameters` (e.g. `'redshift': [z0, z1, ..., zN-1]`) pins that
+  parameter independently for each source. Shape mismatches and single-source
+  lists raise `ValueError` at load time.
+
+### Changed
+- `galapy.sampling.Run`: `loglikelihood(par, state, **kwargs)` and
+  `logprob(par, state, **kwargs)` now take an explicit `PipelineState`
+  argument instead of reading from module-level global state, making
+  concurrent calls for different objects safe.
+- `galapy.sampling.Run`: `initialize()` returns a `PipelineState` instance (previously
+  returned the module-level `global_dict`).
+- `galapy-fit`: internal dispatch always routes through `_expand_hyperpar()`;
+  single-source / single-model parameter files are fully backward compatible.
 
 ## [0.5.6 - 2026-06-08]
 
