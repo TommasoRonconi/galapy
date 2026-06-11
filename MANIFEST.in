@@ -1,0 +1,2 @@
+recursive-include pybind11 *.h
+recursive-include c++ *.h *.cpp
