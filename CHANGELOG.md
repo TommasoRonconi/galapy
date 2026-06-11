@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | --- |
 |  **1.** Fill in the [Unreleased] section below. |
 |  **2.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
-|  **3.** Rename [Unreleased] → [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
+|  **3.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
 |  **4.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
 |  **5.** Push: git push origin main && git push origin --tags |
 
@@ -17,6 +17,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > the `-lw` tag suffix was used for pre-stable releases and dropped from v0.4.0 onwards.
 
 ## [Unreleased]
+
+### Added
+- `galapy.sampling.Sampler`: nautilus (Neural Network-Boosted Nested Sampler)
+  is now a supported backend. Adds entries to
+  `_library_default_sampler_kw` (`n_live=1500`, `n_networks=4`) and
+  `_library_default_sampling_kw` (`f_live=0.01`, `n_eff=8000`,
+  `discard_exploration=True`, `verbose=True`), and `elif` dispatch blocks in
+  `__init__`, `run_sampling`, `return_samples_logl_weights`, and
+  `save_results`. The prior is passed via `prior_kwargs` (not `prior_args`) so
+  that nautilus calls `prior_transform(u, prior_limits=…)` rather than
+  `prior_transform(prior_limits, u)`.
+- `galapy-fit`: `sampler = 'nautilus'` is now a valid choice in the parameter
+  file. Adds the corresponding `elif` block in `sample()`, a galapy-level
+  default entry in `_default_sampling_kw`, and documentation links in the
+  parameter file template.
+
+### Changed
+- `galapy.sampling.Sampler`: renamed `_default_sampler_kw` ->
+  `_library_default_sampler_kw` and `_default_sampling_kw` ->
+  `_library_default_sampling_kw` to make explicit that these hold raw library
+  baselines, distinct from the galapy-level overrides in `Run.py`.
+- `nautilus-sampler` added as an explicit dependency in `pyproject.toml`,
+    `setup.py`, and `requirements.txt`. Also:
+  - `INSTALL.rst`: added nautilus-sampler to the dependency table.
+  - `README.rst`: added `nautilus-sampler` to the dependencies summary.
+  - `doc/guides/parameter_file.rst`: documented `sampler = 'nautilus'` as a
+    valid choice; added description of the Neural Network-Boosted Nested Sampling
+    algorithm and the `nautilus_default_sampler_kw` / `nautilus_default_sampling_kw`
+    reference blocks under items 3 and 4.
 
 ### Fixed
 - `MANIFEST.in`: added `recursive-include` directives for `pybind11/*.h` and
@@ -233,7 +262,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New helper utilities (`shorten_string`, filter-name listing).
 
 ### Fixed
-- Bug in stellar-mass integration (linear → logarithmic binning; different
+- Bug in stellar-mass integration (linear -> logarithmic binning; different
   approximation for passive galaxies).
 - Bug in interpolated SFH age integration.
 - Long-standing spelling errors propagated across the package.

@@ -111,6 +111,8 @@ A table with the dependencies of the library follows. We also provide a short de
 +------------------------------------------------------+------------------------------------------------------------------------------------+
 | `dynesty <https://pypi.org/project/dynesty/>`_       | A dynamic nested sampling package for computing Bayesian posteriors and evidences. |
 +------------------------------------------------------+------------------------------------------------------------------------------------+
+| `nautilus-sampler <https://pypi.org/project/nautilus-sampler/>`_ | Neural Network-Boosted Nested Sampling for Bayesian inference.         |
++------------------------------------------------------+------------------------------------------------------------------------------------+
 | `setuptools <https://pypi.org/project/setuptools/>`_ | Easily download, build, install, upgrade, and uninstall Python packages            |
 +------------------------------------------------------+------------------------------------------------------------------------------------+
 | `matplotlib <https://pypi.org/project/matplotlib/>`_ | Python plotting package                                                            |

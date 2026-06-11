@@ -46,7 +46,8 @@ theoretical and computational researchers interested in a modern modelling tool.
 | **Python versions**   | >=3.7                                     |
 +-----------------------+-------------------------------------------+
 | **Dependencies**      | ``setuptools``, ``numpy``, ``scipy``,     |
-|                       | ``emcee``, ``dynesty``, ``matplotlib``,   |
+|                       | ``emcee``, ``dynesty``,                   |
+|                       | ``nautilus-sampler``, ``matplotlib``,     |
 |                       | ``getdist``, ``requests``                 |
 +-----------------------+-------------------------------------------+
 
