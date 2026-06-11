@@ -367,10 +367,16 @@ The parameters to set are the following:
      .. math::
 
 	\mathcal{S}(f_p, s_p, s_{\mathcal{Z}}, n) \equiv f_p \times \frac{\mathcal{S}_p(n)}{s_p} + (1 - f_p) \times \frac{\mathcal{S}_\mathcal{Z}(n)}{s_{\mathcal{Z}}} < 1
-	
+
      where :math:`f_p` is the fractional importance we place on posterior estimation (20%, as mentioned above), :math:`\mathcal{S}_p` is the posterior stopping function,
      :math:`\mathcal{S}_\mathcal{Z}` is the evidence stopping function, :math:`s_p` is the posterior "error threshold", :math:`s_\mathcal{Z}` is the evidence error threshold,
      and :math:`n` is the total number of Monte Carlo realisations, used to generate the posterior/evidence stopping values.
+
+   * `Nautilus sampler <https://nautilus-sampler.readthedocs.io>`_ implements Neural Network-Boosted Nested Sampling
+     `(Lange, 2023) <https://ui.adsabs.harvard.edu/abs/2023MNRAS.525.3181L/abstract>`_, an efficient nested sampling algorithm that uses
+     neural network emulators to learn the shape of the likelihood and guide live-point proposals.
+     Nautilus typically requires far fewer likelihood evaluations than classical nested sampling for the same posterior accuracy,
+     making it well-suited for expensive SED-fitting runs with many free parameters.
 
    When sampling high-dimensional large volumes the degeneracy between parameters can easily generate a complex posterior topology,
    such as multiple peaks on some parameters or non-linear correlations.
@@ -413,6 +419,13 @@ The parameters to set are the following:
 		                       'update_interval' : 0.6, 'walks' : 25,
                                        'bootstrap' : 0 }
 
+   * for **nautilus**: see documentation of the `Nautilus Sampler <https://nautilus-sampler.readthedocs.io/en/stable/api/nautilus.Sampler.html>`_.
+     The default values we have set internally (see :py:mod:`galapy.sampling.Sampler`) are
+
+     .. code-block:: python
+
+	nautilus_default_sampler_kw = { 'n_live' : 1500, 'n_networks' : 4 }
+
 4. ``sampling_kw`` (default ``= {}``) additional keyword arguments to be passed to the function running the sampling with the chosen sampler.
 
    * for **emcee**: see documentation of the ``run_mcmc`` method of the `Ensamble Sampler <https://emcee.readthedocs.io/en/stable/user/sampler/>`_.
@@ -438,6 +451,14 @@ The parameters to set are the following:
                                         'maxbatch' : sys.maxsize,
                                         'n_effective' : None, 'print_progress' : True,
                                         'stop_kwargs' : { 'target_n_effective' : 10000 } }
+
+   * for **nautilus**: see documentation of the ``run`` method of the `Nautilus Sampler <https://nautilus-sampler.readthedocs.io/en/stable/api/nautilus.Sampler.html>`_.
+     The default values we have set internally (see :py:mod:`galapy.sampling.Sampler`) are
+
+     .. code-block:: python
+
+	nautilus_default_sampling_kw = { 'f_live' : 0.01, 'n_eff' : 8000,
+                                         'discard_exploration' : True, 'verbose' : True }
 
 5. ``output_directory`` (default ``= ''``) choose the position in the filesystem where to store the results. The default empty string (``''``) means "store in current location",
    results will be saved in the directory from which the ``galapy-fit`` command has been called.

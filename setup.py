@@ -192,6 +192,7 @@ def main():
                'tqdm',
                'emcee',
                'dynesty',
+               'nautilus-sampler',
                'matplotlib>=3.6',
                'getdist',
                'requests',
