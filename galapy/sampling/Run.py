@@ -142,28 +142,32 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
 def loglikelihood ( par, state, **kwargs ) :
 
     nested = state.handler.return_nested( par )
-    try :
-        state.model.set_parameters( **nested['galaxy'] )
-        flux_model = numpy.asarray( state.model.photoSED() )
-    except RuntimeError :
-        return -numpy.inf
-
-    if state.noise is not None :
-        state.noise.set_parameters( **nested['noise'] )
-        errors = state.noise.apply( state.data.errors, flux_model )
-        noise_llike = numpy.log( 2 * numpy.pi * errors**2 ).sum()
-        if numpy.isnan( noise_llike ) :
+    with numpy.errstate( all = 'ignore' ) :
+        try :
+            state.model.set_parameters( **nested['galaxy'] )
+            flux_model = numpy.asarray( state.model.photoSED() )
+        except RuntimeError :
             return -numpy.inf
-        return gaussian_loglikelihood( data   = state.data.fluxes,
-                                       error  = errors,
-                                       model  = flux_model,
-                                       uplims = state.data.uplims,
-                                       **kwargs ) - 0.5 * noise_llike
-    return gaussian_loglikelihood( data   = state.data.fluxes,
-                                   error  = state.data.errors,
-                                   model  = flux_model,
-                                   uplims = state.data.uplims,
-                                   **kwargs )
+
+        if state.noise is not None :
+            state.noise.set_parameters( **nested['noise'] )
+            errors      = state.noise.apply( state.data.errors, flux_model )
+            noise_llike = numpy.log( 2 * numpy.pi * errors**2 ).sum()
+            if not numpy.isfinite( noise_llike ) :
+                return -numpy.inf
+            llike = ( gaussian_loglikelihood( data   = state.data.fluxes,
+                                              error  = errors,
+                                              model  = flux_model,
+                                              uplims = state.data.uplims,
+                                              **kwargs ) - 0.5 * noise_llike )
+        else :
+            llike = gaussian_loglikelihood( data   = state.data.fluxes,
+                                            error  = state.data.errors,
+                                            model  = flux_model,
+                                            uplims = state.data.uplims,
+                                            **kwargs )
+
+    return llike if numpy.isfinite( llike ) else -numpy.inf
 
 ################################################################################
 
