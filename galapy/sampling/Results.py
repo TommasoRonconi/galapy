@@ -72,6 +72,7 @@ def dump_results ( model, handler, data, sampler,
     if not isinstance( sampler, Sampler ) :
         raise ValueError( "Argument ``sampler`` should be an instance of type Sampler" )
     sample_res, sample_logl, sample_weights = sampler.return_samples_logl_weights()
+    logz, logzerr = sampler.log_evidence()
 
     if not isinstance( model, GXY ) :
         raise ValueError( "Argument ``model`` should be an instance of type GXY" )
@@ -105,6 +106,8 @@ def dump_results ( model, handler, data, sampler,
                     'data' : None if data is None else data.dump(),
                     'noise' : None if noise is None else noise.dump(),
                     'sampler_name' : sampler.which_sampler,
+                    'logz'    : logz,
+                    'logzerr' : logzerr,
                 }
             )
             return outbase
@@ -118,9 +121,11 @@ def dump_results ( model, handler, data, sampler,
     tstart = time()
     results = Results( model, handler,
                        sample_res, sample_logl,
-                       sample_weights = sample_weights,
-                       data = data, noise = noise,
-                       sampler_name = sampler.which_sampler )
+                       sample_weights   = sample_weights,
+                       data             = data, noise = noise,
+                       sampler_name     = sampler.which_sampler,
+                       log_evidence     = logz,
+                       log_evidence_err = logzerr )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
 
@@ -184,7 +189,9 @@ def load_results ( infile, method = None, lightweight = None ) :
                     if res_dict['results']['noise'] is not None
                     else None
                 ),
-                sampler_name = res_dict['results']['sampler_name']
+                sampler_name     = res_dict['results']['sampler_name'],
+                log_evidence     = res_dict['results'].get( 'logz',    None ),
+                log_evidence_err = res_dict['results'].get( 'logzerr', None ),
             )
             ndur = time() - tstart
             print( f'... done in {ndur} seconds.' )
@@ -202,7 +209,8 @@ def load_results ( infile, method = None, lightweight = None ) :
 class Results () :
     def __init__ ( self, model, handler, sample_res, sample_logl,
                    sample_weights = None, data = None, noise = None,
-                   sampler_name = 'dynesty' ) :
+                   sampler_name = 'dynesty',
+                   log_evidence = None, log_evidence_err = None ) :
         """ A class for storing the results of a sampling run.
         
         Parameters
@@ -230,6 +238,12 @@ class Results () :
         sampler_name : str
             Which sampler has been used in the sampling run (i.e. 'dynesty' or 'emcee', 
             default is 'dynesty')
+        log_evidence : float
+            (Optional) the logarithm of the evidence accumulated during the run (this
+            number is not available for runs performed with the 'emcee' sampler)
+        log_evidence_err : float 
+            (Optional) the error on the logarithm of the evidence accumulated during
+            the run (this number is only available for runs performed with the 'dynesty' sampler)
         """
         
         # Store the model architecture
@@ -285,9 +299,11 @@ class Results () :
             else :
                 self._noise = noise.dump()
 
-        # Store the sampler's name and specs
+        # Store the sampler's name, specs, and evidence estimate
         self.sampler = sampler_name
-        self.ndim = len( handler.par_free )
+        self.ndim    = len( handler.par_free )
+        self.logz    = log_evidence
+        self.logzerr = log_evidence_err
         
         self.size = len(sample_res)
         if self.size != len(sample_logl) or self.size != len(sample_weights):
@@ -360,6 +376,8 @@ class Results () :
             # Sampling run hyperparameters
             sampler_name = self.sampler,
             size = self.size, Ndof = self.Ndof,
+            logz    = self.logz,
+            logzerr = self.logzerr,
             # Sampling run stored quantities
             logl    = self.logl,
             samples = self.samples,
@@ -402,6 +420,8 @@ class Results () :
         # Additional hyperparameters
         ret.Ndof    = dictionary['Ndof']
         ret.size    = dictionary['size']
+        ret.logz    = dictionary.get( 'logz',    None )
+        ret.logzerr = dictionary.get( 'logzerr', None )
 
         # Derived quantities
         ret.SED     = dictionary['SED']

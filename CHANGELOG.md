@@ -45,6 +45,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `galaxy_parameters` (e.g. `'redshift': [z0, z1, ..., zN-1]`) pins that
   parameter independently for each source. Shape mismatches and single-source
   lists raise `ValueError` at load time.
+- `galapy.sampling.Sampler`: new `log_evidence()` method returning
+  `(logz, logzerr)` for nested samplers (`dynesty`: from
+  `results.logz[-1]` / `results.logzerr[-1]`; `nautilus`: from
+  `sampler.log_z`, error is `None`). Returns `(None, None)` for emcee.
+- `galapy.sampling.Results.Results`: stores `logz` and `logzerr`
+  as instance attributes (both `None` for emcee runs). Evidence is
+  persisted in the HDF5 results file (both full and lightweight modes)
+  and restored on load. Backward compatible: older files without the
+  field load with `logz = logzerr = None`.
+- `galapy.analysis.model_comparison`: new submodule. Provides
+  stateless posterior estimators operating on raw `(values, weights)`
+  arrays — `weighted_quantile`, `weighted_mean`, `weighted_std`,
+  `credible_interval` — generalising the class methods of
+  `GalaxyResults`. Also provides `bayes_factor(logz1, logz2)` and
+  `jeffreys_scale(log_bf)` as entry points for Bayesian model
+  comparison; full multi-model comparison tooling reserved for a future
+  release.
 
 ### Changed
 - `galapy.sampling.Run`: `loglikelihood(par, state, **kwargs)` and

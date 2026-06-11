@@ -241,4 +241,22 @@ class Sampler () :
 
         return;
 
+    def log_evidence ( self ) :
+        """ Returns the log-evidence (and its uncertainty) estimated by the sampler.
+
+        Returns
+        -------
+        logz : float or None
+            Natural log of the Bayesian evidence. None for emcee.
+        logzerr : float or None
+            Uncertainty on logz. None for emcee and nautilus.
+        """
+        if self.which_sampler == 'dynesty' :
+            return ( float( self.sampler.results.logz[-1] ),
+                     float( self.sampler.results.logzerr[-1] ) )
+        elif self.which_sampler == 'nautilus' :
+            return ( float( self.sampler.log_z ), None )
+        else :
+            return ( None, None )
+
 #############################################################################################
