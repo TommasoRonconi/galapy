@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `galapy-fit`: catalogue fitting by passing a 2-D `fluxes` array (shape NxM)
   to fit N sources in sequence, one source fitted parallely at a time.
   The MPI path for true multi-node parallelism is reserved for a future release.
-- `galapy-fit`: multi-model runs — add a `models` list to the parameter file
+- `galapy-fit`: multi-model runs by adding a `models` list to the parameter file
   to test K model configurations on every source, launching NxK jobs in total.
   Intended for Bayesian model comparison via the nested-sampling log-evidence.
 - `galapy-genparams`: `--catalogue` / `-cat` flag generates a multi-source
@@ -61,7 +61,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   forthcoming MPI entry point (`mpi4py.futures.MPIPoolExecutor`); no longer
   called by `galapy-fit` in the single-node path.
   CPU-binding (`os.sched_setaffinity`) and two-level dispatch infrastructure in
-  `_catalogue_worker` are retained for reuse when MPI is wired in.
+  `_catalogue_worker` are retained for reuse when MPI is wired in
+
+### Fixed
+- `MANIFEST.in`: added `recursive-include` directives for `pybind11/*.h` and
+  `c++/**/*.{h,cpp}` so that C++ header files are included in the source
+  distribution. Previously, building from the sdist (e.g. on a Python version
+  with no pre-compiled wheel available) failed with
+  `fatal error: pyb11_serialize.h: No such file or directory`.
+
+### Build
+- Bumped `cibuildwheel` from v2.16.5 to v2.22.0 in the wheel-build workflow.
+  v2.16.5 predates Python 3.13 and 3.14; v2.22.0 adds support for both,
+  extending the published wheel matrix to cover all CPython versions from
+  3.7 through 3.14.
 
 ## [0.5.6 - 2026-06-08]
 
