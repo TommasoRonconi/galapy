@@ -325,7 +325,10 @@ def _sample_parallel ( state, which_sampler = 'dynesty',
 
     elif which_sampler == 'emcee' :
 
-        with mp.get_context( 'fork' ).Pool( Ncpu ) as pool :
+        import sys
+        #_ctx = 'fork' if sys.platform.startswith( 'linux' ) else 'spawn'
+        _ctx = 'spawn'
+        with mp.get_context( _ctx ).Pool( Ncpu ) as pool :
             sampler = sample(
                 state,
                 sampler         = which_sampler,
@@ -381,7 +384,7 @@ def _model_suffixes ( resolved_variants ) :
 
 def _expand_hyperpar ( hyperpar ) :
     """Expand a (possibly multi-source, multi-model) hyperpar into a flat list
-    of N×K single-job SimpleNamespace objects.
+    of NxK single-job SimpleNamespace objects.
 
     Each returned object is a fully-resolved specification for one
     (source, model-variant) pair — equivalent to a single-object parameter
@@ -395,7 +398,7 @@ def _expand_hyperpar ( hyperpar ) :
     Returns
     -------
     list of SimpleNamespace
-        Length N×K, where N is the number of sources (inferred from
+        Length NxK, where N is the number of sources (inferred from
         ``hyperpar.fluxes.shape[0]`` when 2-D, else 1) and K is
         ``len(hyperpar.models)`` when present, else 1.
     """
@@ -554,10 +557,19 @@ def _catalogue_worker ( job ) :
 
     Receives a fully-resolved :class:`~types.SimpleNamespace` produced by
     :func:`_expand_hyperpar`.  Builds its own :class:`PipelineState` and
-    runs a serial fit.  Designed to be called inside a forked/spawned
-    subprocess so that thread-count limits take effect before any numpy
-    operations.
+    runs a fit.  Designed to be called inside a forked/spawned subprocess.
+
+    If ``job.cpu_set`` is present and ``os.sched_setaffinity`` is available
+    (Linux), the process is pinned to those CPUs before any computation so
+    that forked grandchildren (the inner sampler pool) inherit the same mask.
+    If ``job.cpus_per_job > 1`` the inner sampler is run in parallel across
+    those CPUs; otherwise it runs serially.
     """
+    if hasattr( os, 'sched_setaffinity' ) :
+        cpu_set = getattr( job, 'cpu_set', None )
+        if cpu_set is not None :
+            os.sched_setaffinity( 0, cpu_set )
+
     for _var in ( 'OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS',
                   'BLAS_NUM_THREADS', 'NUMEXPR_NUM_THREADS',
                   'VECLIB_MAXIMUM_THREADS' ) :
@@ -582,7 +594,11 @@ def _catalogue_worker ( job ) :
         filter_kwargs = job.filters_custom or {},
     )
 
-    _sample_serial(
+    cpus_per_job = getattr( job, 'cpus_per_job', 1 )
+    _run_fn      = _sample_parallel if cpus_per_job > 1 else _sample_serial
+    _extra       = { 'Ncpu' : cpus_per_job } if cpus_per_job > 1 else {}
+
+    _run_fn(
         state,
         which_sampler     = job.sampler,
         nwalkers          = job.nwalkers,
@@ -596,24 +612,65 @@ def _catalogue_worker ( job ) :
         store_lightweight = job.store_lightweight,
         pickle_sampler    = job.pickle_sampler,
         pickle_raw        = job.pickle_raw,
+        **_extra,
     )
 
     return job.run_id
 
 
 def _sample_catalogue ( jobs, Ncpu = None ) :
-    """Run one serial fit per job in parallel across worker processes."""
+    """Distribute NxK jobs across MPI ranks (future multi-node entry point).
+
+    Not called by :func:`_run` in the current single-node implementation.
+    Reserved for the forthcoming MPI path where each rank receives a slice of
+    jobs and runs them sequentially with the full per-rank CPU budget, matching
+    the strategy in :func:`_run`.
+
+    The ``ProcessPoolExecutor`` + CPU-binding infrastructure below is retained
+    as a functional fallback for testing and as scaffolding for the MPI
+    integration.
+    """
     import multiprocessing as mp
     import sys
 
-    if Ncpu is None :
-        Ncpu = min( mp.cpu_count(), len( jobs ) )
+    if hasattr( os, 'sched_getaffinity' ) :
+        avail = sorted( os.sched_getaffinity( 0 ) )
+    else :
+        avail = list( range( mp.cpu_count() ) )
 
-    ctx_name = 'fork' if sys.platform.startswith( 'linux' ) else 'forkserver'
+    if Ncpu is not None :
+        avail = avail[ :Ncpu ]
+
+    n_parallel   = min( len( jobs ), len( avail ) )
+    cpus_per_job = len( avail ) // n_parallel
+
+    for i, job in enumerate( jobs ) :
+        slot         = i % n_parallel
+        job.cpu_set      = set( avail[ slot * cpus_per_job :
+                                       ( slot + 1 ) * cpus_per_job ] )
+        job.cpus_per_job = cpus_per_job
+
+    _binding = ( 'active' if hasattr( os, 'sched_setaffinity' )
+                 else 'not available on this platform' )
+    _inner   = ( f'parallel ({cpus_per_job} CPUs/worker)'
+                 if cpus_per_job > 1 else 'serial' )
+    print( f'galapy-fit  [{len(jobs)} job(s)]  '
+           f'{n_parallel} worker(s) x {cpus_per_job} CPU(s)  |  '
+           f'inner sampler: {_inner}  |  CPU binding: {_binding}',
+           flush = True )
+
+    from concurrent.futures import ProcessPoolExecutor
+
+    # ctx_name = 'fork' if sys.platform.startswith( 'linux' ) else 'forkserver'
+    ctx_name = 'spawn'
     ctx      = mp.get_context( ctx_name )
 
-    with ctx.Pool( Ncpu ) as pool :
-        pool.map( _catalogue_worker, jobs )
+    # ProcessPoolExecutor workers are non-daemon, so each catalogue worker
+    # can itself spawn the inner sampler pool without hitting the
+    # "daemonic processes are not allowed to have children" restriction.
+    with ProcessPoolExecutor( max_workers = n_parallel,
+                              mp_context  = ctx ) as executor :
+        list( executor.map( _catalogue_worker, jobs ) )
 
     return;
 
@@ -652,68 +709,71 @@ def _run () :
     jobs = _expand_hyperpar( hyperpar )
 
     ####################################################################
-    # Multi-job mode: catalogue-level parallelism
+    # Sequential outer loop — each job receives the full CPU budget.
+    # For multi-node cluster runs _sample_catalogue (MPI) will be used
+    # instead; that path is not wired here yet.
 
     if len( jobs ) > 1 :
-        _sample_catalogue( jobs, Ncpu = args.Ncpu )
-        return;
+        _ncpu  = args.Ncpu if args.Ncpu is not None else os.cpu_count()
+        _inner = 'serial' if args.serial else f'parallel ({_ncpu} CPUs)'
+        print( f'galapy-fit  [{len(jobs)} job(s)]  sequential  |  '
+               f'inner sampler: {_inner}',
+               flush = True )
 
-    ####################################################################
-    # Single-job mode
+    for job in jobs :
 
-    job   = jobs[ 0 ]
-    state = initialize(
-        job.bands,
-        job.fluxes,
-        job.errors,
-        job.uplims,
-        job.filters,
-        job.galaxy_parameters,
-        sfh_model    = job.sfh_model,
-        ssp_lib      = job.ssp_lib,
-        do_Radio     = job.do_Radio,
-        do_Xray      = job.do_Xray,
-        do_AGN       = job.do_AGN,
-        noise_model  = job.noise_model,
-        noise_params = job.noise_parameters,
-        gxy_kwargs   = { 'lstep' : job.lstep },
-        noise_kwargs = job.noise_kwargs,
-        filter_kwargs = job.filters_custom if job.filters_custom is not None else {},
-    )
-
-    if args.serial :
-        _sample_serial(
-            state,
-            which_sampler     = job.sampler,
-            nwalkers          = job.nwalkers,
-            nsamples          = job.nsamples,
-            sampler_kw        = job.sampler_kw,
-            logl_kw           = { 'method_uplims' : job.method_uplims },
-            run_sampling_kw   = job.sampling_kw,
-            out_dir           = job.output_directory,
-            name              = job.run_id,
-            store_method      = job.store_method,
-            store_lightweight = job.store_lightweight,
-            pickle_sampler    = job.pickle_sampler,
-            pickle_raw        = job.pickle_raw,
+        state = initialize(
+            job.bands,
+            job.fluxes,
+            job.errors,
+            job.uplims,
+            job.filters,
+            job.galaxy_parameters,
+            sfh_model    = job.sfh_model,
+            ssp_lib      = job.ssp_lib,
+            do_Radio     = job.do_Radio,
+            do_Xray      = job.do_Xray,
+            do_AGN       = job.do_AGN,
+            noise_model  = job.noise_model,
+            noise_params = job.noise_parameters,
+            gxy_kwargs   = { 'lstep' : job.lstep },
+            noise_kwargs = job.noise_kwargs,
+            filter_kwargs = job.filters_custom if job.filters_custom is not None else {},
         )
-    else :
-        _sample_parallel(
-            state,
-            which_sampler     = job.sampler,
-            nwalkers          = job.nwalkers,
-            nsamples          = job.nsamples,
-            sampler_kw        = job.sampler_kw,
-            logl_kw           = { 'method_uplims' : job.method_uplims },
-            run_sampling_kw   = job.sampling_kw,
-            Ncpu              = args.Ncpu,
-            out_dir           = job.output_directory,
-            name              = job.run_id,
-            store_method      = job.store_method,
-            store_lightweight = job.store_lightweight,
-            pickle_sampler    = job.pickle_sampler,
-            pickle_raw        = job.pickle_raw,
-        )
+
+        if args.serial :
+            _sample_serial(
+                state,
+                which_sampler     = job.sampler,
+                nwalkers          = job.nwalkers,
+                nsamples          = job.nsamples,
+                sampler_kw        = job.sampler_kw,
+                logl_kw           = { 'method_uplims' : job.method_uplims },
+                run_sampling_kw   = job.sampling_kw,
+                out_dir           = job.output_directory,
+                name              = job.run_id,
+                store_method      = job.store_method,
+                store_lightweight = job.store_lightweight,
+                pickle_sampler    = job.pickle_sampler,
+                pickle_raw        = job.pickle_raw,
+            )
+        else :
+            _sample_parallel(
+                state,
+                which_sampler     = job.sampler,
+                nwalkers          = job.nwalkers,
+                nsamples          = job.nsamples,
+                sampler_kw        = job.sampler_kw,
+                logl_kw           = { 'method_uplims' : job.method_uplims },
+                run_sampling_kw   = job.sampling_kw,
+                Ncpu              = args.Ncpu,
+                out_dir           = job.output_directory,
+                name              = job.run_id,
+                store_method      = job.store_method,
+                store_lightweight = job.store_lightweight,
+                pickle_sampler    = job.pickle_sampler,
+                pickle_raw        = job.pickle_raw,
+            )
 
     return;
 

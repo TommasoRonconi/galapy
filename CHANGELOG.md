@@ -26,13 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `galapy.sampling.Run`: `_expand_hyperpar()` decomposes a single parameter
   file into a flat list of NxK single-job specifications, where N is the number
   of sources (inferred from the shape of `fluxes`) and K is the number of model
-  variants (`models` list). All NxK jobs are dispatched in parallel via a
-  forked process pool.
+  variants (`models` list).
 - `galapy.sampling.Run`: `_model_suffixes()` generates descriptive output-file
   suffixes encoding only the topology keys that vary across model variants (e.g.
   `AGNFalse`, `SFHinsitu_AGNTrue`).
-- `galapy-fit`: catalogue-level parallel fitting — pass a 2-D `fluxes` array (shape NxM)
-  to fit N sources simultaneously, one serial fit per worker process.
+- `galapy-fit`: catalogue fitting by passing a 2-D `fluxes` array (shape NxM)
+  to fit N sources in sequence, one source fitted parallely at a time.
+  The MPI path for true multi-node parallelism is reserved for a future release.
 - `galapy-fit`: multi-model runs — add a `models` list to the parameter file
   to test K model configurations on every source, launching NxK jobs in total.
   Intended for Bayesian model comparison via the nested-sampling log-evidence.
@@ -55,6 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   returned the module-level `global_dict`).
 - `galapy-fit`: internal dispatch always routes through `_expand_hyperpar()`;
   single-source / single-model parameter files are fully backward compatible.
+
+### Internal
+- `galapy.sampling.Run._sample_catalogue`: preserved as scaffolding for the
+  forthcoming MPI entry point (`mpi4py.futures.MPIPoolExecutor`); no longer
+  called by `galapy-fit` in the single-node path.
+  CPU-binding (`os.sched_setaffinity`) and two-level dispatch infrastructure in
+  `_catalogue_worker` are retained for reuse when MPI is wired in.
 
 ## [0.5.6 - 2026-06-08]
 
