@@ -18,6 +18,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `MANIFEST.in`: added `recursive-include` directives for `pybind11/*.h` and
+  `c++/**/*.{h,cpp}` so that C++ header files are included in the source
+  distribution. Previously, building from the sdist (e.g. on a Python version
+  with no pre-compiled wheel available) failed with
+  `fatal error: pyb11_serialize.h: No such file or directory`.
+
+### Build
+- Bumped `cibuildwheel` from v2.16.5 to v2.22.0 in the wheel-build workflow.
+  v2.16.5 predates Python 3.13 and 3.14; v2.22.0 adds support for both,
+  extending the published wheel matrix to cover all CPython versions from
+  3.7 through 3.14.
+
+## [0.5.6 - 2026-06-08]
+
 ### Changed
 - `galapy.sampling.Sampler`: the `__init__` and `run_sampling` methods now
   accept a single `sampler_kw` / `sampling_kw` dict instead of separate
