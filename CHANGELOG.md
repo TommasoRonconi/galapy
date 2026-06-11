@@ -64,6 +64,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `_catalogue_worker` are retained for reuse when MPI is wired in
 
 ### Fixed
+- `galapy.sampling.Run.loglikelihood`: wrapped model evaluation and likelihood
+  computation in `numpy.errstate(all='ignore')` to suppress spurious
+  `RuntimeWarning` messages (invalid value, divide by zero, overflow,
+  underflow) that arise for parameter combinations outside the physically
+  valid range. The result is checked with `numpy.isfinite` and mapped to
+  `-numpy.inf` if non-finite, so the sampler always receives a valid sentinel.
+  The existing `except RuntimeError` guard for C++ model errors is preserved.
+- `galapy.sampling.Results.GalaxyResults.__init__`: applied the same
+  `numpy.errstate(all='ignore')` guard to the posterior SED recomputation
+  loop, preventing identical warnings at store time. Added a `numpy.isfinite`
+  check on the computed SED: if the SED is entirely non-finite, all derived
+  scalar quantities (`Mstar`, `Mdust`, `Mgas`, `Zstar`, `Zgas`, `SFR`,
+  `TMC`, `TDD`) are set to `-inf` to avoid silently storing values computed
+  from a broken model state.
+
+## [0.5.7 - 2026-06-11]
+
+### Fixed
 - `MANIFEST.in`: added `recursive-include` directives for `pybind11/*.h` and
   `c++/**/*.{h,cpp}` so that C++ header files are included in the source
   distribution. Previously, building from the sdist (e.g. on a Python version

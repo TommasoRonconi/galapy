@@ -310,33 +310,45 @@ class Results () :
         self.TMC    = numpy.empty(shape=(self.size,))
         self.TDD    = numpy.empty(shape=(self.size,))
 
+        _sentinel = -numpy.inf
         for i, par in enumerate(sample_res) :
             self.params += [handler.return_nested(par)['galaxy']]
 
-            try :
-                model.set_parameters( **self.params[-1] )
-            except RuntimeError :
-                self.SED[i]   = -numpy.inf * numpy.ones_like(model.wl())
-                self.Mstar[i] = -numpy.inf
-                self.Mdust[i] = -numpy.inf
-                self.Mgas[i]  = -numpy.inf
-                self.Zstar[i] = -numpy.inf
-                self.Zgas[i]  = -numpy.inf
-                self.SFR[i]   = -numpy.inf
-                self.TMC[i]   = -numpy.inf
-                self.TDD[i]   = -numpy.inf
-                continue
-            
-            age = model.age
-            self.SED[i]   = model.get_SED()
-            self.Mstar[i] = model.sfh.Mstar(age)
-            self.Mdust[i] = model.sfh.Mdust(age)
-            self.Mgas[i]  = model.sfh.Mgas(age)
-            self.Zstar[i] = model.sfh.Zstar(age)
-            self.Zgas[i]  = model.sfh.Zgas(age)
-            self.SFR[i]   = model.sfh(age)
-            self.TMC[i]   = model.ism.mc.T
-            self.TDD[i]   = model.ism.dd.T
+            with numpy.errstate( all = 'ignore' ) :
+                try :
+                    model.set_parameters( **self.params[-1] )
+                except RuntimeError :
+                    self.SED[i]   = _sentinel * numpy.ones_like(model.wl())
+                    self.Mstar[i] = _sentinel
+                    self.Mdust[i] = _sentinel
+                    self.Mgas[i]  = _sentinel
+                    self.Zstar[i] = _sentinel
+                    self.Zgas[i]  = _sentinel
+                    self.SFR[i]   = _sentinel
+                    self.TMC[i]   = _sentinel
+                    self.TDD[i]   = _sentinel
+                    continue
+
+                age           = model.age
+                self.SED[i]   = model.get_SED()
+                self.Mstar[i] = model.sfh.Mstar(age)
+                self.Mdust[i] = model.sfh.Mdust(age)
+                self.Mgas[i]  = model.sfh.Mgas(age)
+                self.Zstar[i] = model.sfh.Zstar(age)
+                self.Zgas[i]  = model.sfh.Zgas(age)
+                self.SFR[i]   = model.sfh(age)
+                self.TMC[i]   = model.ism.mc.T
+                self.TDD[i]   = model.ism.dd.T
+
+            if not numpy.isfinite( self.SED[i] ).any() :
+                self.Mstar[i] = _sentinel
+                self.Mdust[i] = _sentinel
+                self.Mgas[i]  = _sentinel
+                self.Zstar[i] = _sentinel
+                self.Zgas[i]  = _sentinel
+                self.SFR[i]   = _sentinel
+                self.TMC[i]   = _sentinel
+                self.TDD[i]   = _sentinel
 
     def dump ( self ) :
         return dict(
