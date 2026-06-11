@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> nothing new
+
+## [0.5.7] - 2026-06-11
+
 ### Added
 - `galapy.sampling.Sampler`: nautilus (Neural Network-Boosted Nested Sampler)
   is now a supported backend. Adds entries to
@@ -60,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   extending the published wheel matrix to cover all CPython versions from
   3.7 through 3.14.
 
-## [0.5.6 - 2026-06-08]
+## [0.5.6] - 2026-06-08
 
 ### Changed
 - `galapy.sampling.Sampler`: the `__init__` and `run_sampling` methods now
