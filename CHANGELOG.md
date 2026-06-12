@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> nothing new
+
+## [0.6.0] - 2026-06-12
+
 ### Added
 - `galapy.analysis.plot.corner_derived` function for plotting the marginal 2d posterior
   of derived parameters. The API is completely equivalent to the one
