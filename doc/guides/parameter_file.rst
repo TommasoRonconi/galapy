@@ -605,3 +605,12 @@ files.
 When model variants are also specified, the auto-generated model suffix is appended
 after the run-id prefix, e.g. ``my_galaxy_AGNTrue``.
 
+.. warning::
+
+   For large catalogues (many sources and/or multiple model variants), the total output
+   size can grow very quickly because each job writes its own independent results file.
+   Setting ``store_lightweight = True`` in the shared :ref:`sampling_and_output` block
+   is strongly recommended in this case: it reduces each file from up to ~1 GB to ~10 MB
+   by storing only samples, log-likelihoods, weights, and the minimal information needed
+   to reconstruct the models.
+

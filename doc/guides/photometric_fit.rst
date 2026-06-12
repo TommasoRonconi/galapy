@@ -157,6 +157,13 @@ with the same syntax as a single-source run:
 
 GalaPy detects catalogue mode automatically from the contents of the parameter file.
 
+.. note::
+
+   Each (source, variant) pair produces its own independent results file, identical in
+   format to a standard single-source output.
+   Post-processing and analysis are therefore unchanged: use the existing tools in
+   :py:mod:`galapy.analysis` on each file individually, source by source and model by model.
+
 Fitting through the Python API
 ..............................
 
