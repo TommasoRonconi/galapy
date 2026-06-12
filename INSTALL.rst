@@ -16,6 +16,15 @@ From the Python Package Index (PyPI)
 ------------------------------------
 
 GalaPy is available on PyPI for Linux and MacOS.
+
+.. tip::
+
+   Before installing, ensure pip is up to date. This is required to pick up
+   binary wheels on Linux (including WSL) and avoids falling back to a slower
+   source build::
+
+      $ pip install --upgrade pip
+
 With an internet connection, install the library by calling
 
 .. code-block:: console
@@ -140,6 +149,16 @@ These apps provide users with a Linux shell (e.g. BASH) running on a Linux sub-s
 
 Once the above actions have been performed, from the newly installed Linux shell it is possible to set up a work environment
 by installing :code:`python3` and :code:`pip` with the user's preferred method.
+
+.. important::
+
+   After installing pip, upgrade it before proceeding::
+
+      $ pip install --upgrade pip
+
+   Older pip versions (< 19.3) cannot resolve binary wheels for Linux and will
+   attempt to compile GalaPy from source, which requires a C++ toolchain and
+   is likely to fail on a fresh WSL environment.
 
 With this minimal set-up is now possible to follow the instructions presented previously in this guide to get a working installation of GalaPy.
 

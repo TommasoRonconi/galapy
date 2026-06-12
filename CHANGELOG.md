@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `galapy.analysis.plot.corner_derived` function for plotting the marginal 2d posterior
+  of derived parameters. The API is completely equivalent to the one
+  used for the free parameters
 - `galapy.sampling.Run`: `PipelineState` class encapsulates all per-object
   fitting state (`data`, `model`, `noise`, `handler`), replacing the module-level
   `global_dict`. Multiple independent fits can now coexist in the same Python
@@ -95,6 +98,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scalar quantities (`Mstar`, `Mdust`, `Mgas`, `Zstar`, `Zgas`, `SFR`,
   `TMC`, `TDD`) are set to `-inf` to avoid silently storing values computed
   from a broken model state.
+- `MANIFEST.in` now includes the *.tpp extensions used for templated headers of the
+  C++ library sector
+- support for more out-of-the-box architectures is now made available (WSL compliant
+  and intel-based MacOS architectures
 
 ## [0.5.7] - 2026-06-11
 
