@@ -1,3 +1,4 @@
+pip>=19.3
 numpy
 scipy
 emcee
