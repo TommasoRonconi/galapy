@@ -38,18 +38,19 @@ def return_extensions () :
     
     #############################################################################
     # C++ implementation of the interpolation class
+    # [replaced by galapy/internal/interp.py — pure Python, numpy.interp-backed]
 
-    ext_intp = Pybind11Extension(
-        "galapy.internal.interp",
-        sorted(
-            [ os.path.join( 'pybind11', 'pyb11_interpolation.cpp' ) ]
-        ),
-        include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
-                                 os.path.join( 'pybind11' ) ] ),
-        libraries = [ "m" ],
-        extra_compile_args=extra_compile_args
-    )
-    
+    # ext_intp = Pybind11Extension(
+    #     "galapy.internal.interp",
+    #     sorted(
+    #         [ os.path.join( 'pybind11', 'pyb11_interpolation.cpp' ) ]
+    #     ),
+    #     include_dirs = sorted( [ os.path.join( 'c++', 'utl', 'include' ),
+    #                              os.path.join( 'pybind11' ) ] ),
+    #     libraries = [ "m" ],
+    #     extra_compile_args=extra_compile_args
+    # )
+
     #############################################################################
     # C++ implementation of SFH functions and types
 
@@ -145,7 +146,6 @@ def return_extensions () :
     )
 
     return [
-        ext_intp,
         ext_sfh,
         ext_csp,
         ext_ism,

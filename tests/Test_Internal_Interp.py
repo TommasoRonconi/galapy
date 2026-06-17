@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------#
-#           Test of galapy.internal.interp compiled extension (pybind11).
+#           Test of galapy.internal.interp (pure-Python lin_interp class).
 #------------------------------------------------------------------------------#
 
 import numpy as np

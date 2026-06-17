@@ -24,7 +24,6 @@ from galapy.Cosmology import CSM
 from galapy.InterGalacticMedium import IGM
 
 from galapy.internal.utils import trap_int, find_nearest
-from galapy.internal.interp import lin_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
