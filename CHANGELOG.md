@@ -18,7 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> nothing new
+### Changed
+- `galapy.internal.interp`: replaced the C++/pybind11 BST-backed `lin_interp`
+  extension with a pure-Python implementation using `numpy.interp` for
+  in-range evaluation and manual edge-slope propagation for linear extrapolation
+  beyond the grid. The public API (`__call__`, `get_x`, `get_y`, `integrate`)
+  is unchanged; behaviour is identical including linear extrapolation.
+  The `galapy.internal.interp` pybind11 extension is no longer compiled.
 
 ## [0.6.0] - 2026-06-12
 
