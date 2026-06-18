@@ -111,25 +111,25 @@ Pre-requisites
 
 A table with the dependencies of the library follows. We also provide a short description of the package and the relevant link for download. 
 
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `NumPy <https://pypi.org/project/numpy/>`_           | Fundamental package for array computing in Python                                  |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `SciPy <https://pypi.org/project/scipy/>`_           | Fundamental algorithms for scientific computing in Python                          |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `emcee <https://pypi.org/project/emcee/>`_           | The Python ensemble sampling toolkit for MCMC                                      |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `dynesty <https://pypi.org/project/dynesty/>`_       | A dynamic nested sampling package for computing Bayesian posteriors and evidences. |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `nautilus-sampler <https://pypi.org/project/nautilus-sampler/>`_ | Neural Network-Boosted Nested Sampling for Bayesian inference.         |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `setuptools <https://pypi.org/project/setuptools/>`_ | Easily download, build, install, upgrade, and uninstall Python packages            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `matplotlib <https://pypi.org/project/matplotlib/>`_ | Python plotting package                                                            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `requests <https://pypi.org/project/requests/>`_     | Python HTTP for Humans.                                                            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `pytest <https://pypi.org/project/pytest/>`_         | simple powerful testing with Python                                                |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `NumPy <https://pypi.org/project/numpy/>`_               | Fundamental package for array computing in Python                                  |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `SciPy <https://pypi.org/project/scipy/>`_               | Fundamental algorithms for scientific computing in Python                          |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `emcee <https://pypi.org/project/emcee/>`_               | The Python ensemble sampling toolkit for MCMC                                      |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `dynesty <https://pypi.org/project/dynesty/>`_           | A dynamic nested sampling package for computing Bayesian posteriors and evidences. |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `nautilus <https://pypi.org/project/nautilus-sampler/>`_ | Neural Network-Boosted Nested Sampling for Bayesian inference.                     |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `setuptools <https://pypi.org/project/setuptools/>`_     | Easily download, build, install, upgrade, and uninstall Python packages            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `matplotlib <https://pypi.org/project/matplotlib/>`_     | Python plotting package                                                            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `requests <https://pypi.org/project/requests/>`_         | Python HTTP for Humans.                                                            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `pytest <https://pypi.org/project/pytest/>`_             | simple powerful testing with Python                                                |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
 
 Windows Users
 -------------
