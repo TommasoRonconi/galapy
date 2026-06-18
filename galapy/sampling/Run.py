@@ -1021,7 +1021,7 @@ lstep = None
 #
 # If this is set to ``None`` all the other hyper-parameters in this file
 # related to noise will be ignored.
-noise_model = None
+noise_model = 'calibration_error'
 
 # Eventual keyword arguments to be passed to the noise model of choice
 # (leave empty for no keyword arguments)
