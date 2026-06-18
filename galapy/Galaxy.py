@@ -24,6 +24,7 @@ from galapy.Cosmology import CSM
 from galapy.InterGalacticMedium import IGM
 
 from galapy.internal.utils import trap_int, find_nearest
+from galapy.internal.interp import log_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
@@ -869,13 +870,21 @@ class PhotoGXY ( GXY ) :
 
     def photoSED ( self ) :
         """Computes and returns the photometric bandpass fluxes in milliJansky.
+
+        Each bandpass integral is evaluated on the filter's own native
+        wavelength grid via a power-law (log-log) interpolator built from the
+        galaxy SED.  This removes resolution artefacts for narrow filters that
+        contain few SSP grid points and allows bands that extend beyond the SSP
+        wavelength range to be evaluated by power-law extrapolation.
         """
 
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
                              "Call function build_photometric_system() before." )
+        wl_obs = self.wl( obs = True )
+        sed    = self.get_SED()
         return numpy.asarray(
-            self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
+            self.pms.get_fluxes( wl_obs, sed, interp = log_interp( wl_obs, sed ) )
         )
         
 
