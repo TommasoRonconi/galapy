@@ -25,6 +25,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   beyond the grid. The public API (`__call__`, `get_x`, `get_y`, `integrate`)
   is unchanged; behaviour is identical including linear extrapolation.
   The `galapy.internal.interp` pybind11 extension is no longer compiled.
+- `PhotoGXY.photoSED`: bandpass integration is now performed on each filter's
+  own native wavelength grid (via `log_interp`) instead of slicing the SSP
+  array; this removes resolution artefacts for narrow bands and supports
+  evaluation outside the SSP wavelength range without zero-padding.
+- `PMS.get_fluxes`: accepts an optional `interp` callable; when provided, each
+  band integral is computed over the filter's native grid rather than the SSP
+  grid.
+- SSP libraries ending in `.refined` are no longer required for accurate
+  photometric fitting; `parsec22.NTL` now gives the same photometric accuracy
+  as `parsec22.NTL.refined` in the same wall time.
+
+### Added
+
+- `galapy.internal.interp`: new pure-Python `log_interp` class — piecewise
+  power-law (log-log space) interpolator with power-law extrapolation beyond
+  the grid boundary and a log-space trapezoid integration rule; used internally
+  by `PhotoGXY.photoSED` to evaluate the galaxy SED on each filter's native
+  wavelength grid.
 
 ## [0.6.0] - 2026-06-12
 
