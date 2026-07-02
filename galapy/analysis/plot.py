@@ -816,6 +816,7 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
 
 
 def corner_derived ( res, which_keys = None, log_scale = None,
+                     labels = None,
                      getdist_settings = None,
                      param_limits = 'auto', plot_titles = True, mark = 'bestfit',
                      titles_kw = {}, triangle_kw = {}, marker_kw = {} ) :
@@ -826,8 +827,8 @@ def corner_derived ( res, which_keys = None, log_scale = None,
     ``SFR``, ``TMC``, ``TDD``) rather than the free sampling parameters.
     Scalar quantities added via ``Results.add_property`` are eligible too and
     are drawn with default cosmetics (linear axis, the quantity's name as
-    label) unless they are listed in ``log_scale``.  Samples for which any
-    selected quantity is non-finite are silently excluded.
+    label) unless they are listed in ``log_scale`` / ``labels``.  Samples for
+    which any selected quantity is non-finite are silently excluded.
 
     Parameters
     ----------
@@ -842,6 +843,15 @@ def corner_derived ( res, which_keys = None, log_scale = None,
         Keys to plot on a log10 axis.  Defaults to the per-quantity setting in
         ``_derived_quantity_meta`` for the built-ins (masses and SFR are log by
         default); custom quantities default to a linear axis.
+    labels : dict, optional
+        Mapping ``{ key : latex_label }`` overriding the axis label of the
+        listed keys.  Give the raw LaTeX symbol without the surrounding ``$``
+        (e.g. ``{ 'Lbol' : r'L_\\mathrm{bol}' }``), matching the convention of
+        ``_derived_quantity_meta``.  This is the way to give a custom quantity a
+        proper symbol instead of its escaped name; it also overrides the
+        built-in label of any default quantity.  The ``log10`` wrapping (when
+        the key is log-scaled) is still applied on top.  Purely cosmetic and
+        per-call — nothing is persisted on the ``Results`` object.
     getdist_settings : dict, optional
     param_limits : str, sequence or dict, optional
         'auto' (default), a list of (lo, hi) pairs, or a dict keyed by quantity name.
@@ -918,18 +928,22 @@ def corner_derived ( res, which_keys = None, log_scale = None,
         for k in which_keys
     ] )
 
-    # axis labels. Built-in quantities have a LaTeX label in
-    # ``_derived_quantity_meta``; custom quantities fall back to their name,
-    # rendered upright with underscores escaped so they are not parsed as
-    # subscripts.
-    labels = []
+    # axis labels. Resolution order per key: an explicit override in the
+    # ``labels`` argument wins; otherwise built-in quantities use their LaTeX
+    # label from ``_derived_quantity_meta``; otherwise the key falls back to its
+    # own name, rendered upright with underscores escaped so they are not parsed
+    # as subscripts. The ``log10`` wrapping is applied on top when log-scaled.
+    axis_labels = []
     for k in which_keys :
-        meta = _derived_quantity_meta.get( k, None )
-        lab = ( meta['label'] if meta is not None
-                else r'\mathrm{' + k.replace( '_', r'\_' ) + '}' )
+        if labels is not None and k in labels :
+            lab = labels[k]
+        else :
+            meta = _derived_quantity_meta.get( k, None )
+            lab = ( meta['label'] if meta is not None
+                    else r'\mathrm{' + k.replace( '_', r'\_' ) + '}' )
         if use_log[k] :
             lab = r'\log_{10}\!\left(' + lab + r'\right)'
-        labels.append( lab )
+        axis_labels.append( lab )
 
     # marker position
     markers = {}
@@ -977,7 +991,7 @@ def corner_derived ( res, which_keys = None, log_scale = None,
         loglikes = -logl,
         weights  = weights,
         names    = which_keys,
-        labels   = labels,
+        labels   = axis_labels,
         sampler  = sampler,
         settings = default_getdist_settings,
     )
@@ -1003,7 +1017,7 @@ def corner_derived ( res, which_keys = None, log_scale = None,
 
     if plot_titles :
         digits = default_titles_kw.get( 'digits', 2 )
-        for i, ( k, lab ) in enumerate( zip( which_keys, labels ) ) :
+        for i, ( k, lab ) in enumerate( zip( which_keys, axis_labels ) ) :
             q16, q50, q84 = quantile_weighted(
                 mat[:, i], (0.16, 0.5, 0.84), weights = weights
             )

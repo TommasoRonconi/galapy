@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   linear attenuation `Aavg` (in `[0, 1]`) is now always stored after each
   update; the `store_attenuation` argument of `get_emission` is deprecated and
   ignored.
+- `galapy.analysis.plot.corner_derived`: new `labels` keyword argument — a
+  `{key: latex_label}` mapping that overrides the axis label of the listed
+  quantities. This is the way to give a custom quantity added via
+  `Results.add_property` a proper LaTeX symbol instead of its escaped name (it
+  also overrides the built-in label of any default quantity). Labels are raw
+  LaTeX without the surrounding `$`; the `log10` wrapping is still applied on
+  top for log-scaled keys. Purely cosmetic and per-call — nothing is persisted
+  on the `Results` object.
 
 ### Added
 
