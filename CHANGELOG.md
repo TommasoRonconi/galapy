@@ -68,6 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `getattr`-guarded so older parameter files without the key keep working.
   Documented in the `galapy-genparams` template.
 
+### Internal
+
+- `tests/Test_Results.py`: new test suite covering the `Results` derived-quantity
+  machinery — the built-in quantities are all computed, tracked in `_derived`,
+  exposed as attributes with the expected shapes (scalar vs 2-D `SED`) and
+  finite/physical values; `add_property` with a single callable (named and
+  auto-named), a `{name: callable}` mapping, and an array-valued quantity, plus
+  its error cases; and round-tripping the stored quantities through `dump`/`load`.
+
 ## [0.6.0] - 2026-06-12
 
 ### Added
