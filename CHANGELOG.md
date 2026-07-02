@@ -35,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SSP libraries ending in `.refined` are no longer required for accurate
   photometric fitting; `parsec22.NTL` now gives the same photometric accuracy
   as `parsec22.NTL.refined` in the same wall time.
+- `galapy.Galaxy.GXY`: the galaxy emission is now computed eagerly — once at
+  construction and again at the end of every `set_parameters` — and cached in
+  `self._Ltot`. `get_emission` is now a thin accessor that returns the cached
+  luminosity (recomputing only if `**kwargs` update the parameters), so a `GXY`
+  object is always in a fully self-consistent, queryable state. The average
+  linear attenuation `Aavg` (in `[0, 1]`) is now always stored after each
+  update; the `store_attenuation` argument of `get_emission` is deprecated and
+  ignored.
 
 ### Added
 
