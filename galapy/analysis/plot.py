@@ -824,18 +824,24 @@ def corner_derived ( res, which_keys = None, log_scale = None,
     Mirrors ``corner_res`` but operates on the derived quantities stored in the
     ``Results`` instance (``Mstar``, ``Mdust``, ``Mgas``, ``Zstar``, ``Zgas``,
     ``SFR``, ``TMC``, ``TDD``) rather than the free sampling parameters.
-    Samples for which any selected quantity is non-finite are silently excluded.
+    Scalar quantities added via ``Results.add_property`` are eligible too and
+    are drawn with default cosmetics (linear axis, the quantity's name as
+    label) unless they are listed in ``log_scale``.  Samples for which any
+    selected quantity is non-finite are silently excluded.
 
     Parameters
     ----------
     res : Results instance
         A ``Results`` instance from a sampling run.
     which_keys : sequence of str, optional
-        Names of the derived quantities to include.  Defaults to all quantities
-        in ``_derived_quantity_meta`` that are present in ``res``.
+        Names of the derived quantities to include.  Defaults to all scalar
+        (one-value-per-sample) derived quantities stored in ``res``, including
+        any added via ``add_property``.  Array-valued quantities (e.g. the SED)
+        are not eligible for a triangle plot and are always excluded.
     log_scale : sequence of str, optional
         Keys to plot on a log10 axis.  Defaults to the per-quantity setting in
-        ``_derived_quantity_meta`` (masses and SFR are log by default).
+        ``_derived_quantity_meta`` for the built-ins (masses and SFR are log by
+        default); custom quantities default to a linear axis.
     getdist_settings : dict, optional
     param_limits : str, sequence or dict, optional
         'auto' (default), a list of (lo, hi) pairs, or a dict keyed by quantity name.
@@ -863,8 +869,15 @@ def corner_derived ( res, which_keys = None, log_scale = None,
             'Attribute "res" should be an instance of type ``Results``'
         )
 
-    # select keys present in the Results instance
-    available = [ k for k in _derived_quantity_meta if hasattr( res, k ) ]
+    # select keys present in the Results instance. The quantities that can
+    # appear in a triangle plot are the *scalar-per-sample* derived quantities
+    # tracked in ``res._derived`` (one value per posterior sample). This
+    # includes user-defined quantities added via ``add_property``, which carry
+    # no entry in ``_derived_quantity_meta`` but are plotted with sensible
+    # default cosmetics (see below). Array-valued quantities — the SED, or any
+    # array-valued custom quantity — are excluded.
+    available = [ k for k in res._derived
+                  if hasattr( res, k ) and numpy.ndim( getattr( res, k ) ) == 1 ]
     if which_keys is None :
         which_keys = available
     else :
@@ -874,9 +887,12 @@ def corner_derived ( res, which_keys = None, log_scale = None,
                 'None of the requested keys are available in this Results instance.'
             )
 
-    # log-scale flags
+    # log-scale flags. Built-in quantities have a default in
+    # ``_derived_quantity_meta``; custom quantities default to linear unless the
+    # caller lists them explicitly in ``log_scale``.
     if log_scale is None :
-        use_log = { k : _derived_quantity_meta[k]['log'] for k in which_keys }
+        use_log = { k : _derived_quantity_meta.get( k, {} ).get( 'log', False )
+                    for k in which_keys }
     else :
         use_log = { k : ( k in log_scale ) for k in which_keys }
 
@@ -902,10 +918,15 @@ def corner_derived ( res, which_keys = None, log_scale = None,
         for k in which_keys
     ] )
 
-    # axis labels
+    # axis labels. Built-in quantities have a LaTeX label in
+    # ``_derived_quantity_meta``; custom quantities fall back to their name,
+    # rendered upright with underscores escaped so they are not parsed as
+    # subscripts.
     labels = []
     for k in which_keys :
-        lab = _derived_quantity_meta[k]['label']
+        meta = _derived_quantity_meta.get( k, None )
+        lab = ( meta['label'] if meta is not None
+                else r'\mathrm{' + k.replace( '_', r'\_' ) + '}' )
         if use_log[k] :
             lab = r'\log_{10}\!\left(' + lab + r'\right)'
         labels.append( lab )

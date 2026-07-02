@@ -77,6 +77,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   auto-named), a `{name: callable}` mapping, and an array-valued quantity, plus
   its error cases; and round-tripping the stored quantities through `dump`/`load`.
 
+### Fixed
+
+- `galapy.analysis.plot.corner_derived`: custom scalar derived quantities added
+  via `Results.add_property` now appear in the triangle plot. The available-keys
+  set is drawn from `res._derived` (filtered to one-value-per-sample quantities)
+  instead of the static `_derived_quantity_meta`, so it also honours the
+  `store_quantities` subset. Quantities without an entry in
+  `_derived_quantity_meta` fall back to a linear axis and an upright label
+  (their name, with underscores escaped); array-valued quantities such as the
+  `SED` are excluded.
+
 ## [0.6.0] - 2026-06-12
 
 ### Added
