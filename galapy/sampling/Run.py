@@ -267,7 +267,8 @@ def sample ( state, sampler = 'dynesty', nwalkers = None, nsamples = None,
 def store_results ( state, sampler,
                     out_dir = '.', name = '',
                     method = 'hdf5', lightweight = False,
-                    pickle_sampler = False, pickle_raw = False ) :
+                    pickle_sampler = False, pickle_raw = False,
+                    store_quantities = None ) :
 
     outbase = generate_output_base( out_dir = out_dir, name = name )
     _ = dump_results( model      = state.model,
@@ -277,7 +278,8 @@ def store_results ( state, sampler,
                       noise      = state.noise,
                       outbase    = outbase,
                       method     = method,
-                      lightweight = lightweight )
+                      lightweight = lightweight,
+                      derived    = store_quantities )
     sampler.save_results( outbase        = outbase,
                           pickle_sampler = pickle_sampler,
                           pickle_raw     = pickle_raw )
@@ -290,7 +292,8 @@ def _sample_serial ( state, which_sampler = 'dynesty',
                      sampler_kw = {}, logl_kw = {}, run_sampling_kw = {},
                      out_dir = '.', name = '',
                      store_method = 'hdf5', store_lightweight = False,
-                     pickle_sampler = False, pickle_raw = False ) :
+                     pickle_sampler = False, pickle_raw = False,
+                     store_quantities = None ) :
 
     sampler = sample(
         state,
@@ -310,6 +313,7 @@ def _sample_serial ( state, which_sampler = 'dynesty',
         lightweight = store_lightweight,
         pickle_sampler = pickle_sampler,
         pickle_raw     = pickle_raw,
+        store_quantities = store_quantities,
     )
 
     return;
@@ -322,7 +326,8 @@ def _sample_parallel ( state, which_sampler = 'dynesty',
                        Ncpu = None,
                        out_dir = '.', name = '',
                        store_method = 'hdf5', store_lightweight = False,
-                       pickle_sampler = False, pickle_raw = False ) :
+                       pickle_sampler = False, pickle_raw = False,
+                       store_quantities = None ) :
     import multiprocessing as mp
 
     if Ncpu is None :
@@ -382,6 +387,7 @@ def _sample_parallel ( state, which_sampler = 'dynesty',
         lightweight = store_lightweight,
         pickle_sampler = pickle_sampler,
         pickle_raw     = pickle_raw,
+        store_quantities = store_quantities,
     )
 
     return;
@@ -573,6 +579,7 @@ def _expand_hyperpar ( hyperpar ) :
                 run_id            = job_run_id,
                 store_method      = hyperpar.store_method,
                 store_lightweight = hyperpar.store_lightweight,
+                store_quantities  = getattr( hyperpar, 'store_quantities', None ),
                 pickle_sampler    = hyperpar.pickle_sampler,
                 pickle_raw        = hyperpar.pickle_raw,
             ) )
@@ -639,6 +646,7 @@ def _catalogue_worker ( job ) :
         name              = job.run_id,
         store_method      = job.store_method,
         store_lightweight = job.store_lightweight,
+        store_quantities  = getattr( job, 'store_quantities', None ),
         pickle_sampler    = job.pickle_sampler,
         pickle_raw        = job.pickle_raw,
         **_extra,
@@ -783,6 +791,7 @@ def _run () :
                 name              = job.run_id,
                 store_method      = job.store_method,
                 store_lightweight = job.store_lightweight,
+                store_quantities  = getattr( job, 'store_quantities', None ),
                 pickle_sampler    = job.pickle_sampler,
                 pickle_raw        = job.pickle_raw,
             )
@@ -800,6 +809,7 @@ def _run () :
                 name              = job.run_id,
                 store_method      = job.store_method,
                 store_lightweight = job.store_lightweight,
+                store_quantities  = getattr( job, 'store_quantities', None ),
                 pickle_sampler    = job.pickle_sampler,
                 pickle_raw        = job.pickle_raw,
             )
@@ -1205,6 +1215,28 @@ store_method = 'hdf5'
 # With lightweight storage off, all the quantities are computed at the end of the sampling
 # run and are ready to use but the output file can reach a size of up to some GiB.
 store_lightweight = False
+
+# Which derived physical quantities to compute from the posterior and store in
+# the results file. Choose any subset of the built-in quantities:
+#   'SED'   : spectral energy distribution        [flux, mJy ; array]
+#   'Mstar' : stellar mass                         [Msun]
+#   'Mdust' : dust mass                            [Msun]
+#   'Mgas'  : gas mass                             [Msun]
+#   'Zstar' : stellar metallicity                  [absolute, metal mass fraction]
+#   'Zgas'  : gas metallicity                      [absolute, metal mass fraction]
+#   'SFR'   : star-formation rate                  [Msun / yr]
+#   'TMC'   : molecular-cloud temperature          [K]
+#   'TDD'   : diffuse-dust temperature             [K]
+# - None (default) stores all of them.
+# - A shorter list makes the output file smaller and post-processing faster.
+# - 'SED' is ALWAYS stored, whether or not you list it.
+# Example: store_quantities = ['Mstar', 'SFR', 'Mdust']
+#
+# NOTE: this selects among the built-in quantities only. To store your *own*
+# quantities (a colour, a band luminosity, the average attenuation, ...) add
+# them after the run with Results.add_property() -- see the
+# "Custom derived quantities" how-to in the documentation.
+store_quantities = None
 
 # Whether to pickle the sampler raw results.
 # (might be useful for analyzing run statistics)

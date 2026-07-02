@@ -63,7 +63,8 @@ def generate_output_base ( out_dir = '', name = '' ) :
 
 def dump_results ( model, handler, data, sampler,
                    noise = None, outbase = '',
-                   method = 'hdf5', lightweight = False ) :
+                   method = 'hdf5', lightweight = False,
+                   derived = None ) :
     from time import time
 
     if len(outbase) == 0 :
@@ -125,7 +126,8 @@ def dump_results ( model, handler, data, sampler,
                        data             = data, noise = noise,
                        sampler_name     = sampler.which_sampler,
                        log_evidence     = logz,
-                       log_evidence_err = logzerr )
+                       log_evidence_err = logzerr,
+                       derived          = derived )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
 
@@ -207,10 +209,30 @@ def load_results ( infile, method = None, lightweight = None ) :
 #############################################################################################
 
 class Results () :
+
+    # Registry of the derived quantities computed for every sample at
+    # construction time. Each entry maps a stored-attribute name to a callable
+    # ``f(model)`` returning that quantity for a model whose parameters have
+    # already been set to the sample's values. ``model.age`` is a plain
+    # attribute (set inside ``set_parameters``), so functions that need the age
+    # recover it from the model instead of receiving it as a separate argument.
+    _default_properties = {
+        'SED'   : lambda model : model.get_SED(),
+        'Mstar' : lambda model : model.sfh.Mstar( model.age ),
+        'Mdust' : lambda model : model.sfh.Mdust( model.age ),
+        'Mgas'  : lambda model : model.sfh.Mgas( model.age ),
+        'Zstar' : lambda model : model.sfh.Zstar( model.age ),
+        'Zgas'  : lambda model : model.sfh.Zgas( model.age ),
+        'SFR'   : lambda model : model.sfh( model.age ),
+        'TMC'   : lambda model : model.ism.mc.T,
+        'TDD'   : lambda model : model.ism.dd.T,
+    }
+
     def __init__ ( self, model, handler, sample_res, sample_logl,
                    sample_weights = None, data = None, noise = None,
                    sampler_name = 'dynesty',
-                   log_evidence = None, log_evidence_err = None ) :
+                   log_evidence = None, log_evidence_err = None,
+                   derived = None ) :
         """ A class for storing the results of a sampling run.
         
         Parameters
@@ -241,9 +263,15 @@ class Results () :
         log_evidence : float
             (Optional) the logarithm of the evidence accumulated during the run (this
             number is not available for runs performed with the 'emcee' sampler)
-        log_evidence_err : float 
+        log_evidence_err : float
             (Optional) the error on the logarithm of the evidence accumulated during
             the run (this number is only available for runs performed with the 'dynesty' sampler)
+        derived : sequence of str
+            (Optional, default = ``None``) the subset of default derived
+            quantities (keys of ``_default_properties``) to compute and store.
+            ``None`` selects them all. ``'SED'`` is always computed and stored
+            regardless of this argument; listing it explicitly is allowed but
+            redundant (a warning is emitted).
         """
         
         # Store the model architecture
@@ -310,64 +338,217 @@ class Results () :
             raise RuntimeError( 
                 'Arguments sample_res, sample_logl and sample_weights should have same length'
             )
-        self.params = []
+        self.params  = []
         self.logl    = numpy.asarray( sample_logl )
         self.samples = numpy.asarray( sample_res )
         self.weights = numpy.asarray( sample_weights )
-        self.wnot0 = ( self.weights > 0. )
-        self.SED    = numpy.empty(shape=(self.size, 
-                                         *model.wl().shape))
-        self.Mstar  = numpy.empty(shape=(self.size,))
-        self.Mdust  = numpy.empty(shape=(self.size,))
-        self.Mgas   = numpy.empty(shape=(self.size,))
-        self.Zstar  = numpy.empty(shape=(self.size,))
-        self.Zgas   = numpy.empty(shape=(self.size,))
-        self.SFR    = numpy.empty(shape=(self.size,))
-        self.TMC    = numpy.empty(shape=(self.size,))
-        self.TDD    = numpy.empty(shape=(self.size,))
+        self.wnot0   = ( self.weights > 0. )
 
+        # Build the per-sample list of (free) nested parameter dictionaries.
+        # The user-fixed parameters are not part of ``return_nested(par)``;
+        # they are applied separately inside ``_compute_properties``.
+        for par in sample_res :
+            self.params += [ handler.return_nested( par )['galaxy'] ]
+
+        # Compute and store the selected derived quantities. ``_derived`` keeps
+        # track of which quantities are stored so that ``dump``/``load`` and
+        # ``add_property`` stay in sync. ``SED`` is always computed and stored.
+        self._derived = []
+        self._compute_properties( self._select_properties( derived ),
+                                  model = model, handler = handler )
+
+    def _select_properties ( self, derived = None ) :
+        """Build the ordered ``{name: callable}`` mapping of default quantities
+        to compute, given an optional user selection.
+
+        ``SED`` is always included (it is the primary product and the reference
+        for the physical-validity gate in ``_compute_properties``). If the user
+        lists it explicitly it is silently de-duplicated with a warning.
+
+        Parameters
+        ----------
+        derived : sequence of str, optional
+            The subset of ``_default_properties`` keys to store. ``None`` selects
+            them all.
+
+        Returns
+        -------
+        : dict
+            Mapping ``{name: callable}`` drawn from ``_default_properties``,
+            always containing ``'SED'``.
+        """
+        if derived is None :
+            return dict( self._default_properties )
+
+        names = list( derived )
+        if 'SED' in names :
+            warnings.warn( "'SED' is always computed and stored by default; "
+                           "ignoring its presence in the requested `derived` list." )
+            names = [ n for n in names if n != 'SED' ]
+
+        unknown = [ n for n in names if n not in self._default_properties ]
+        if len( unknown ) > 0 :
+            raise KeyError(
+                f"Unknown derived quantities {unknown}; valid choices are "
+                f"{list( self._default_properties.keys() )}."
+            )
+
+        # 'SED' first, then the requested ones in the user-provided order.
+        selected = { 'SED' : self._default_properties['SED'] }
+        for n in names :
+            selected[n] = self._default_properties[n]
+        return selected
+
+    def _compute_properties ( self, funcs, model = None, handler = None ) :
+        """Evaluate derived-property functions over all the stored samples.
+
+        For each sample the model parameters are set and every callable in
+        ``funcs`` is evaluated as ``f(model)``; the returned values are stored
+        as instance attributes named after the dictionary keys. The storage
+        arrays are sized from the shape of each returned value, so scalar- and
+        array-valued quantities (e.g. ``SED``) are handled uniformly.
+
+        On a ``RuntimeError`` from ``set_parameters`` the sample is filled with
+        ``-inf`` for every property. Historical behaviour is preserved: if the
+        ``SED`` of a sample is non-finite, all the *other* quantities of that
+        sample are set to ``-inf`` while the SED itself keeps its values.
+
+        Parameters
+        ----------
+        funcs : dict
+            Mapping ``{ name : callable }`` where each callable takes the model
+            (with the current sample's parameters set) and returns the derived
+            quantity for that sample.
+        model : galapy.Galaxy.GXY, optional
+            A model instance to reuse. If ``None`` a fresh one is built with
+            ``get_model``.
+        handler : galapy.Handlers.ModelParameters, optional
+            The parameter handler to reuse. If ``None`` it is rebuilt with
+            ``get_handler``.
+        """
+        if model is None :
+            model = self.get_model()
+        if handler is None :
+            handler = self.get_handler()
+
+        keys = list( funcs.keys() )
         _sentinel = -numpy.inf
-        for i, par in enumerate(sample_res) :
-            self.params += [handler.return_nested(par)['galaxy']]
 
+        # Apply the user-fixed parameters once: return_nested() with no
+        # argument returns *all* the stored parameters (fixed included), while
+        # the per-sample dictionaries in self.params hold only the free ones.
+        # Evaluating the functions on this valid state also lets us pre-size
+        # the storage arrays, so array-valued quantities keep their shape even
+        # if every sample below fails ``set_parameters``.
+        out = None
+        try :
+            model.set_parameters( **handler.return_nested()['galaxy'] )
+            with numpy.errstate( all = 'ignore' ) :
+                probe = { k : funcs[k]( model ) for k in keys }
+            out = { k : numpy.full( ( self.size, *numpy.shape( v ) ),
+                                    _sentinel, dtype = float )
+                    for k, v in probe.items() }
+        except RuntimeError :
+            pass   # fixed configuration invalid: fall back to lazy allocation
+
+        for i, nested in enumerate( self.params ) :
             with numpy.errstate( all = 'ignore' ) :
                 try :
-                    model.set_parameters( **self.params[-1] )
+                    model.set_parameters( **nested )
                 except RuntimeError :
-                    self.SED[i]   = _sentinel * numpy.ones_like(model.wl())
-                    self.Mstar[i] = _sentinel
-                    self.Mdust[i] = _sentinel
-                    self.Mgas[i]  = _sentinel
-                    self.Zstar[i] = _sentinel
-                    self.Zgas[i]  = _sentinel
-                    self.SFR[i]   = _sentinel
-                    self.TMC[i]   = _sentinel
-                    self.TDD[i]   = _sentinel
+                    if out is not None :
+                        for k in keys :
+                            out[k][i] = _sentinel
                     continue
+                vals = { k : funcs[k]( model ) for k in keys }
 
-                age           = model.age
-                self.SED[i]   = model.get_SED()
-                self.Mstar[i] = model.sfh.Mstar(age)
-                self.Mdust[i] = model.sfh.Mdust(age)
-                self.Mgas[i]  = model.sfh.Mgas(age)
-                self.Zstar[i] = model.sfh.Zstar(age)
-                self.Zgas[i]  = model.sfh.Zgas(age)
-                self.SFR[i]   = model.sfh(age)
-                self.TMC[i]   = model.ism.mc.T
-                self.TDD[i]   = model.ism.dd.T
+            # Allocate on the first successful sample if the probe above failed
+            # (already-failed samples keep the sentinel value from ``full``).
+            if out is None :
+                out = { k : numpy.full( ( self.size, *numpy.shape( v ) ),
+                                        _sentinel, dtype = float )
+                        for k, v in vals.items() }
 
-            if not numpy.isfinite( self.SED[i] ).any() :
-                self.Mstar[i] = _sentinel
-                self.Mdust[i] = _sentinel
-                self.Mgas[i]  = _sentinel
-                self.Zstar[i] = _sentinel
-                self.Zgas[i]  = _sentinel
-                self.SFR[i]   = _sentinel
-                self.TMC[i]   = _sentinel
-                self.TDD[i]   = _sentinel
+            for k, v in vals.items() :
+                out[k][i] = v
+
+            # Physical-validity gate: a non-finite SED invalidates all the other
+            # quantities for this sample (the SED itself keeps its values). The
+            # SED of the current batch is used when available (construction),
+            # otherwise the canonical one stored at construction is used, so
+            # quantities added later via ``add_property`` are gated identically.
+            sed_ref = out['SED'] if 'SED' in out else getattr( self, 'SED', None )
+            if sed_ref is not None and not numpy.isfinite( sed_ref[i] ).any() :
+                for k in keys :
+                    if k != 'SED' :
+                        out[k][i] = _sentinel
+
+        # No sample produced a value and the fixed configuration was invalid.
+        if out is None :
+            out = { k : numpy.full( ( self.size, ), _sentinel, dtype = float )
+                    for k in keys }
+
+        for k in keys :
+            setattr( self, k, out[k] )
+            if k not in self._derived :
+                self._derived += [ k ]
+        return
+
+    def add_property ( self, func, name = None ) :
+        """Compute and store one or more additional derived quantities.
+
+        The new quantities are evaluated over all the stored samples exactly
+        like the default ones (``SED``, ``Mstar``, ...) and become available to
+        all the statistics methods (``get_mean``, ``get_quantile``, ...). They
+        are also serialised by ``dump`` and restored by ``load``.
+
+        Parameters
+        ----------
+        func : callable or dict
+            Either a single callable ``f(model)`` or a dictionary
+            ``{ name : callable }``. Each callable receives the model with the
+            parameters of the current sample already set and returns the derived
+            value for that sample (scalar or array). The model's age is
+            available as ``model.age``.
+        name : str, optional
+            Name under which a single callable is stored. Ignored when ``func``
+            is a dictionary. When ``None`` and ``func`` is a single callable an
+            automatic name ``custom{N}`` is assigned.
+
+        Returns
+        -------
+        : list
+            The names of the quantities that have been added.
+
+        Examples
+        --------
+        >>> res.add_property( lambda model : model.sfh.Mstar( model.age ),
+        ...                   name = 'Mstar_check' )
+        ['Mstar_check']
+        >>> res.add_property( { 'Lbol' : lambda model : model.get_SED().sum() } )
+        ['Lbol']
+        """
+        if not isinstance( func, MM ) :
+            if name is not None :
+                if not isinstance( name, str ) :
+                    raise TypeError( 'Argument ``name`` should be a string.' )
+                func = { name : func }
+            else :
+                icust = 0
+                while hasattr( self, f'custom{icust:d}' ) :
+                    icust += 1
+                func = { f'custom{icust:d}' : func }
+        for k, f in func.items() :
+            if not hasattr( f, '__call__' ) :
+                raise AttributeError(
+                    'Argument ``func`` should be a callable or a dictionary of '
+                    f'{{name:callable}}; "{k}" is not callable.'
+                )
+        self._compute_properties( func )
+        return list( func.keys() )
 
     def dump ( self ) :
-        return dict(
+        ret = dict(
             # Models' architecture
             model = self._mod,
             handler = self._han,
@@ -383,17 +564,14 @@ class Results () :
             samples = self.samples,
             weights = self.weights,
             wnot0   = self.wnot0,
-            # Derived quantities
-            SED     = self.SED,
-            Mstar   = self.Mstar,
-            Mdust   = self.Mdust,
-            Mgas    = self.Mgas,
-            Zstar   = self.Zstar,
-            Zgas    = self.Zgas,
-            SFR     = self.SFR,
-            TMC     = self.TMC,
-            TDD     = self.TDD,
+            # Names of the stored derived quantities (pipe-joined, mirroring
+            # the convention used in galapy.Handlers.ModelParameters.dump)
+            derived = '|'.join( self._derived ),
         )
+        # Derived quantities (defaults plus any added via ``add_property``)
+        for k in self._derived :
+            ret[k] = getattr( self, k )
+        return ret
 
     @classmethod
     def load ( cls, dictionary ) :
@@ -423,16 +601,17 @@ class Results () :
         ret.logz    = dictionary.get( 'logz',    None )
         ret.logzerr = dictionary.get( 'logzerr', None )
 
-        # Derived quantities
-        ret.SED     = dictionary['SED']
-        ret.Mstar   = dictionary['Mstar']
-        ret.Mdust   = dictionary['Mdust']
-        ret.Mgas    = dictionary['Mgas']
-        ret.Zstar   = dictionary['Zstar']
-        ret.Zgas    = dictionary['Zgas']
-        ret.SFR     = dictionary['SFR']
-        ret.TMC     = dictionary['TMC']
-        ret.TDD     = dictionary['TDD']
+        # Derived quantities. Files written before the introduction of the
+        # ``derived`` key always stored exactly the nine default quantities.
+        derived = dictionary.get( 'derived', None )
+        if derived is None :
+            derived = [ 'SED', 'Mstar', 'Mdust', 'Mgas',
+                        'Zstar', 'Zgas', 'SFR', 'TMC', 'TDD' ]
+        else :
+            derived = derived.split('|')
+        ret._derived = list( derived )
+        for k in derived :
+            setattr( ret, k, dictionary[k] )
 
         # Compute parameters' dictionaries
         handler = ret.get_handler()
