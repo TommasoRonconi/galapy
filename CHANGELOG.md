@@ -51,6 +51,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the grid boundary and a log-space trapezoid integration rule; used internally
   by `PhotoGXY.photoSED` to evaluate the galaxy SED on each filter's native
   wavelength grid.
+- `galapy.sampling.Results.Results`: selectable derived quantities. The new
+  `derived` argument chooses which of the built-in per-sample quantities
+  (`SED`, `Mstar`, `Mdust`, `Mgas`, `Zstar`, `Zgas`, `SFR`, `TMC`, `TDD`) to
+  compute and store; `None` stores all and `SED` is always stored regardless.
+  Non-finite samples are sentinelled to `-inf` via a physical-validity gate and
+  excluded by the statistics helpers. New `add_property(func, name=None)` method
+  computes and stores one or more custom quantities after the run (`func` is
+  `f(model)` or a `{name: callable}` mapping); the set of stored quantities is
+  tracked in `_derived` and serialised in `dump`/`load`.
+- `galapy-fit`: new `store_quantities` parameter-file option selecting which
+  built-in derived quantities are computed and written to the results file
+  (a subset shrinks the output and speeds up post-processing; `SED` is always
+  stored). Wired end-to-end through `_expand_hyperpar` → job → the serial and
+  parallel samplers → `store_results` → `dump_results(derived=)`;
+  `getattr`-guarded so older parameter files without the key keep working.
+  Documented in the `galapy-genparams` template.
 
 ## [0.6.0] - 2026-06-12
 
