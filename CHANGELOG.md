@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> nothing new
+
+## [0.6.1] - 2026-07-02
+
 ### Changed
 - `galapy.internal.interp`: replaced the C++/pybind11 BST-backed `lin_interp`
   extension with a pure-Python implementation using `numpy.interp` for
