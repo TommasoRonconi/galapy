@@ -18,6 +18,7 @@
    guides/photometric_fit
    guides/parameter_file   
    notebooks/results_analysis
+   notebooks/custom_derived_quantities
    notebooks/choose_ssp_lib
 
 .. toctree::

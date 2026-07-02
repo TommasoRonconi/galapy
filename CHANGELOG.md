@@ -67,6 +67,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parallel samplers → `store_results` → `dump_results(derived=)`;
   `getattr`-guarded so older parameter files without the key keep working.
   Documented in the `galapy-genparams` template.
+- `doc/notebooks/custom_derived_quantities.ipynb`: new how-to notebook showing
+  how to compute and store custom derived quantities from a `Results` object
+  with `add_property`, query them with the statistics helpers, plot them with
+  `corner_derived`, and persist them, including the same-shape-per-sample,
+  average-in-linear-space and `-inf` sentinel caveats.
 
 ### Internal
 
