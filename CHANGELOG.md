@@ -18,7 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> nothing new
+### Fixed
+- `galapy.sampling.Run.sample`: the `nautilus` branch was left behind by the
+  `PipelineState` refactor and referenced the removed module-level
+  `global_dict`, raising `NameError` as soon as a nautilus run was started.
+  It now reads `state.handler`, like the other samplers.
+- `galapy.sampling.Run.sample`: the `nautilus` branch never forwarded the
+  `PipelineState` to the likelihood, so `loglikelihood` was called without its
+  mandatory `state` argument. The state is now passed through
+  `likelihood_kwargs` — not `likelihood_args`, since nautilus wraps the
+  callable with `functools.partial` and positional arguments would be
+  prepended to the sampled vector (the same pitfall already documented for
+  `prior_args`).
 
 ## [0.6.1] - 2026-07-02
 

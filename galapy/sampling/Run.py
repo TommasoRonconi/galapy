@@ -239,15 +239,21 @@ def sample ( state, sampler = 'dynesty', nwalkers = None, nsamples = None,
         from galapy.sampling.Statistics import transform_to_prior_unit_cube
 
         # Build sampler — likelihood_kwargs and prior_kwargs go to the constructor.
-        # prior_kwargs is used (not prior_args) so that par_prior is passed by name
-        # and nautilus does not prepend it ahead of the unit-cube vector.
+        # NOTE: nautilus wraps both callables with
+        #   functools.partial( func, *func_args, **func_kwargs )
+        # so anything passed through prior_args/likelihood_args is PREPENDED to
+        # the sampled vector, reversing the argument order.  Both the prior
+        # limits and the pipeline state are therefore passed by keyword, which
+        # makes nautilus call
+        #   loglikelihood( par, state = state, **logl_kw )
+        # matching the signature used by the other samplers.
         sampler_kw.update(
-            { 'prior_kwargs' : { 'prior_limits' : global_dict['handler'].par_prior },
-              'likelihood_kwargs' : logl_kw,
+            { 'prior_kwargs' : { 'prior_limits' : state.handler.par_prior },
+              'likelihood_kwargs' : { 'state' : state, **logl_kw },
             }
         )
         sampler = Sampler( loglikelihood = loglikelihood,
-                           ndim = len( global_dict['handler'].par_free ),
+                           ndim = len( state.handler.par_free ),
                            sampler = sampler,
                            prior_transform = transform_to_prior_unit_cube,
                            pool = pool,
