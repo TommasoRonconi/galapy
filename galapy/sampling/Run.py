@@ -7,8 +7,10 @@ os.environ["NUMEXPR_NUM_THREADS"]    = "1"
 os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
 import numpy
 
+import inspect
 import warnings
 import argparse
+import functools
 import importlib.util
 from types import SimpleNamespace
 
@@ -40,13 +42,21 @@ class PipelineState :
     Replaces the module-level ``global_dict`` so that multiple independent
     fits can coexist in the same Python process (catalogue mode) without
     sharing mutable global state.
+
+    The log-likelihood used by the run is carried here as well, so that every
+    code path (serial, parallel, catalogue) picks it up from the same place
+    without threading an extra argument through the whole call stack.
     """
 
-    def __init__ ( self, data, model, noise, handler ) :
+    def __init__ ( self, data, model, noise, handler, loglikelihood = None ) :
         self.data    = data
         self.model   = model
         self.noise   = noise
         self.handler = handler
+        # ``None`` selects the built-in likelihood; anything else is validated
+        # here so that a malformed custom likelihood fails at construction
+        # rather than inside the sampling loop.
+        self.loglikelihood = _resolve_loglikelihood( loglikelihood )
 
     @classmethod
     def initialize (
@@ -55,7 +65,8 @@ class PipelineState :
             sfh_model    = 'insitu', ssp_lib = 'parsec22.NT',
             do_Radio     = False, do_Xray = False, do_AGN = False,
             noise_model  = None, noise_params = {},
-            gxy_kwargs   = {}, noise_kwargs = {}, filter_kwargs = {}
+            gxy_kwargs   = {}, noise_kwargs = {}, filter_kwargs = {},
+            loglikelihood = None
     ) :
 
         #########################################################################
@@ -112,7 +123,8 @@ class PipelineState :
             pass
         if noise is not None : noise.set_parameters( **init['noise'] )
 
-        return cls( data, model, noise, handler )
+        return cls( data, model, noise, handler,
+                    loglikelihood = loglikelihood )
 
 ################################################################################
 
@@ -120,7 +132,8 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
                  sfh_model = 'insitu', ssp_lib = 'parsec22.NT',
                  do_Radio = False, do_Xray = False, do_AGN = False,
                  noise_model = None, noise_params = {},
-                 gxy_kwargs = {}, noise_kwargs = {}, filter_kwargs = {} ) :
+                 gxy_kwargs = {}, noise_kwargs = {}, filter_kwargs = {},
+                 loglikelihood = None ) :
     """Build and return a :class:`PipelineState` for one object.
 
     This is a convenience wrapper around :meth:`PipelineState.initialize`
@@ -137,11 +150,40 @@ def initialize ( bands, fluxes, errors, uplims, filter_args, params,
         do_AGN       = do_AGN,      noise_model  = noise_model,
         noise_params = noise_params, gxy_kwargs  = gxy_kwargs,
         noise_kwargs = noise_kwargs, filter_kwargs = filter_kwargs,
+        loglikelihood = loglikelihood,
     )
 
 ################################################################################
 
 def loglikelihood ( par, state, **kwargs ) :
+    """The built-in Gaussian log-likelihood of galapy.
+
+    This is also the reference implementation for user-provided likelihoods
+    (see the ``loglikelihood`` hyper-parameter of the parameter file): any
+    replacement must honour the same contract.
+
+    Parameters
+    ----------
+    par : array-like
+        1-D array with the current values of the free parameters, in the order
+        given by ``state.handler.par_free``.
+    state : PipelineState
+        The state of the run, giving access to ``state.handler`` (parameter
+        handler), ``state.model`` (the galaxy model), ``state.noise`` (the
+        noise model, or ``None``) and ``state.data`` (the ``Observation``).
+    **kwargs
+        Extra keyword arguments forwarded by the sampler through ``logl_kw``
+        (currently ``method_uplims``). A custom likelihood should always
+        accept ``**kwargs``.
+
+    Returns
+    -------
+    float
+        A finite scalar, or ``-numpy.inf`` for parameter sets that are
+        rejected — either because the model refuses them (``RuntimeError``
+        from ``set_parameters``) or because the likelihood is not finite.
+        Returning anything else (an array, a ``nan``) will corrupt the run.
+    """
 
     nested = state.handler.return_nested( par )
     with numpy.errstate( all = 'ignore' ) :
@@ -173,11 +215,138 @@ def loglikelihood ( par, state, **kwargs ) :
 
 ################################################################################
 
+def loglikelihood_name ( func ) :
+    """Fully-qualified name identifying a log-likelihood callable.
+
+    Returns the ``module.qualified_name`` string, which is exactly what
+    ``pickle`` stores when serialising a function by reference. It is used as
+    a provenance marker in the results file so that two runs can be checked
+    for likelihood compatibility before their evidences are compared.
+    """
+    module   = getattr( func, '__module__',  None ) or '<unknown>'
+    qualname = getattr( func, '__qualname__', None )
+    if qualname is None :
+        # Callable instances carry no ``__qualname__`` of their own: fall back
+        # to the class, which is stable across runs (``repr`` would embed the
+        # memory address, making two identical runs look incompatible).
+        qualname = type( func ).__qualname__
+    return f'{module}.{qualname}'
+
+def _warn_if_not_picklable ( func ) :
+    """Warn when ``func`` will not survive being sent to a worker process.
+
+    Parallel runs ship the likelihood to the workers by pickling it, which
+    stores a *reference* (module plus qualified name) rather than the code
+    itself. Lambdas, nested functions and anything defined directly inside the
+    parameter file — imported by path as the throw-away module
+    ``hyper_parameters`` — have no importable path and cannot be rebuilt by a
+    spawned worker.
+    """
+    qualname = getattr( func, '__qualname__', '' ) or ''
+    module   = getattr( func, '__module__',   None )
+
+    if qualname == '<lambda>' :
+        reason = 'it is a lambda'
+    elif '<locals>' in qualname :
+        reason = 'it is defined inside another function (a closure)'
+    elif module in ( None, 'hyper_parameters' ) :
+        reason = ( f'it is defined in the "{module}" namespace, which a worker '
+                   'process cannot import' )
+    else :
+        return
+
+    warnings.warn(
+        f'The custom loglikelihood "{loglikelihood_name(func)}" is most likely '
+        f'not picklable ({reason}). It will work in serial runs '
+        '(galapy-fit --serial) but is expected to fail as soon as the sampling '
+        'is parallelised. Define it in a regular, importable module (installed '
+        'or reachable through PYTHONPATH) and import it in the parameter file.'
+    )
+
+def _resolve_loglikelihood ( func ) :
+    """Validate a user-provided log-likelihood and return the callable to use.
+
+    Parameters
+    ----------
+    func : callable or None
+        Value of the ``loglikelihood`` hyper-parameter. ``None`` selects the
+        built-in :func:`loglikelihood`.
+
+    Returns
+    -------
+    callable
+        A callable honouring the ``(par, state, **kwargs) -> float`` contract.
+
+    Raises
+    ------
+    TypeError
+        If ``func`` is neither ``None`` nor a callable, or if it cannot be
+        called with the two mandatory positional arguments ``(par, state)``.
+    """
+    if func is None :
+        return loglikelihood
+
+    if not callable( func ) :
+        raise TypeError(
+            'The "loglikelihood" hyper-parameter must be either None (use the '
+            'built-in Gaussian likelihood) or a callable with signature '
+            f'(par, state, **kwargs), got an object of type '
+            f'"{type(func).__name__}".'
+        )
+
+    try :
+        signature = inspect.signature( func )
+    except ( TypeError, ValueError ) :
+        # C-implemented callables may not expose a signature: nothing to check.
+        signature = None
+
+    if signature is not None :
+        try :
+            signature.bind( 'par', 'state' )
+        except TypeError as err :
+            raise TypeError(
+                f'The custom loglikelihood "{loglikelihood_name(func)}" cannot '
+                'be called as loglikelihood(par, state). It must accept the '
+                'two mandatory positional arguments `par` (the free-parameter '
+                'vector) and `state` (the PipelineState of the run). '
+                f'Original error: {err}'
+            ) from err
+
+        if not any( p.kind is inspect.Parameter.VAR_KEYWORD
+                    for p in signature.parameters.values() ) :
+            warnings.warn(
+                f'The custom loglikelihood "{loglikelihood_name(func)}" does '
+                'not accept **kwargs. Sampling keyword arguments (currently '
+                '"method_uplims") are forwarded to the likelihood and will '
+                'raise a TypeError unless they are among its named arguments.'
+            )
+
+    _warn_if_not_picklable( func )
+
+    return func
+
+def _nautilus_loglikelihood ( logl, state, par, **kwargs ) :
+    """Adapter keeping the likelihood contract positional under nautilus.
+
+    nautilus wraps the likelihood with ``functools.partial( func, *args,
+    **kwargs )``, so positional extras are PREPENDED to the sampled vector and
+    the state cannot follow ``par`` positionally. Pre-binding ``logl`` and
+    ``state`` here (with :func:`functools.partial`, see :func:`sample`) hands
+    nautilus a callable of ``par`` alone, while the user's likelihood keeps
+    receiving ``( par, state, **kwargs )`` positionally, exactly as with
+    dynesty and emcee. Module-level on purpose: the resulting partial is
+    picklable by reference for nautilus' internal pool.
+    """
+    return logl( par, state, **kwargs )
+
+################################################################################
+
 def logprob ( par, state, **kwargs ) :
 
     pmin, pmax = state.handler.par_prior.T
     if all( ( pmin < par ) & ( par < pmax ) ) :
-        return loglikelihood( par, state, **kwargs )
+        return getattr( state, 'loglikelihood', loglikelihood )( par, state,
+                                                                 **kwargs )
 
     return -numpy.inf
 
@@ -194,6 +363,11 @@ def sample ( state, sampler = 'dynesty', nwalkers = None, nsamples = None,
     sampling_kw = dict( _default_sampling_kw.get( sampler, {} ) )
     sampling_kw.update( run_sampling_kw )
 
+    # Log-likelihood of the run: the custom one carried by the state, when
+    # present, otherwise the built-in default. The emcee branch goes through
+    # ``logprob``, which resolves it the same way.
+    logl = getattr( state, 'loglikelihood', loglikelihood )
+
     if sampler == 'dynesty' :
 
         from galapy.sampling.Statistics import transform_to_prior_unit_cube
@@ -205,7 +379,7 @@ def sample ( state, sampler = 'dynesty', nwalkers = None, nsamples = None,
               'queue_size'  : Ncpu,
             }
         )
-        sampler = Sampler( loglikelihood   = loglikelihood,
+        sampler = Sampler( loglikelihood   = logl,
                            ndim            = len( state.handler.par_free ),
                            sampler         = sampler,
                            prior_transform = transform_to_prior_unit_cube,
@@ -239,15 +413,22 @@ def sample ( state, sampler = 'dynesty', nwalkers = None, nsamples = None,
         from galapy.sampling.Statistics import transform_to_prior_unit_cube
 
         # Build sampler — likelihood_kwargs and prior_kwargs go to the constructor.
-        # prior_kwargs is used (not prior_args) so that par_prior is passed by name
-        # and nautilus does not prepend it ahead of the unit-cube vector.
+        # NOTE: nautilus wraps both callables with
+        #   functools.partial( func, *func_args, **func_kwargs )
+        # so anything passed through prior_args/likelihood_args is PREPENDED to
+        # the sampled vector, reversing the argument order. The prior limits
+        # are therefore passed by keyword, while the state is pre-bound to the
+        # likelihood through the _nautilus_loglikelihood adapter, which keeps
+        # the ( par, state, **kwargs ) contract positional for the (possibly
+        # custom) likelihood, exactly as with the other samplers.
         sampler_kw.update(
-            { 'prior_kwargs' : { 'prior_limits' : global_dict['handler'].par_prior },
+            { 'prior_kwargs' : { 'prior_limits' : state.handler.par_prior },
               'likelihood_kwargs' : logl_kw,
             }
         )
-        sampler = Sampler( loglikelihood = loglikelihood,
-                           ndim = len( global_dict['handler'].par_free ),
+        sampler = Sampler( loglikelihood = functools.partial(
+                               _nautilus_loglikelihood, logl, state ),
+                           ndim = len( state.handler.par_free ),
                            sampler = sampler,
                            prior_transform = transform_to_prior_unit_cube,
                            pool = pool,
@@ -279,7 +460,10 @@ def store_results ( state, sampler,
                       outbase    = outbase,
                       method     = method,
                       lightweight = lightweight,
-                      derived    = store_quantities )
+                      derived    = store_quantities,
+                      loglikelihood_name = loglikelihood_name(
+                          getattr( state, 'loglikelihood', loglikelihood )
+                      ) )
     sampler.save_results( outbase        = outbase,
                           pickle_sampler = pickle_sampler,
                           pickle_raw     = pickle_raw )
@@ -342,7 +526,9 @@ def _sample_parallel ( state, which_sampler = 'dynesty',
         sampling_kw.update( run_sampling_kw )
 
         with DynestyPool(
-                Ncpu, loglikelihood, transform_to_prior_unit_cube,
+                Ncpu,
+                getattr( state, 'loglikelihood', loglikelihood ),
+                transform_to_prior_unit_cube,
                 logl_args    = ( state, ),
                 logl_kwargs  = logl_kw,
                 ptform_args  = ( state.handler.par_prior, ),
@@ -474,6 +660,32 @@ def _expand_hyperpar ( hyperpar ) :
     K              = len( model_variants )
 
     # ------------------------------------------------------------------ #
+    # Step 2b — the log-likelihood is a top-level, run-wide setting       #
+    # ------------------------------------------------------------------ #
+    # Validate once, here, so that a malformed custom likelihood is reported
+    # in the main process before any job is built.
+    custom_logl = getattr( hyperpar, 'loglikelihood', None )
+    _ = _resolve_loglikelihood( custom_logl )
+
+    # It must NOT be overridable per model variant: the likelihood is the term
+    # carrying the data, and the whole point of running K variants on the same
+    # source is to compare their evidences. Evidences computed with different
+    # likelihoods do not form a Bayes factor about the models -- the ratio
+    # would mostly measure which likelihood assigns more probability mass to
+    # the dataset. This is a silent scientific error, hence a hard failure.
+    for j, mv in enumerate( model_variants ) :
+        if 'loglikelihood' in mv :
+            raise ValueError(
+                f'models[{j}] specifies a per-variant "loglikelihood". The '
+                'log-likelihood must be identical across model variants: '
+                'evidences obtained with different likelihoods are not '
+                'comparable and their ratio is not a Bayes factor about the '
+                'models. Set "loglikelihood" once at the top level of the '
+                'parameter file. To genuinely compare two likelihoods, run '
+                'them from separate parameter files.'
+            )
+
+    # ------------------------------------------------------------------ #
     # Step 3 — validate and split per-source galaxy_parameters overrides #
     # A plain list or 1-D numpy array (not a tuple) signals per-source   #
     # fixed values.  Tuples are prior specs and are left untouched.      #
@@ -570,6 +782,7 @@ def _expand_hyperpar ( hyperpar ) :
                 noise_kwargs      = mv.get( 'noise_kwargs',     hyperpar.noise_kwargs     ),
                 lstep             = hyperpar.lstep,
                 method_uplims     = hyperpar.method_uplims,
+                loglikelihood     = custom_logl,
                 sampler           = hyperpar.sampler,
                 nwalkers          = getattr( hyperpar, 'nwalkers', None ),
                 nsamples          = getattr( hyperpar, 'nsamples', None ),
@@ -628,6 +841,7 @@ def _catalogue_worker ( job ) :
         gxy_kwargs   = { 'lstep' : job.lstep },
         noise_kwargs = job.noise_kwargs,
         filter_kwargs = job.filters_custom or {},
+        loglikelihood = getattr( job, 'loglikelihood', None ),
     )
 
     cpus_per_job = getattr( job, 'cpus_per_job', 1 )
@@ -776,6 +990,7 @@ def _run () :
             gxy_kwargs   = { 'lstep' : job.lstep },
             noise_kwargs = job.noise_kwargs,
             filter_kwargs = job.filters_custom if job.filters_custom is not None else {},
+            loglikelihood = getattr( job, 'loglikelihood', None ),
         )
 
         if args.serial :
@@ -1188,6 +1403,50 @@ sampler_kw = {{}}
 # - dynesty  (run_nested): https://dynesty.readthedocs.io/en/latest/api.html#dynesty.DynamicNestedSampler.run_nested
 # - nautilus (run)       : https://nautilus-sampler.readthedocs.io/en/latest/api.html#nautilus.Sampler.run
 sampling_kw = {{}}
+
+# Custom log-likelihood (advanced).
+#
+# When None (the default) galapy uses its built-in Gaussian log-likelihood,
+# i.e. galapy.sampling.Run.loglikelihood.
+#
+# To use your own, set this to a callable with the signature
+#
+#   def my_loglikelihood ( par, state, **kwargs ) :
+#       ...
+#       return llike
+#
+# where
+# - par    : 1-D array with the current values of the free parameters, ordered
+#            as state.handler.par_free
+# - state  : the galapy.sampling.Run.PipelineState of the run, giving access to
+#            state.handler (parameter handler), state.model (the galaxy model),
+#            state.noise (the noise model, or None) and state.data (the
+#            Observation being fitted)
+# - kwargs : extra keyword arguments forwarded by the sampler (currently
+#            'method_uplims'); always accept **kwargs
+#
+# The function MUST return a scalar, and MUST return -numpy.inf both for
+# parameter sets the model rejects (set_parameters raises RuntimeError) and
+# whenever the result is not finite. Evaluate the model inside a
+# numpy.errstate(all='ignore') context, as the built-in likelihood does.
+#
+# IMPORTANT: in parallel runs the likelihood is sent to the worker processes by
+# reference, so it has to live in a module the workers can import. Define it in
+# a separate .py file that is installed or reachable through PYTHONPATH and
+# import it here; lambdas, nested functions, and functions defined directly in
+# this parameter file will NOT work in parallel.
+#
+# NOTE: this is a run-wide setting. It cannot be overridden per entry of the
+# 'models' list, because evidences computed with different likelihoods are not
+# comparable and their ratio is not a Bayes factor about the models.
+#
+# Example:
+#   from my_likelihoods import student_t_loglikelihood
+#   loglikelihood = student_t_loglikelihood
+#
+# See the "Custom likelihood" how-to in the documentation for a complete,
+# copy-pasteable template.
+loglikelihood = None
 
 # Output directory (note that if the directory does not exist it will be created)
 output_directory = ''
