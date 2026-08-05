@@ -2,6 +2,7 @@
 # External imports
 
 import numpy
+import warnings
 
 ######################################################################################
 # Internal imports
@@ -11,6 +12,7 @@ from galapy.internal.utils import (
     get_credible_interval,
     find_nearest,
 )
+from galapy.sampling.Results import _default_loglikelihood_name
 
 ######################################################################################
 # General posterior estimators
@@ -119,6 +121,19 @@ def credible_interval ( values, logl, percent = 0.68,
 ######################################################################################
 # Bayesian model comparison
 
+def _unpack_evidence ( arg ) :
+    """ Accept either a raw log-evidence or a ``Results``-like object.
+
+    Returns
+    -------
+    logz : float
+    loglikelihood_name : str or None
+        Provenance marker of the likelihood used, when available.
+    """
+    if hasattr( arg, 'logz' ) :
+        return arg.logz, getattr( arg, 'loglikelihood_name', None )
+    return arg, None
+
 def bayes_factor ( logz1, logz2 ) :
     """ Log Bayes factor B_12 = exp(logz1 - logz2).
 
@@ -126,15 +141,60 @@ def bayes_factor ( logz1, logz2 ) :
 
     Parameters
     ----------
-    logz1, logz2 : float
-        Natural log-evidences of the two models.
+    logz1, logz2 : float or galapy.sampling.Results.Results
+        Natural log-evidences of the two models, or the two ``Results``
+        objects themselves. In the latter case the likelihoods used by the two
+        runs are checked for compatibility and a warning is issued when they
+        differ, or when a custom likelihood was used.
 
     Returns
     -------
     float
         ln(B_12) = logz1 - logz2.
+
+    Raises
+    ------
+    ValueError
+        If either evidence is ``None``, i.e. the run does not provide an
+        evidence estimate (emcee, being a pure MCMC sampler, computes none:
+        Bayes factors require nested-sampling runs, dynesty or nautilus).
+
+    Notes
+    -----
+    A Bayes factor is a statement about the *models* only if both evidences
+    were computed with the same likelihood: the likelihood is the term that
+    carries the data, so a ratio of evidences obtained with different
+    likelihoods mostly measures which of the two assigns more probability mass
+    to the dataset, not which model fits it better.
     """
-    return logz1 - logz2
+    z1, name1 = _unpack_evidence( logz1 )
+    z2, name2 = _unpack_evidence( logz2 )
+
+    if z1 is None or z2 is None :
+        raise ValueError(
+            'One of the two runs does not provide an evidence estimate '
+            '(logz is None). Only nested-sampling runs (dynesty, nautilus) '
+            'compute the Bayesian evidence; emcee runs cannot be compared '
+            'through a Bayes factor.'
+        )
+
+    if name1 is not None and name2 is not None :
+        if name1 != name2 :
+            warnings.warn(
+                'The two runs used different log-likelihoods '
+                f'("{name1}" and "{name2}"). Their evidences are not '
+                'comparable and the returned value is not a Bayes factor '
+                'about the models.'
+            )
+        elif name1 != _default_loglikelihood_name :
+            warnings.warn(
+                f'Both runs used the custom log-likelihood "{name1}" instead '
+                'of galapy\'s built-in one. The Bayes factor is meaningful '
+                'only insofar as that likelihood is a valid sampling '
+                'distribution for the data.'
+            )
+
+    return z1 - z2
 
 def jeffreys_scale ( log_bf ) :
     """ Classify a log Bayes factor using the Jeffreys (1961) scale.
