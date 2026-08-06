@@ -223,6 +223,11 @@ def loglikelihood_name ( func ) :
     a provenance marker in the results file so that two runs can be checked
     for likelihood compatibility before their evidences are compared.
     """
+    # A functools.partial binds per-object data, not behaviour: unwrap it
+    # (repeatedly, partials can nest) so that the marker identifies the
+    # underlying function. The bound values are not part of the marker.
+    while isinstance( func, functools.partial ) :
+        func = func.func
     module   = getattr( func, '__module__',  None ) or '<unknown>'
     qualname = getattr( func, '__qualname__', None )
     if qualname is None :
@@ -242,6 +247,12 @@ def _warn_if_not_picklable ( func ) :
     ``hyper_parameters`` — have no importable path and cannot be rebuilt by a
     spawned worker.
     """
+    # A partial is itself pickled by value, storing a reference to the wrapped
+    # callable plus the bound arguments: what must be importable is the
+    # innermost function, so the checks below apply to that.
+    while isinstance( func, functools.partial ) :
+        func = func.func
+
     qualname = getattr( func, '__qualname__', '' ) or ''
     module   = getattr( func, '__module__',   None )
 
@@ -1434,15 +1445,19 @@ sampling_kw = {{}}
 # reference, so it has to live in a module the workers can import. Define it in
 # a separate .py file that is installed or reachable through PYTHONPATH and
 # import it here; lambdas, nested functions, and functions defined directly in
-# this parameter file will NOT work in parallel.
+# this parameter file will NOT work in parallel. Binding per-object data with
+# functools.partial HERE is fine instead: a partial is pickled by value, so
+# only the wrapped function needs to be importable.
 #
 # NOTE: this is a run-wide setting. It cannot be overridden per entry of the
 # 'models' list, because evidences computed with different likelihoods are not
 # comparable and their ratio is not a Bayes factor about the models.
 #
-# Example:
-#   from my_likelihoods import student_t_loglikelihood
-#   loglikelihood = student_t_loglikelihood
+# Example (photometry + external stellar-mass estimate for this object):
+#   from functools import partial
+#   from my_likelihoods import mstar_loglikelihood
+#   loglikelihood = partial( mstar_loglikelihood,
+#                            logmstar_obs = 10.65, logmstar_err = 0.15 )
 #
 # See the "Custom likelihood" how-to in the documentation for a complete,
 # copy-pasteable template.

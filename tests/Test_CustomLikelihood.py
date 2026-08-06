@@ -8,10 +8,12 @@ machinery.
 Covers:
 - Run._resolve_loglikelihood: None -> built-in, TypeError on non-callable or
   wrong signature, warnings on missing **kwargs and on unpicklable callables
-  (lambda, closure, parameter-file namespace)
+  (lambda, closure, parameter-file namespace); functools.partial with bound
+  per-object data accepted cleanly, unbound required data rejected, and the
+  picklability checks see through partial wrappers
 - Run.loglikelihood_name: provenance marker for functions and callable
-  instances (stable, no memory address), consistency with the literal stored
-  in Results._default_loglikelihood_name
+  instances (stable, no memory address), partial wrappers unwrapped,
+  consistency with the literal stored in Results._default_loglikelihood_name
 - PipelineState: carries the resolved likelihood; validation at construction;
   Run.logprob dispatches to the custom likelihood while keeping the prior gate
 - Run._expand_hyperpar: run-wide propagation to jobs, absent attribute ->
@@ -93,6 +95,14 @@ def loglikelihood_no_kwargs ( par, state ) :
 
 def loglikelihood_wrong_signature ( par ) :
     """Cannot be called as f(par, state): should raise TypeError."""
+    return 0.
+
+
+def loglikelihood_needing_data ( par, state, logmstar_obs, logmstar_err,
+                                 **kwargs ) :
+    """Valid likelihood requiring per-object data, to be bound with
+    functools.partial in the parameter file (the pattern documented in the
+    custom-likelihood guide)."""
     return 0.
 
 
@@ -199,6 +209,28 @@ class TestResolveLoglikelihood :
         assert callable( resolved )
         assert len( record ) == 0
 
+    def test_partial_bound_data_accepted_without_warnings ( self ) :
+        # the documented per-object pattern: data bound in the parameter file
+        bound = functools.partial( loglikelihood_needing_data,
+                                   logmstar_obs = 10.65,
+                                   logmstar_err = 0.15 )
+        with _warnings.catch_warnings( record = True ) as record :
+            _warnings.simplefilter( 'always' )
+            resolved = _resolve_loglikelihood( bound )
+        assert resolved is bound
+        assert len( record ) == 0
+
+    def test_unbound_required_data_raises ( self ) :
+        # forgetting the functools.partial binding must fail at load time
+        with pytest.raises( TypeError, match = 'cannot be called as' ) :
+            _resolve_loglikelihood( loglikelihood_needing_data )
+
+    def test_partial_of_lambda_still_warns_not_picklable ( self ) :
+        # the picklability checks must see through the partial wrapper
+        bound = functools.partial( lambda par, state, x, **kwargs : 0., x = 1. )
+        with pytest.warns( UserWarning, match = 'lambda' ) :
+            _resolve_loglikelihood( bound )
+
 
 # ===========================================================================
 # loglikelihood_name
@@ -224,6 +256,19 @@ class TestLoglikelihoodName :
         assert name1 == name2
         assert '0x' not in name1
         assert name1.endswith( '.RecordingLoglikelihood' )
+
+    def test_partial_unwrapped_to_wrapped_function ( self ) :
+        # the marker must identify the function, not the partial wrapper,
+        # so per-object bindings share the provenance of their module
+        bound = functools.partial( loglikelihood_needing_data,
+                                   logmstar_obs = 10.65,
+                                   logmstar_err = 0.15 )
+        name = loglikelihood_name( bound )
+        assert name == loglikelihood_name( loglikelihood_needing_data )
+        assert name.endswith( '.loglikelihood_needing_data' )
+        # rebinding different data keeps the same marker
+        rebound = functools.partial( bound, logmstar_obs = 9.8 )
+        assert loglikelihood_name( rebound ) == name
 
 
 # ===========================================================================
