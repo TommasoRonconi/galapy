@@ -17,10 +17,8 @@
 
    guides/photometric_fit
    guides/parameter_file
-   guides/custom_likelihood
    notebooks/results_analysis
-   notebooks/custom_derived_quantities
-   notebooks/choose_ssp_lib
+   guides/advanced
 
 .. toctree::
    :maxdepth: 2
