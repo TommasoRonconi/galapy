@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | Release workflow: |
 | --- |
 |  **1.** Fill in the [Unreleased] section below. |
-|  **2.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
-|  **3.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
-|  **4.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **2.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
+|  **3.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **4.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
 |  **5.** Push: git push origin main && git push origin --tags |
 
 > **Note:** pre-release tags are marked as vX.Y.Z-lw for "light-weight" on GitHub;
@@ -78,6 +78,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `likelihood_args` cannot be used for this, since nautilus wraps the callable
   with `functools.partial` and positional arguments would be prepended to the
   sampled vector (the same pitfall already documented for `prior_args`).
+- `galapy.sampling.Run._sample_parallel`: `nautilus` was never wired into the
+  parallel sampling path, whose dispatch only knew `dynesty` and `emcee`, so
+  selecting it in a parameter file aborted the run with `ValueError: The
+  sampler chosen "nautilus" is not valid` unless `galapy-fit --serial` was
+  used. The same gap affected catalogue runs, which take the parallel path
+  whenever more than one CPU per job is available. nautilus now gets a pool
+  the way `emcee` does, and the error message lists all three samplers.
 
 ### Internal
 - `tests/Test_CustomLikelihood.py` (new): test suite for the custom-likelihood
@@ -86,8 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PipelineState`/`logprob` dispatch and backward compatibility,
   `_expand_hyperpar` propagation and per-variant rejection, the
   `_nautilus_loglikelihood` adapter (argument order, equivalence with the
-  built-in, picklability), `Results` marker serialisation, and `bayes_factor`
-  warnings/errors.
+  built-in, picklability), the `_sample_parallel` sampler dispatch, `Results`
+  marker serialisation, and `bayes_factor` warnings/errors.
 
 ## [0.6.1] - 2026-07-02
 

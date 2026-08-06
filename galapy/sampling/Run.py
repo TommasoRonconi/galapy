@@ -572,9 +572,29 @@ def _sample_parallel ( state, which_sampler = 'dynesty',
                 pool            = pool,
             )
 
+    elif which_sampler == 'nautilus' :
+
+        # nautilus parallelises the likelihood calls through the pool it is
+        # handed, so the pool is simply forwarded to sample(). What travels to
+        # the workers is the partial built there, which carries the state
+        # pre-bound to the likelihood through _nautilus_loglikelihood.
+        _ctx = 'spawn'
+        with mp.get_context( _ctx ).Pool( Ncpu ) as pool :
+            sampler = sample(
+                state,
+                sampler         = which_sampler,
+                sampler_kw      = sampler_kw,
+                logl_kw         = logl_kw,
+                run_sampling_kw = run_sampling_kw,
+                nwalkers        = nwalkers,
+                nsamples        = nsamples,
+                Ncpu            = Ncpu,
+                pool            = pool,
+            )
+
     else :
         raise ValueError( f'The sampler chosen "{which_sampler}" is not valid. '
-                          'Valid samplers are ["dynesty", "emcee"].' )
+                          'Valid samplers are ["dynesty", "emcee", "nautilus"].' )
 
     store_results(
         state, sampler,
