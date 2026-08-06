@@ -21,6 +21,9 @@ Covers:
 - Run._nautilus_loglikelihood: adapter restores the positional
   ``(par, state, **kwargs)`` contract under nautilus' functools.partial
   wrapping, is picklable, and matches the built-in likelihood exactly
+- Run._sample_parallel: the sampler dispatch of the parallel path accepts
+  nautilus (regression: it used to abort), forwards the pool and the state
+  untouched, and still rejects unknown sampler names
 - Results: loglikelihood_name attribute defaults to the built-in marker,
   survives dump/load, files without the key load as built-in
 - model_comparison.bayes_factor: accepts raw floats and Results-like objects,
@@ -419,6 +422,78 @@ class TestNautilusAdapter :
         restored = pickle.loads( pickle.dumps( wrapped ) )
         assert restored.func is _nautilus_loglikelihood
         assert restored.args[0] is Run.loglikelihood
+
+
+# ===========================================================================
+# Parallel-path dispatch
+# ===========================================================================
+
+class _FakePool :
+    """Stand-in for a multiprocessing pool: no worker process is started."""
+    def __enter__ ( self ) : return self
+    def __exit__ ( self, *args ) : return False
+
+class _FakeContext :
+    def __init__ ( self ) : self.requested = []
+    def Pool ( self, Ncpu ) :
+        self.requested.append( Ncpu )
+        return _FakePool()
+
+
+@pytest.fixture
+def no_subprocess ( monkeypatch ) :
+    """Intercept pool creation and result storage in _sample_parallel.
+
+    The dispatch is what is under test, so neither a real pool nor a real
+    sampling run is needed — spawning workers here would make the test slow
+    and platform-dependent for no added coverage.
+    """
+    import multiprocessing
+
+    ctx = _FakeContext()
+    monkeypatch.setattr( multiprocessing, 'get_context', lambda _ : ctx )
+    monkeypatch.setattr( Run, 'store_results', lambda *a, **kw : None )
+
+    calls = []
+    def _fake_sample ( state, **kwargs ) :
+        calls.append( ( state, kwargs ) )
+        return 'SAMPLER'
+    monkeypatch.setattr( Run, 'sample', _fake_sample )
+
+    return SimpleNamespace( ctx = ctx, calls = calls )
+
+
+class TestParallelDispatch :
+
+    def test_nautilus_is_accepted ( self, state, no_subprocess ) :
+        # regression: nautilus was missing from the _sample_parallel dispatch
+        # and every non-serial run aborted on the else branch
+        Run._sample_parallel( state, which_sampler = 'nautilus', Ncpu = 2 )
+
+        ( ( _, kwargs ), ) = no_subprocess.calls
+        assert kwargs['sampler'] == 'nautilus'
+        assert kwargs['Ncpu']    == 2
+        assert isinstance( kwargs['pool'], _FakePool )
+        assert no_subprocess.ctx.requested == [ 2 ]
+
+    def test_custom_likelihood_travels_with_the_state ( self, custom_state,
+                                                        no_subprocess ) :
+        # sample() pre-binds the likelihood carried by the state, so the state
+        # object itself must reach it unchanged on the parallel nautilus path
+        Run._sample_parallel( custom_state, which_sampler = 'nautilus',
+                              Ncpu = 1 )
+
+        ( ( forwarded, _ ), ) = no_subprocess.calls
+        assert forwarded is custom_state
+        assert forwarded.loglikelihood is constant_loglikelihood
+
+    def test_unknown_sampler_still_rejected ( self, state, no_subprocess ) :
+        with pytest.raises( ValueError, match = 'is not valid' ) as excinfo :
+            Run._sample_parallel( state, which_sampler = 'metropolis',
+                                  Ncpu = 1 )
+        # the message must advertise every supported sampler
+        for name in ( 'dynesty', 'emcee', 'nautilus' ) :
+            assert name in str( excinfo.value )
 
 
 # ===========================================================================
