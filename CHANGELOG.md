@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> nothing new
+
+## [0.6.2] - 2026-08-07
+
 ### Added
 - `galapy-fit`: new `loglikelihood` parameter-file option replacing the
   log-likelihood used to score the models. `None` (the default) keeps the
