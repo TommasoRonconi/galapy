@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   environment variable is dropped along with them: it was the workaround
   keeping those actions running, and the runners force Node 24 by default
   since 2 June 2026, so it no longer does anything.
+- CI: the test matrix now spans Python 3.8 to 3.14, up from 3.8 to 3.11, so
+  that the interpreters the wheels are built for are also the ones the tests
+  run on. Windows is no longer listed as a commented-out option: WSL is the
+  supported route on that platform, and it is covered by the manylinux wheels.
 
 ## [0.6.2] - 2026-08-07
 
