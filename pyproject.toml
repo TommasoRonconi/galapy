@@ -1,11 +1,16 @@
 # pyproject.toml
 
 [build-system]
+# NOTE: numpy is deliberately NOT a build requirement. The extensions include
+# <pybind11/numpy.h>, which reaches the numpy C API at runtime through Python
+# and needs no numpy headers to compile. Listing it here forced pip to install
+# numpy inside the wheel-building container, where a missing wheel for that
+# platform meant compiling numpy from source — how the v0.6.2 manylinux build
+# failed. numpy remains a runtime dependency, below.
 requires = [
     "setuptools",
     "wheel",
     "pybind11>=2.10.0",
-    'numpy'
 ]
 build-backend = "setuptools.build_meta"
 
@@ -35,7 +40,7 @@ dependencies = [
     'requests',
     'h5py'
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 
 [project.urls]
 Source = "https://github.com/TommasoRonconi/galapy"

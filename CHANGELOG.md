@@ -67,6 +67,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   evidences computed with different likelihoods do not form a Bayes factor
   about the models — a silent scientific error, hence a hard failure rather
   than a warning.
+- `requires-python` is now `>=3.8` (was `>=3.7`). Python 3.7 could not install
+  galapy in any case, since `matplotlib>=3.6` requires 3.8 and
+  `nautilus-sampler` requires 3.9; the declared floor merely advertised a
+  version that never resolved. Support for 3.8 will be dropped in v0.7.0.
+- Linux wheels are now built on `manylinux_2_28` (glibc >= 2.28) instead of
+  `manylinux2014` (glibc >= 2.17). This covers Debian 10+, Ubuntu 18.10+,
+  Fedora 29+ and RHEL/CentOS 8+; only distributions already out of support,
+  such as Ubuntu 18.04, lose the pre-built wheel and fall back to the sdist.
+  The manylinux2014 image is built on CentOS 7, EOL since June 2024, and its
+  toolchain is frozen at GCC 10.2.
 
 ### Fixed
 - `galapy.sampling.Run.sample`: the `nautilus` branch was left behind by the
@@ -89,6 +99,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   used. The same gap affected catalogue runs, which take the parallel path
   whenever more than one CPU per job is available. nautilus now gets a pool
   the way `emcee` does, and the error message lists all three samplers.
+- Wheel builds failed on manylinux because `numpy` was listed in
+  `[build-system] requires` while nothing in the build actually uses it: the
+  extensions include `<pybind11/numpy.h>`, which needs no numpy headers, and
+  the `import numpy` in `setup.py` was unused. pip therefore installed numpy
+  into the build container, found no wheel for that platform, and fell back to
+  compiling numpy from source with a compiler too old for it. numpy is
+  unchanged as a runtime dependency.
+- `.github/workflows/build-wheels.yml`: cibuildwheel updated from v2.22.0 to
+  v3.4.1, which supports CPython 3.14.
 
 ### Internal
 - `tests/Test_CustomLikelihood.py` (new): test suite for the custom-likelihood

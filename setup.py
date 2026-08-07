@@ -1,7 +1,6 @@
 import setuptools
 import os
 import sysconfig
-import numpy as np
 
 from setuptools import setup, find_packages
 

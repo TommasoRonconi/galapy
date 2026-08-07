@@ -43,7 +43,7 @@ theoretical and computational researchers interested in a modern modelling tool.
 +-----------------------+-------------------------------------------+
 | **GitHub repository** | https://github.com/TommasoRonconi/galapy  |
 +-----------------------+-------------------------------------------+
-| **Python versions**   | >=3.7                                     |
+| **Python versions**   | >=3.8                                     |
 +-----------------------+-------------------------------------------+
 | **Dependencies**      | ``setuptools``, ``numpy``, ``scipy``,     |
 |                       | ``emcee``, ``dynesty``,                   |
