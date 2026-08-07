@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | Release workflow: |
 | --- |
 |  **1.** Fill in the [Unreleased] section below. |
-|  **2.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
-|  **3.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
-|  **4.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **2.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
+|  **3.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **4.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
 |  **5.** Push: git push origin main && git push origin --tags |
 
 > **Note:** pre-release tags are marked as vX.Y.Z-lw for "light-weight" on GitHub;
@@ -18,18 +18,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `galapy-fit`: new `loglikelihood` parameter-file option replacing the
+  log-likelihood used to score the models. `None` (the default) keeps the
+  built-in Gaussian likelihood; any callable with signature
+  `(par, state, **kwargs) -> scalar` can be used instead, typically imported
+  from the user's own module. Wired end-to-end through `_expand_hyperpar` →
+  job → `PipelineState.loglikelihood` → the serial, parallel and catalogue
+  samplers; `getattr`-guarded so older parameter files keep working.
+  Documented in the `galapy-genparams` template.
+- `galapy.sampling.Run._resolve_loglikelihood`: validates the custom callable
+  once, in the main process, before any sampling starts — raises `TypeError`
+  if it is not callable or cannot be called as `loglikelihood(par, state)`,
+  and warns if it does not accept `**kwargs` or looks unpicklable (a lambda, a
+  closure, or defined in the parameter file itself, none of which can be
+  rebuilt by a spawned worker). `functools.partial` wrappers — the documented
+  way to bind per-object data, e.g. an external stellar-mass estimate, in the
+  parameter file — are seen through by the picklability checks.
+- `galapy.sampling.Run.loglikelihood_name`: returns the
+  `module.qualified_name` of a likelihood callable — the same string `pickle`
+  uses to serialise a function by reference — used as a provenance marker.
+  `functools.partial` wrappers are unwrapped, so per-object bindings of the
+  same function share its marker.
+- `galapy.sampling.Results.Results`: new `loglikelihood_name` attribute
+  recording which likelihood produced the run, serialised in `dump`/`load` and
+  in the lightweight HDF5 path. Files written before this release are read back
+  as having used the built-in likelihood.
+- `galapy.analysis.model_comparison.bayes_factor`: now accepts `Results`
+  objects in addition to raw log-evidences, and warns when the two runs used
+  different likelihoods (their ratio is not a Bayes factor about the models) or
+  when both used a custom one. Raises `ValueError` when either evidence is
+  `None` — emcee runs compute no evidence and cannot enter a Bayes factor.
+- `doc/guides/custom_likelihood.rst`: new how-to covering the likelihood
+  contract, a copy-pasteable template, the importability requirement for
+  parallel runs, the validation performed by galapy, and why the likelihood
+  must be held fixed across model variants.
+
+### Changed
+- `galapy.sampling.Run.PipelineState`: new `loglikelihood` argument, resolved
+  and stored at construction. Every sampling path reads the likelihood from
+  the state, so a custom one travels with the pickled state to the workers.
+- `galapy-fit`: a `loglikelihood` key inside an entry of the `models` list now
+  raises `ValueError`. The likelihood is the term carrying the data, so
+  evidences computed with different likelihoods do not form a Bayes factor
+  about the models — a silent scientific error, hence a hard failure rather
+  than a warning.
+
 ### Fixed
 - `galapy.sampling.Run.sample`: the `nautilus` branch was left behind by the
-  `PipelineState` refactor and referenced the removed module-level
+  `PipelineState` refactor and still referenced the removed module-level
   `global_dict`, raising `NameError` as soon as a nautilus run was started.
   It now reads `state.handler`, like the other samplers.
 - `galapy.sampling.Run.sample`: the `nautilus` branch never forwarded the
   `PipelineState` to the likelihood, so `loglikelihood` was called without its
-  mandatory `state` argument. The state is now passed through
-  `likelihood_kwargs` — not `likelihood_args`, since nautilus wraps the
-  callable with `functools.partial` and positional arguments would be
-  prepended to the sampled vector (the same pitfall already documented for
-  `prior_args`).
+  mandatory `state` argument. The state is now pre-bound to the likelihood
+  with `functools.partial` through the module-level `_nautilus_loglikelihood`
+  adapter, so the (possibly custom) likelihood receives `(par, state,
+  **kwargs)` positionally, exactly as with dynesty and emcee.
+  `likelihood_args` cannot be used for this, since nautilus wraps the callable
+  with `functools.partial` and positional arguments would be prepended to the
+  sampled vector (the same pitfall already documented for `prior_args`).
+- `galapy.sampling.Run._sample_parallel`: `nautilus` was never wired into the
+  parallel sampling path, whose dispatch only knew `dynesty` and `emcee`, so
+  selecting it in a parameter file aborted the run with `ValueError: The
+  sampler chosen "nautilus" is not valid` unless `galapy-fit --serial` was
+  used. The same gap affected catalogue runs, which take the parallel path
+  whenever more than one CPU per job is available. nautilus now gets a pool
+  the way `emcee` does, and the error message lists all three samplers.
+
+### Internal
+- `tests/Test_CustomLikelihood.py` (new): test suite for the custom-likelihood
+  machinery — `_resolve_loglikelihood` validation and warnings,
+  `loglikelihood_name` provenance (including callable instances),
+  `PipelineState`/`logprob` dispatch and backward compatibility,
+  `_expand_hyperpar` propagation and per-variant rejection, the
+  `_nautilus_loglikelihood` adapter (argument order, equivalence with the
+  built-in, picklability), the `_sample_parallel` sampler dispatch, `Results`
+  marker serialisation, and `bayes_factor` warnings/errors.
 
 ## [0.6.1] - 2026-07-02
 

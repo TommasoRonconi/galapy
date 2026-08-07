@@ -464,14 +464,34 @@ The parameters to set are the following:
 	nautilus_default_sampling_kw = { 'f_live' : 0.01, 'n_eff' : 8000,
                                          'discard_exploration' : True, 'verbose' : True }
 
-5. ``output_directory`` (default ``= ''``) choose the position in the filesystem where to store the results. The default empty string (``''``) means "store in current location",
+5. ``loglikelihood`` (default ``= None``) replaces the log-likelihood used to score the models.
+   ``None`` selects GalaPy's built-in Gaussian likelihood, :py:func:`galapy.sampling.Run.loglikelihood`.
+   To use your own, assign a callable with signature ``(par, state, **kwargs)`` returning a scalar,
+   defined in an importable module and imported here:
+
+   .. code-block:: python
+
+      from functools import partial
+      from my_likelihoods import mstar_loglikelihood
+
+      loglikelihood = partial( mstar_loglikelihood,
+                               logmstar_obs = 10.65, logmstar_err = 0.15 )
+
+   This is an advanced feature that changes the statistical meaning of the run, and it comes with
+   requirements the custom function has to satisfy (returning ``-numpy.inf`` on rejected parameters,
+   being importable by the worker processes in parallel runs, ...).
+   It is a run-wide setting and cannot be overridden per entry of the ``models`` list.
+   See :ref:`custom_likelihood` for the full contract, a copy-pasteable template and the
+   implications for model comparison.
+
+6. ``output_directory`` (default ``= ''``) choose the position in the filesystem where to store the results. The default empty string (``''``) means "store in current location",
    results will be saved in the directory from which the ``galapy-fit`` command has been called.
 
-6. ``run_id`` (default ``= ''``) choose a common name to associate to all the output files. The empty string will trigger the usage of a *date-time* string with format
+7. ``run_id`` (default ``= ''``) choose a common name to associate to all the output files. The empty string will trigger the usage of a *date-time* string with format
    ``'YYYYMMDDhhmm'`` where ``YYYY`` = four digits for the year (we are scheptical that our tool will still be used after year 9999 A.D.), ``MM`` two digits for the month, ``DD`` two
    digits for the day, ``hh`` two digits for the hour (in 24h-format), ``mm`` two digits for the minutes.
 
-7. ``store_method`` (default ``= 'hdf5'``) two possible output formats are currently available in GalaPy:
+8. ``store_method`` (default ``= 'hdf5'``) two possible output formats are currently available in GalaPy:
 
    * ``'pickle'`` the standard Python serialisation protocol.  Results objects (see documentation of the :py:mod:`galapy.sampling.Results` module) are computed at the end of a sampling run
      then serialised and stored in non-volatile memory. The typical size of the output file can reach up to :math:`\sim 1` GB.
@@ -482,7 +502,7 @@ The parameters to set are the following:
       For almost all use-cases, the HDF5 format is a better choice than pickle as it is safer to distribute and backward/forward compatibility is guaranteed.
       Pickle should be used only for internal usage.
 
-8. ``store_lightweight`` (default ``= False``) boolean available only if the HDF5 output format is chosen.
+9. ``store_lightweight`` (default ``= False``) boolean available only if the HDF5 output format is chosen.
    
    * ``True``: store only samples coordinates, likelihood values and weights along with minimal additional information to re-build the models used in the sampling (typical size :math:`\sim 10` MB);
    * ``False``: along with the information available also stored with this option set as ``True`` option,
@@ -493,10 +513,10 @@ The parameters to set are the following:
 
       The amount of information stored by choosing ``store_method = 'pickle'`` is equivalent to the combination ``store_method = 'hdf5'`` and ``store_lightweight = False``)
 
-9. ``pickle_raw`` (default ``= False``) whether to pickle the sampler raw results, no analysis on the outputs is done, these data are not sufficient to reproduce the models used.
+10. ``pickle_raw`` (default ``= False``) whether to pickle the sampler raw results, no analysis on the outputs is done, these data are not sufficient to reproduce the models used.
    (might be useful for analyzing the run statistics).
 
-10. ``pickle_sampler`` (default ``= False``) whether to pickle the sampler at the end-of-run state. It is necessary to set this hyperparameter to ``True`` if the user wants to restart the run.
+11. ``pickle_sampler`` (default ``= False``) whether to pickle the sampler at the end-of-run state. It is necessary to set this hyperparameter to ``True`` if the user wants to restart the run.
 
 .. _catalogue_param_file:
 

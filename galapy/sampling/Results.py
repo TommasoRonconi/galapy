@@ -61,10 +61,15 @@ def generate_output_base ( out_dir = '', name = '' ) :
 
     return outbase
 
+#: Provenance marker written when the run used galapy's built-in likelihood.
+#: It is the ``module.qualified_name`` of ``galapy.sampling.Run.loglikelihood``
+#: (kept as a literal here to avoid a circular import with that module).
+_default_loglikelihood_name = 'galapy.sampling.Run.loglikelihood'
+
 def dump_results ( model, handler, data, sampler,
                    noise = None, outbase = '',
                    method = 'hdf5', lightweight = False,
-                   derived = None ) :
+                   derived = None, loglikelihood_name = None ) :
     from time import time
 
     if len(outbase) == 0 :
@@ -88,6 +93,9 @@ def dump_results ( model, handler, data, sampler,
         if not isinstance( noise, Noise ) :
             raise ValueError( "Argument ``noise`` should be an instance of type Noise" )
 
+    if loglikelihood_name is None :
+        loglikelihood_name = _default_loglikelihood_name
+
     if lightweight :
         if method in { 'hdf5', 'h5' } :
             outfile = '_'.join( [ outbase, sampler.which_sampler, 'results_light.galapy.hdf5' ] )
@@ -109,6 +117,7 @@ def dump_results ( model, handler, data, sampler,
                     'sampler_name' : sampler.which_sampler,
                     'logz'    : logz,
                     'logzerr' : logzerr,
+                    'loglikelihood_name' : loglikelihood_name,
                 }
             )
             return outbase
@@ -127,7 +136,8 @@ def dump_results ( model, handler, data, sampler,
                        sampler_name     = sampler.which_sampler,
                        log_evidence     = logz,
                        log_evidence_err = logzerr,
-                       derived          = derived )
+                       derived          = derived,
+                       loglikelihood_name = loglikelihood_name )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
 
@@ -194,6 +204,8 @@ def load_results ( infile, method = None, lightweight = None ) :
                 sampler_name     = res_dict['results']['sampler_name'],
                 log_evidence     = res_dict['results'].get( 'logz',    None ),
                 log_evidence_err = res_dict['results'].get( 'logzerr', None ),
+                loglikelihood_name = res_dict['results'].get(
+                    'loglikelihood_name', None ),
             )
             ndur = time() - tstart
             print( f'... done in {ndur} seconds.' )
@@ -232,7 +244,7 @@ class Results () :
                    sample_weights = None, data = None, noise = None,
                    sampler_name = 'dynesty',
                    log_evidence = None, log_evidence_err = None,
-                   derived = None ) :
+                   derived = None, loglikelihood_name = None ) :
         """ A class for storing the results of a sampling run.
         
         Parameters
@@ -272,6 +284,12 @@ class Results () :
             ``None`` selects them all. ``'SED'`` is always computed and stored
             regardless of this argument; listing it explicitly is allowed but
             redundant (a warning is emitted).
+        loglikelihood_name : str
+            (Optional) ``module.qualified_name`` of the log-likelihood used in
+            the run, kept as a provenance marker. ``None`` (the default) means
+            galapy's built-in Gaussian likelihood. Two runs are comparable in
+            evidence only if this marker matches, which is what
+            :func:`galapy.analysis.model_comparison.bayes_factor` checks.
         """
         
         # Store the model architecture
@@ -332,6 +350,11 @@ class Results () :
         self.ndim    = len( handler.par_free )
         self.logz    = log_evidence
         self.logzerr = log_evidence_err
+
+        # Provenance of the likelihood used in the run
+        self.loglikelihood_name = ( loglikelihood_name
+                                    if loglikelihood_name is not None
+                                    else _default_loglikelihood_name )
         
         self.size = len(sample_res)
         if self.size != len(sample_logl) or self.size != len(sample_weights):
@@ -559,6 +582,7 @@ class Results () :
             size = self.size, Ndof = self.Ndof,
             logz    = self.logz,
             logzerr = self.logzerr,
+            loglikelihood_name = self.loglikelihood_name,
             # Sampling run stored quantities
             logl    = self.logl,
             samples = self.samples,
@@ -600,6 +624,11 @@ class Results () :
         ret.size    = dictionary['size']
         ret.logz    = dictionary.get( 'logz',    None )
         ret.logzerr = dictionary.get( 'logzerr', None )
+
+        # Files written before the introduction of this marker can only come
+        # from a run with the built-in likelihood.
+        ret.loglikelihood_name = dictionary.get( 'loglikelihood_name',
+                                                 _default_loglikelihood_name )
 
         # Derived quantities. Files written before the introduction of the
         # ``derived`` key always stored exactly the nine default quantities.
