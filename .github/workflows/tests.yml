@@ -3,9 +3,6 @@
 
 name: test
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   push:
     branches: [ "main", "devel" ]
@@ -24,9 +21,9 @@ jobs:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -34,7 +31,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pybind11 pytest
     - name: Cache galapy database
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.galapy/galapy_database
         key: galapy-database-${{ runner.os }}-v1

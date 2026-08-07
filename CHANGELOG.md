@@ -18,7 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> nothing new
+### Internal
+- CI: the GitHub Actions used by both workflows are updated to the majors that
+  run natively on Node 24 — `actions/checkout` and `actions/upload-artifact`
+  and `actions/download-artifact` to v7, `actions/setup-python` to v7 and
+  `actions/cache` to v6 — clearing the Node 20 deprecation warnings raised
+  during the v0.6.2 release build. The `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`
+  environment variable is dropped along with them: it was the workaround
+  keeping those actions running, and the runners force Node 24 by default
+  since 2 June 2026, so it no longer does anything.
 
 ## [0.6.2] - 2026-08-07
 
