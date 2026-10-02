@@ -869,9 +869,10 @@ class GXY ( Model ) :
         if self.agn.model == 'Fritz2006' :
             return self.params['agn']['fAGN']
         
+        # Lbol and the stellar emission (L_sun/Ang) are both in solar units
         wn0 = self.components['stellar'] > 0
-        return self.params['agn']['Lbol']*sunL / (
-            self.params['agn']['Lbol']*sunL +
+        return self.params['agn']['Lbol'] / (
+            self.params['agn']['Lbol'] +
             trap_int( self.wl()[wn0], self.components['stellar'][wn0] )
         )
     

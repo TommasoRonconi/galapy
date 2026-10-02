@@ -68,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suite (construction, parameters, `set_parameters`, emission reference values
   at 20 wavelengths). `Test_Run.py` covers both AGN models through `agn_model`,
   the per-variant override, the output suffixes and the old-parameter-file
-  warning.
+  warning. `Test_Gxy.py` (previously imports only) checks `GXY.get_fAGN` for
+  no AGN, Fritz2006, and Panchromatic at known `Lbol / L_stellar` ratios.
 
 ### Changed
 - **Breaking:** `GXY(do_AGN = True)` now builds a `Panchromatic` AGN by
