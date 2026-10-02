@@ -619,8 +619,9 @@ def _model_suffixes ( resolved_variants ) :
     """Return one name suffix per model variant, encoding the varying keys.
 
     Only keys that differ across variants are included, e.g. 'AGNTrue',
-    'SFHinsitu_AGNFalse', 'AGNFritz2006'. Keys resolved to ``None`` (e.g.
-    ``agn_model`` in a variant without AGN) are left out of that suffix.
+    'SFHinsitu_AGNFalse', 'AGNFritz2006'. Keys missing or resolved to
+    ``None`` (e.g. ``agn_model`` in a variant without AGN) carry no
+    information: they neither make a key vary nor appear in a suffix.
     """
     _KEYS = [
         ( 'sfh_model', 'SFH'   ),
@@ -631,11 +632,12 @@ def _model_suffixes ( resolved_variants ) :
     ]
     varying = [
         ( key, pfx ) for key, pfx in _KEYS
-        if len( set( str( r[key] ) for r in resolved_variants ) ) > 1
+        if len( set( str( r.get( key ) ) for r in resolved_variants
+                     if r.get( key ) is not None ) ) > 1
     ]
     return [
         '_'.join( f'{pfx}{r[key]}' for key, pfx in varying
-                  if r[key] is not None )
+                  if r.get( key ) is not None )
         for r in resolved_variants
     ]
 
@@ -1638,6 +1640,7 @@ def _generate_parameter_file () :
                              'Available models are:' +
                              ' Fritz2006, Panchromatic. ' +
                              'DEFAULT: None'
+                         ) )
     parser.add_argument( '--catalogue', '-cat',
                          dest = 'catalogue',
                          action = 'store_true',
