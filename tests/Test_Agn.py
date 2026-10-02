@@ -182,6 +182,15 @@ def test_agn_emission (agn):
     np.testing.assert_allclose( em, expected, rtol = 1e-5 )
 
 
+def test_agn_default_model_is_panchromatic () :
+
+    """Without an explicit model the wrapper builds Panchromatic, like GXY."""
+
+    agn = gpagn.AGN( _LGRID )
+    assert agn.model == 'Panchromatic'
+    assert isinstance( agn.core, Panchromatic )
+
+
 def test_agn_invalid_model () :
 
     """
@@ -210,6 +219,16 @@ def test_agn_panchromatic_init ( agn_pan ) :
     assert isinstance( agn_pan, galapy.ActiveGalacticNucleus.AGN )
     assert isinstance( agn_pan.core, Panchromatic )
     assert agn_pan.params['model'] == 'Panchromatic'
+
+
+def test_agn_panchromatic_components_are_arrays () :
+
+    """Every emission component is initialised as an array, X-ray included."""
+
+    core = Panchromatic( _LGRID, do_Xray = True )
+    for key, comp in core.components.items() :
+        assert isinstance( comp, np.ndarray ), key
+        assert comp.shape == _LGRID.shape, key
 
 
 def test_agn_panchromatic_params ( agn_pan ) :

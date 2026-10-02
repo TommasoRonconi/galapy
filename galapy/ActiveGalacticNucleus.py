@@ -12,7 +12,7 @@ from galapy import AGN_core
 class AGN () :
 
     def __init__ (
-            self, lgrid, model = 'Fritz2006',
+            self, lgrid, model = 'Panchromatic',
             **kwargs
     ) :
 

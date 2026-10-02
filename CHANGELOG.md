@@ -34,8 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `1e11`). Emission is returned in L☉/Å, like `Fritz2006`.
 - `galapy.ActiveGalacticNucleus.AGN`: now a thin dispatcher,
   `AGN(lgrid, model = 'Fritz2006' | 'Panchromatic', **kwargs)`, forwarding
-  `set_parameters`, `emission` and `__call__` to the selected model. An unknown
-  `model` raises `RuntimeError`; the choice is recorded in `params['model']`.
+  `set_parameters`, `emission` and `__call__` to the selected model. `model`
+  defaults to `'Panchromatic'`, consistently with `GXY` and `galapy-fit`. An
+  unknown `model` raises `RuntimeError`; the choice is recorded in
+  `params['model']`.
 - `galapy.Galaxy.gxy_params_defaults`: the Panchromatic parameters
   `agn.Lbol` (log-prior `[6.5, 14.5]` in L☉), `agn.theta_view`, `agn.delta`,
   `agn.TH`, `agn.Delta`, `agn.EBV` and `agn.RL`, with LaTeX labels.

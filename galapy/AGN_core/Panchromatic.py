@@ -490,7 +490,7 @@ class Panchromatic () :
         }
         if do_Xray :
             self.xray = agn_xray( self.lgrid )
-            self.components['xray_obs'] = numpy.zeros_like( self.lgrid ),
+            self.components['xray_obs'] = numpy.zeros_like( self.lgrid )
         self.params = agn_build_params(
             Lbol = Lbol, theta_view = theta_view, delta = delta,
             TH = TH,
