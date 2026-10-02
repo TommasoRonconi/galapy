@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | Release workflow: |
 | --- |
 |  **1.** Fill in the [Unreleased] section below. |
-|  **2.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
-|  **3.** Rename [Unreleased] → [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
-|  **4.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **2.** Rename [Unreleased] -> [X.Y.Z] - YYYY-MM-DD and add a fresh [Unreleased]. |
+|  **3.** Commit the changelog: git commit -m "update CHANGELOG for vX.Y.Z" |
+|  **4.** Run: bumpver update --patch   (or --minor / --major). This commits the version bump in `__init__.py` and creates a local tag. |
 |  **5.** Push: git push origin main && git push origin --tags |
 
 > **Note:** pre-release tags are marked as vX.Y.Z-lw for "light-weight" on GitHub;
@@ -18,7 +18,516 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
----
+### Added
+- `galapy.AGN_core`: new sub-package hosting the AGN emission models, installed
+  by `setup.py` as `galapy.AGN_core`. It contains:
+  - `Fritz2006`: the templated model previously implemented by
+    `galapy.ActiveGalacticNucleus.AGN`, moved here and renamed (see *Changed*).
+  - `Panchromatic`: a new, fully analytical and self-consistent AGN model,
+    recommended for fitting. It sums an accretion disc (piecewise power law
+    with a big-blue-bump modification `delta` and a viewing-angle dependence
+    `theta_view`), its attenuation by the torus (half-aperture `Delta`,
+    extinction `EBV`), the hot-dust torus emission (temperature `TH`), radio
+    jets (radio loudness `RL`) and, when `do_Xray = True`, the X-ray corona
+    normalised through a bolometric correction. All the components scale
+    with the bolometric luminosity `Lbol`, in solar luminosities (default
+    `1e11`). Emission is returned in L☉/Å, like `Fritz2006`.
+- `galapy.ActiveGalacticNucleus.AGN`: now a thin dispatcher,
+  `AGN(lgrid, model = 'Fritz2006' | 'Panchromatic', **kwargs)`, forwarding
+  `set_parameters`, `emission` and `__call__` to the selected model. An unknown
+  `model` raises `RuntimeError`; the choice is recorded in `params['model']`.
+- `galapy.Galaxy.gxy_params_defaults`: the Panchromatic parameters
+  `agn.Lbol` (log-prior `[6.5, 14.5]` in L☉), `agn.theta_view`, `agn.delta`,
+  `agn.TH`, `agn.Delta`, `agn.EBV` and `agn.RL`, with LaTeX labels.
+- `galapy.Galaxy.GXY.get_fAGN()`: the AGN fraction for either model — the
+  `fAGN` parameter for `Fritz2006`, and `Lbol / (Lbol + L_stellar)` (stellar
+  luminosity integrated over the wavelength grid) for `Panchromatic`; `0.0`
+  when the galaxy has no AGN.
+- `galapy-fit`: new `agn_model` parameter-file option selecting the AGN model
+  (`'Fritz2006'` or `'Panchromatic'`), read by `_expand_hyperpar` and passed
+  through each job to `initialize` exactly like `sfh_model`. It can also be
+  overridden per entry of the `models` list, e.g. to compare the two AGN
+  models through their Bayes factor; output files of such runs get suffixes
+  like `AGNFritz2006` / `AGNPanchromatic` (omitted for variants without AGN).
+- `galapy.sampling.Run.initialize` / `PipelineState.initialize`: new
+  `agn_model` argument (default `'Panchromatic'`).
+- `galapy-genparams`: new `--AGN_model` / `-agn` flag (`Fritz2006` or
+  `Panchromatic`). The generated file sets `agn_model` and lists the
+  parameters of the chosen model only; without the flag it sets
+  `agn_model = 'Panchromatic'` and lists the parameters of both models. The
+  catalogue template documents `agn_model` among the per-variant overrides
+  and shows an example comparing the two AGN models.
+- `galapy.sampling.Sampler.Sampler.run_sampling`: new `print_summary`
+  argument (default `True`) to silence dynesty's end-of-run summary.
+- `galapy.analysis.plot.sed_components` and `sed_flux`: extra keyword
+  arguments are forwarded to `matplotlib`'s `plot` (defaults `ls = '-'`,
+  `lw = 1.5`).
+- `c++/utl/include/utilities.h`: templated `utl::sigmoid( x, k )`.
+- Tests: `Test_Agn.py` ported to the new dispatcher, with reference values
+  guarding the Fritz2006 emission, `test_agn_invalid_model`, and a Panchromatic
+  suite (construction, parameters, `set_parameters`, emission reference values
+  at 20 wavelengths). `Test_Run.py` covers both AGN models through `agn_model`,
+  the per-variant override, the output suffixes and the old-parameter-file
+  warning.
+
+### Changed
+- **Breaking:** `GXY(do_AGN = True)` now builds a `Panchromatic` AGN by
+  default (`agn = None` resolves to `{'model' : 'Panchromatic'}`). The
+  Fritz+2006 templates are selected with `agn = {'model' : 'Fritz2006'}`, or
+  `agn_model = 'Fritz2006'` in the parameter file.
+- **Breaking:** parameter files without `agn_model` now get the Panchromatic
+  model. When such a file has `do_AGN = True` (top-level or in any `models`
+  variant not setting its own `agn_model`), `galapy-fit` raises a
+  `FutureWarning` stating the new default and how to restore Fritz2006. It is
+  emitted with an `always` filter, so Python's once-per-location registry
+  never hides it.
+- **Breaking:** the Fritz+2006 class is now `galapy.AGN_core.Fritz2006`,
+  built from the whole wavelength grid, `Fritz2006(lgrid, ...)`, instead of
+  its limits `(lmin, lmax, ...)`. `emission` is kept as an alias of the new
+  `__call__`.
+- `galapy.Galaxy.GXY`: the AGN is built on the full wavelength grid
+  (`self.csp.l`). Only `Fritz2006` receives the dust luminosity as reference
+  luminosity; `Panchromatic` is normalised by its own `Lbol`.
+- AGN emission units: every model returns luminosity per unit wavelength in
+  L☉/Å, and the `AGN` wrapper applies no unit conversion.
+- `Panchromatic`: `Lbol` is expressed in solar luminosities (previously
+  erg/s; default `1e11` instead of `1e44`). The `agn.Lbol` prior is
+  `[6.5, 14.5]` (log L☉) in both `gxy_params_defaults` and the
+  `galapy-genparams` template — the same physical range as the former
+  `[40, 48]` in erg/s.
+- `requirements.txt`: adds `tqdm` and `pytest`, aligning it with `setup.py`.
+
+### Fixed
+- `Panchromatic`: the smoothing kernel of the jets and X-ray components is a
+  method rather than a lambda stored as an instance attribute; lambdas cannot
+  be pickled, which a model shipped to spawned worker processes requires.
+
+### Internal
+- Merge of `devel` (v0.6.2 and later) into `AGN`; how the conflicts were
+  resolved:
+  - Log-evidence: the AGN branch's `Sampler.return_logz_logzerr` and the
+    `sample_logz` / `sample_logzerr` arrays stored by `Results` (the whole
+    dynesty evidence trace) are dropped in favour of `devel`'s
+    `Sampler.log_evidence()`, which stores scalar `logz` / `logzerr`, also
+    covers nautilus, and is already serialised by `Results`.
+  - `Results`: `devel`'s `derived` / `store_quantities` machinery replaces the
+    AGN branch's hard-coded arrays of derived quantities.
+  - `Sampler.run_sampling`: `devel`'s unified `sampling_kw` signature and
+    `if/elif` dispatch, plus the AGN branch's `print_summary` (third position,
+    so positional calls are unaffected).
+  - `galapy-fit`: `devel`'s job expansion (`_expand_hyperpar` →
+    `PipelineState`) replaces the AGN branch's `_run`, whose optional
+    `nwalkers` / `nsamples` handling it already covers.
+  - `galapy-genparams`: both `--catalogue` and `--AGN_model` are kept. The AGN
+    placeholders of the template are renumbered (`{4}`, `{5}`), because
+    `{2}` and `{3}` are the observation and `run_id` blocks on `devel`.
+  - `agn_model` was written into generated parameter files but read by
+    nothing, so every fit silently used the `GXY` default. It is now wired
+    through the jobs (see *Added*), and `-agn` omitted no longer writes
+    `agn_model = 'insitu'` (a copy-paste from the SFH block).
+  - `gxy_params_defaults['agn.Lbol']` still had the erg/s prior `[40, 48]`
+    after `Lbol` moved to solar luminosities; aligned to `[6.5, 14.5]`.
+  - `Test_Run.py`: ported to the `PipelineState` API (`state.model`,
+    `state.handler`, `loglikelihood(par, state)`). Fritz2006 tests select the
+    model with `agn_model = 'Fritz2006'`, since passing
+    `gxy_kwargs = {'agn' : ...}` now collides with the `agn` argument that
+    `initialize` builds itself.
+- CI: the GitHub Actions used by both workflows are updated to the majors that
+  run natively on Node 24 — `actions/checkout` and `actions/upload-artifact`
+  and `actions/download-artifact` to v7, `actions/setup-python` to v7 and
+  `actions/cache` to v6 — clearing the Node 20 deprecation warnings raised
+  during the v0.6.2 release build. The `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`
+  environment variable is dropped along with them: it was the workaround
+  keeping those actions running, and the runners force Node 24 by default
+  since 2 June 2026, so it no longer does anything.
+- CI: the test matrix now spans Python 3.8 to 3.14, up from 3.8 to 3.11, so
+  that the interpreters the wheels are built for are also the ones the tests
+  run on. Windows is no longer listed as a commented-out option: WSL is the
+  supported route on that platform, and it is covered by the manylinux wheels.
+
+## [0.6.2] - 2026-08-07
+
+### Added
+- `galapy-fit`: new `loglikelihood` parameter-file option replacing the
+  log-likelihood used to score the models. `None` (the default) keeps the
+  built-in Gaussian likelihood; any callable with signature
+  `(par, state, **kwargs) -> scalar` can be used instead, typically imported
+  from the user's own module. Wired end-to-end through `_expand_hyperpar` →
+  job → `PipelineState.loglikelihood` → the serial, parallel and catalogue
+  samplers; `getattr`-guarded so older parameter files keep working.
+  Documented in the `galapy-genparams` template.
+- `galapy.sampling.Run._resolve_loglikelihood`: validates the custom callable
+  once, in the main process, before any sampling starts — raises `TypeError`
+  if it is not callable or cannot be called as `loglikelihood(par, state)`,
+  and warns if it does not accept `**kwargs` or looks unpicklable (a lambda, a
+  closure, or defined in the parameter file itself, none of which can be
+  rebuilt by a spawned worker). `functools.partial` wrappers — the documented
+  way to bind per-object data, e.g. an external stellar-mass estimate, in the
+  parameter file — are seen through by the picklability checks.
+- `galapy.sampling.Run.loglikelihood_name`: returns the
+  `module.qualified_name` of a likelihood callable — the same string `pickle`
+  uses to serialise a function by reference — used as a provenance marker.
+  `functools.partial` wrappers are unwrapped, so per-object bindings of the
+  same function share its marker.
+- `galapy.sampling.Results.Results`: new `loglikelihood_name` attribute
+  recording which likelihood produced the run, serialised in `dump`/`load` and
+  in the lightweight HDF5 path. Files written before this release are read back
+  as having used the built-in likelihood.
+- `galapy.analysis.model_comparison.bayes_factor`: now accepts `Results`
+  objects in addition to raw log-evidences, and warns when the two runs used
+  different likelihoods (their ratio is not a Bayes factor about the models) or
+  when both used a custom one. Raises `ValueError` when either evidence is
+  `None` — emcee runs compute no evidence and cannot enter a Bayes factor.
+- `doc/guides/custom_likelihood.rst`: new how-to covering the likelihood
+  contract, a copy-pasteable template, the importability requirement for
+  parallel runs, the validation performed by galapy, and why the likelihood
+  must be held fixed across model variants.
+
+### Changed
+- `galapy.sampling.Run.PipelineState`: new `loglikelihood` argument, resolved
+  and stored at construction. Every sampling path reads the likelihood from
+  the state, so a custom one travels with the pickled state to the workers.
+- `galapy-fit`: a `loglikelihood` key inside an entry of the `models` list now
+  raises `ValueError`. The likelihood is the term carrying the data, so
+  evidences computed with different likelihoods do not form a Bayes factor
+  about the models — a silent scientific error, hence a hard failure rather
+  than a warning.
+- `requires-python` is now `>=3.8` (was `>=3.7`). Python 3.7 could not install
+  galapy in any case, since `matplotlib>=3.6` requires 3.8 and
+  `nautilus-sampler` requires 3.9; the declared floor merely advertised a
+  version that never resolved. Support for 3.8 will be dropped in v0.7.0.
+- Linux wheels are now built on `manylinux_2_28` (glibc >= 2.28) instead of
+  `manylinux2014` (glibc >= 2.17). This covers Debian 10+, Ubuntu 18.10+,
+  Fedora 29+ and RHEL/CentOS 8+; only distributions already out of support,
+  such as Ubuntu 18.04, lose the pre-built wheel and fall back to the sdist.
+  The manylinux2014 image is built on CentOS 7, EOL since June 2024, and its
+  toolchain is frozen at GCC 10.2.
+
+### Fixed
+- `galapy.sampling.Run.sample`: the `nautilus` branch was left behind by the
+  `PipelineState` refactor and still referenced the removed module-level
+  `global_dict`, raising `NameError` as soon as a nautilus run was started.
+  It now reads `state.handler`, like the other samplers.
+- `galapy.sampling.Run.sample`: the `nautilus` branch never forwarded the
+  `PipelineState` to the likelihood, so `loglikelihood` was called without its
+  mandatory `state` argument. The state is now pre-bound to the likelihood
+  with `functools.partial` through the module-level `_nautilus_loglikelihood`
+  adapter, so the (possibly custom) likelihood receives `(par, state,
+  **kwargs)` positionally, exactly as with dynesty and emcee.
+  `likelihood_args` cannot be used for this, since nautilus wraps the callable
+  with `functools.partial` and positional arguments would be prepended to the
+  sampled vector (the same pitfall already documented for `prior_args`).
+- `galapy.sampling.Run._sample_parallel`: `nautilus` was never wired into the
+  parallel sampling path, whose dispatch only knew `dynesty` and `emcee`, so
+  selecting it in a parameter file aborted the run with `ValueError: The
+  sampler chosen "nautilus" is not valid` unless `galapy-fit --serial` was
+  used. The same gap affected catalogue runs, which take the parallel path
+  whenever more than one CPU per job is available. nautilus now gets a pool
+  the way `emcee` does, and the error message lists all three samplers.
+- Wheel builds failed on manylinux because `numpy` was listed in
+  `[build-system] requires` while nothing in the build actually uses it: the
+  extensions include `<pybind11/numpy.h>`, which needs no numpy headers, and
+  the `import numpy` in `setup.py` was unused. pip therefore installed numpy
+  into the build container, found no wheel for that platform, and fell back to
+  compiling numpy from source with a compiler too old for it. numpy is
+  unchanged as a runtime dependency.
+- `.github/workflows/build-wheels.yml`: cibuildwheel updated from v2.22.0 to
+  v3.4.1, which supports CPython 3.14.
+
+### Internal
+- `tests/Test_CustomLikelihood.py` (new): test suite for the custom-likelihood
+  machinery — `_resolve_loglikelihood` validation and warnings,
+  `loglikelihood_name` provenance (including callable instances),
+  `PipelineState`/`logprob` dispatch and backward compatibility,
+  `_expand_hyperpar` propagation and per-variant rejection, the
+  `_nautilus_loglikelihood` adapter (argument order, equivalence with the
+  built-in, picklability), the `_sample_parallel` sampler dispatch, `Results`
+  marker serialisation, and `bayes_factor` warnings/errors.
+
+## [0.6.1] - 2026-07-02
+
+### Changed
+- `galapy.internal.interp`: replaced the C++/pybind11 BST-backed `lin_interp`
+  extension with a pure-Python implementation using `numpy.interp` for
+  in-range evaluation and manual edge-slope propagation for linear extrapolation
+  beyond the grid. The public API (`__call__`, `get_x`, `get_y`, `integrate`)
+  is unchanged; behaviour is identical including linear extrapolation.
+  The `galapy.internal.interp` pybind11 extension is no longer compiled.
+- `PhotoGXY.photoSED`: bandpass integration is now performed on each filter's
+  own native wavelength grid (via `log_interp`) instead of slicing the SSP
+  array; this removes resolution artefacts for narrow bands and supports
+  evaluation outside the SSP wavelength range without zero-padding.
+- `PMS.get_fluxes`: accepts an optional `interp` callable; when provided, each
+  band integral is computed over the filter's native grid rather than the SSP
+  grid.
+- SSP libraries ending in `.refined` are no longer required for accurate
+  photometric fitting; `parsec22.NTL` now gives the same photometric accuracy
+  as `parsec22.NTL.refined` in the same wall time.
+- `galapy.Galaxy.GXY`: the galaxy emission is now computed eagerly — once at
+  construction and again at the end of every `set_parameters` — and cached in
+  `self._Ltot`. `get_emission` is now a thin accessor that returns the cached
+  luminosity (recomputing only if `**kwargs` update the parameters), so a `GXY`
+  object is always in a fully self-consistent, queryable state. The average
+  linear attenuation `Aavg` (in `[0, 1]`) is now always stored after each
+  update; the `store_attenuation` argument of `get_emission` is deprecated and
+  ignored.
+- `galapy.analysis.plot.corner_derived`: new `labels` keyword argument — a
+  `{key: latex_label}` mapping that overrides the axis label of the listed
+  quantities. This is the way to give a custom quantity added via
+  `Results.add_property` a proper LaTeX symbol instead of its escaped name (it
+  also overrides the built-in label of any default quantity). Labels are raw
+  LaTeX without the surrounding `$`; the `log10` wrapping is still applied on
+  top for log-scaled keys. Purely cosmetic and per-call — nothing is persisted
+  on the `Results` object.
+
+### Added
+
+- `galapy.internal.interp`: new pure-Python `log_interp` class — piecewise
+  power-law (log-log space) interpolator with power-law extrapolation beyond
+  the grid boundary and a log-space trapezoid integration rule; used internally
+  by `PhotoGXY.photoSED` to evaluate the galaxy SED on each filter's native
+  wavelength grid.
+- `galapy.sampling.Results.Results`: selectable derived quantities. The new
+  `derived` argument chooses which of the built-in per-sample quantities
+  (`SED`, `Mstar`, `Mdust`, `Mgas`, `Zstar`, `Zgas`, `SFR`, `TMC`, `TDD`) to
+  compute and store; `None` stores all and `SED` is always stored regardless.
+  Non-finite samples are sentinelled to `-inf` via a physical-validity gate and
+  excluded by the statistics helpers. New `add_property(func, name=None)` method
+  computes and stores one or more custom quantities after the run (`func` is
+  `f(model)` or a `{name: callable}` mapping); the set of stored quantities is
+  tracked in `_derived` and serialised in `dump`/`load`.
+- `galapy-fit`: new `store_quantities` parameter-file option selecting which
+  built-in derived quantities are computed and written to the results file
+  (a subset shrinks the output and speeds up post-processing; `SED` is always
+  stored). Wired end-to-end through `_expand_hyperpar` → job → the serial and
+  parallel samplers → `store_results` → `dump_results(derived=)`;
+  `getattr`-guarded so older parameter files without the key keep working.
+  Documented in the `galapy-genparams` template.
+- `doc/notebooks/custom_derived_quantities.ipynb`: new how-to notebook showing
+  how to compute and store custom derived quantities from a `Results` object
+  with `add_property`, query them with the statistics helpers, plot them with
+  `corner_derived`, and persist them, including the same-shape-per-sample,
+  average-in-linear-space and `-inf` sentinel caveats.
+
+### Internal
+
+- `tests/Test_Results.py`: new test suite covering the `Results` derived-quantity
+  machinery — the built-in quantities are all computed, tracked in `_derived`,
+  exposed as attributes with the expected shapes (scalar vs 2-D `SED`) and
+  finite/physical values; `add_property` with a single callable (named and
+  auto-named), a `{name: callable}` mapping, and an array-valued quantity, plus
+  its error cases; and round-tripping the stored quantities through `dump`/`load`.
+
+### Fixed
+
+- `galapy.analysis.plot.corner_derived`: custom scalar derived quantities added
+  via `Results.add_property` now appear in the triangle plot. The available-keys
+  set is drawn from `res._derived` (filtered to one-value-per-sample quantities)
+  instead of the static `_derived_quantity_meta`, so it also honours the
+  `store_quantities` subset. Quantities without an entry in
+  `_derived_quantity_meta` fall back to a linear axis and an upright label
+  (their name, with underscores escaped); array-valued quantities such as the
+  `SED` are excluded.
+
+## [0.6.0] - 2026-06-12
+
+### Added
+- `galapy.analysis.plot.corner_derived` function for plotting the marginal 2d posterior
+  of derived parameters. The API is completely equivalent to the one
+  used for the free parameters
+- `galapy.sampling.Run`: `PipelineState` class encapsulates all per-object
+  fitting state (`data`, `model`, `noise`, `handler`), replacing the module-level
+  `global_dict`. Multiple independent fits can now coexist in the same Python
+  process without shared mutable global state.
+- `galapy.sampling.Run`: `_expand_hyperpar()` decomposes a single parameter
+  file into a flat list of NxK single-job specifications, where N is the number
+  of sources (inferred from the shape of `fluxes`) and K is the number of model
+  variants (`models` list).
+- `galapy.sampling.Run`: `_model_suffixes()` generates descriptive output-file
+  suffixes encoding only the topology keys that vary across model variants (e.g.
+  `AGNFalse`, `SFHinsitu_AGNTrue`).
+- `galapy-fit`: catalogue fitting by passing a 2-D `fluxes` array (shape NxM)
+  to fit N sources in sequence, one source fitted parallely at a time.
+  The MPI path for true multi-node parallelism is reserved for a future release.
+- `galapy-fit`: multi-model runs by adding a `models` list to the parameter file
+  to test K model configurations on every source, launching NxK jobs in total.
+  Intended for Bayesian model comparison via the nested-sampling log-evidence.
+- `galapy-genparams`: `--catalogue` / `-cat` flag generates a multi-source
+  parameter file template with 2-D array inputs, a `models` list, and examples
+  for both AGN toggling and multi-SFH comparison (showing the correct pattern
+  of keeping topology-shared parameters in the base `galaxy_parameters` and
+  SFH-specific parameters inside each variant).
+- Per-source fixed parameter overrides: a plain list of N values in
+  `galaxy_parameters` (e.g. `'redshift': [z0, z1, ..., zN-1]`) pins that
+  parameter independently for each source. Shape mismatches and single-source
+  lists raise `ValueError` at load time.
+- `galapy.sampling.Sampler`: new `log_evidence()` method returning
+  `(logz, logzerr)` for nested samplers (`dynesty`: from
+  `results.logz[-1]` / `results.logzerr[-1]`; `nautilus`: from
+  `sampler.log_z`, error is `None`). Returns `(None, None)` for emcee.
+- `galapy.sampling.Results.Results`: stores `logz` and `logzerr`
+  as instance attributes (both `None` for emcee runs). Evidence is
+  persisted in the HDF5 results file (both full and lightweight modes)
+  and restored on load. Backward compatible: older files without the
+  field load with `logz = logzerr = None`.
+- `galapy.analysis.model_comparison`: new submodule. Provides
+  stateless posterior estimators operating on raw `(values, weights)`
+  arrays — `weighted_quantile`, `weighted_mean`, `weighted_std`,
+  `credible_interval` — generalising the class methods of
+  `GalaxyResults`. Also provides `bayes_factor(logz1, logz2)` and
+  `jeffreys_scale(log_bf)` as entry points for Bayesian model
+  comparison; full multi-model comparison tooling reserved for a future
+  release.
+
+### Changed
+- `galapy.sampling.Run`: `loglikelihood(par, state, **kwargs)` and
+  `logprob(par, state, **kwargs)` now take an explicit `PipelineState`
+  argument instead of reading from module-level global state, making
+  concurrent calls for different objects safe.
+- `galapy.sampling.Run`: `initialize()` returns a `PipelineState` instance (previously
+  returned the module-level `global_dict`).
+- `galapy-fit`: internal dispatch always routes through `_expand_hyperpar()`;
+  single-source / single-model parameter files are fully backward compatible.
+
+### Internal
+- `galapy.sampling.Run._sample_catalogue`: preserved as scaffolding for the
+  forthcoming MPI entry point (`mpi4py.futures.MPIPoolExecutor`); no longer
+  called by `galapy-fit` in the single-node path.
+  CPU-binding (`os.sched_setaffinity`) and two-level dispatch infrastructure in
+  `_catalogue_worker` are retained for reuse when MPI is wired in
+
+### Fixed
+- `galapy.sampling.Run.loglikelihood`: wrapped model evaluation and likelihood
+  computation in `numpy.errstate(all='ignore')` to suppress spurious
+  `RuntimeWarning` messages (invalid value, divide by zero, overflow,
+  underflow) that arise for parameter combinations outside the physically
+  valid range. The result is checked with `numpy.isfinite` and mapped to
+  `-numpy.inf` if non-finite, so the sampler always receives a valid sentinel.
+  The existing `except RuntimeError` guard for C++ model errors is preserved.
+- `galapy.sampling.Results.GalaxyResults.__init__`: applied the same
+  `numpy.errstate(all='ignore')` guard to the posterior SED recomputation
+  loop, preventing identical warnings at store time. Added a `numpy.isfinite`
+  check on the computed SED: if the SED is entirely non-finite, all derived
+  scalar quantities (`Mstar`, `Mdust`, `Mgas`, `Zstar`, `Zgas`, `SFR`,
+  `TMC`, `TDD`) are set to `-inf` to avoid silently storing values computed
+  from a broken model state.
+- `MANIFEST.in` now includes the *.tpp extensions used for templated headers of the
+  C++ library sector
+- support for more out-of-the-box architectures is now made available (WSL compliant
+  and intel-based MacOS architectures
+
+## [0.5.7] - 2026-06-11
+
+### Added
+- `galapy.sampling.Sampler`: nautilus (Neural Network-Boosted Nested Sampler)
+  is now a supported backend. Adds entries to
+  `_library_default_sampler_kw` (`n_live=1500`, `n_networks=4`) and
+  `_library_default_sampling_kw` (`f_live=0.01`, `n_eff=8000`,
+  `discard_exploration=True`, `verbose=True`), and `elif` dispatch blocks in
+  `__init__`, `run_sampling`, `return_samples_logl_weights`, and
+  `save_results`. The prior is passed via `prior_kwargs` (not `prior_args`) so
+  that nautilus calls `prior_transform(u, prior_limits=…)` rather than
+  `prior_transform(prior_limits, u)`.
+- `galapy-fit`: `sampler = 'nautilus'` is now a valid choice in the parameter
+  file. Adds the corresponding `elif` block in `sample()`, a galapy-level
+  default entry in `_default_sampling_kw`, and documentation links in the
+  parameter file template.
+
+### Changed
+- `galapy.sampling.Sampler`: renamed `_default_sampler_kw` ->
+  `_library_default_sampler_kw` and `_default_sampling_kw` ->
+  `_library_default_sampling_kw` to make explicit that these hold raw library
+  baselines, distinct from the galapy-level overrides in `Run.py`.
+- `nautilus-sampler` added as an explicit dependency in `pyproject.toml`,
+    `setup.py`, and `requirements.txt`. Also:
+  - `INSTALL.rst`: added nautilus-sampler to the dependency table.
+  - `README.rst`: added `nautilus-sampler` to the dependencies summary.
+  - `doc/guides/parameter_file.rst`: documented `sampler = 'nautilus'` as a
+    valid choice; added description of the Neural Network-Boosted Nested Sampling
+    algorithm and the `nautilus_default_sampler_kw` / `nautilus_default_sampling_kw`
+    reference blocks under items 3 and 4.
+
+### Fixed
+- `MANIFEST.in`: added `recursive-include` directives for `pybind11/*.h` and
+  `c++/**/*.{h,cpp}` so that C++ header files are included in the source
+  distribution. Previously, building from the sdist (e.g. on a Python version
+  with no pre-compiled wheel available) failed with
+  `fatal error: pyb11_serialize.h: No such file or directory`.
+
+### Build
+- Bumped `cibuildwheel` from v2.16.5 to v2.22.0 in the wheel-build workflow.
+  v2.16.5 predates Python 3.13 and 3.14; v2.22.0 adds support for both,
+  extending the published wheel matrix to cover all CPython versions from
+  3.7 through 3.14.
+
+## [0.5.6] - 2026-06-08
+
+### Changed
+- `galapy.sampling.Sampler`: the `__init__` and `run_sampling` methods now
+  accept a single `sampler_kw` / `sampling_kw` dict instead of separate
+  `dynesty_sampler_kw` / `emcee_sampler_kw` (and their `run_sampling`
+  counterparts). The four flat module-level default dicts have been
+  consolidated into two nested dicts (`_default_sampler_kw`,
+  `_default_sampling_kw`) keyed by sampler name, making it straightforward
+  to register a new sampler without adding module-level names.
+- All `if/if` dispatch chains in `Sampler` and `Run.sample()` converted to
+  `if/elif/else`; unknown sampler names now raise an explicit error at
+  construction time rather than silently falling through.
+- Parameter file template (`galapy-genparams`): `sampler_kw` and
+  `sampling_kw` comments now include links to the upstream library API
+  reference (emcee, dynesty) and note that keys must match the chosen
+  sampler.
+
+### Added
+- `galapy-download-database` gains two new flags:
+  - `--update` / `-u`: compares the version recorded in the installed
+    database's `version` file against the target release (latest by default)
+    and re-downloads only when they differ. Prints an informative message
+    when the database is already up to date.
+  - `--force` / `-f`: unconditionally re-downloads and overwrites whatever
+    is already present on disk.
+
+### Fixed
+- `download_file()` no longer silently swallows `HTTPError`: the exception
+  is now re-raised after printing, preventing an empty file from being
+  written to disk when a requested resource (e.g. a filter band) does not
+  exist at the remote URL. As a result, requesting a filter band absent from
+  the database now fails immediately with the correct message
+  *"Filter … provided is not present in galapy database."* instead of
+  leaving a zero-byte file that would poison subsequent lookups.
+
+## [0.5.5] - 2026-06-03
+
+### Added
+- Comprehensive test suite for `galapy.internal` subpackage:
+  `Test_Internal_Constants.py` (physical constants and unit-conversion
+  functions), `Test_Internal_Utils.py` (utility functions: numerical
+  integration, interpolation helpers, string/dict utilities, statistics),
+  and `Test_Internal_Interp.py` (pybind11 `lin_interp` — construction,
+  interpolation accuracy, extrapolation, integration, input variants).
+- Test suite for `galapy.SFH_core` pybind11 binding (`Test_SFH_core.py`):
+  covers all five SFH models (`insitu`, `constant`, `delayedexp`,
+  `lognormal`, `interpolated`), pinned reference values for SFR and
+  stellar/dust/gas mass, quenching behaviour, and pickle round-trip.
+  Designed to be implementation-agnostic so it will validate a future
+  pure-Python reimplementation of the same interface.
+
+### Fixed
+- `galapy-download-database` (and `download_database()`) now reads
+  `GITHUB_TOKEN` from the environment and passes it as an
+  `Authorization` header to the GitHub Releases API. Eliminates
+  the 403 rate-limit errors that caused macOS CI jobs to fail when
+  multiple matrix runs hit the API simultaneously.
+
+### CI
+- GitHub Actions `tests.yml`: cache `~/.galapy/galapy_database` with
+  `actions/cache@v4` so the database is downloaded only on cold-cache
+  runs; expose `GITHUB_TOKEN` to the install step for authenticated
+  API access.
+- Both workflow files opt into Node.js 24 via
+  `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`, resolving the
+  Node.js 20 deprecation warning ahead of the September 2026
+  forced cutover.
 
 ## [0.5.4] - 2026-05-19
 
@@ -153,7 +662,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New helper utilities (`shorten_string`, filter-name listing).
 
 ### Fixed
-- Bug in stellar-mass integration (linear → logarithmic binning; different
+- Bug in stellar-mass integration (linear -> logarithmic binning; different
   approximation for passive galaxies).
 - Bug in interpolated SFH age integration.
 - Long-standing spelling errors propagated across the package.

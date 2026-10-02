@@ -5,20 +5,26 @@
 Tests for the galapy fitting pipeline (Run module).
 
 Covers:
-- Run.initialize: builds global_dict with model, observation, handler, noise
+- Run.initialize / PipelineState.initialize: builds PipelineState with model,
+  observation, handler, noise
 - Free vs. fixed parameter registration
 - AGN template parameter keys (agn.template.*)
+- AGN model selection (agn_model: Fritz2006 / Panchromatic)
 - SFH model variants
 - Run.loglikelihood and Run.logprob behaviour
 - Upper-limit handling
 - Noise (calibration error) model integration
 - Prior transform utility
+- Catalogue-mode: _catalogue_worker builds independent PipelineState per object
 """
 
 import numpy as np
 import pytest
 
+from types import SimpleNamespace
+
 from galapy.sampling import Run
+from galapy.sampling.Run import PipelineState, _expand_hyperpar, _model_suffixes
 from galapy.Galaxy import PhotoGXY
 from galapy.sampling.Observation import Observation
 from galapy.sampling.Statistics import transform_to_prior_unit_cube
@@ -33,7 +39,6 @@ FLUXES = np.array([1.0e-4, 3.0e-4, 9.0e-4, 2.0e-3])
 ERRORS = FLUXES * 0.1
 UPLIMS = np.zeros(len(BANDS), dtype=bool)
 
-# Minimal galaxy parameter set – insitu SFH, a handful of free params
 BASE_PARAMS = {
     'age'            : ([6., 11.], True),
     'redshift'       : 1.0,
@@ -65,7 +70,7 @@ AGN_PARAMS = {
 }
 
 PANCHROMATIC_PARAMS = {
-    'agn.Lbol'       : ([8.5, 14.5], True),
+    'agn.Lbol'       : ([6.5, 14.5], True),
     'agn.theta_view' : 0.0,
     'agn.delta'      : -0.36,
     'agn.TH'         : 1500.,
@@ -78,21 +83,19 @@ NOISE_PARAMS = {'f_cal': ([-10., 1.], True)}
 
 
 def _init(**kwargs):
-    """Call Run.initialize with shared defaults; return global_dict."""
+    """Call Run.initialize with shared defaults; return the PipelineState."""
     params = dict(BASE_PARAMS)
     params.update(kwargs.pop('extra_params', {}))
-    Run.initialize(
+    return Run.initialize(
         BANDS, FLUXES, ERRORS, UPLIMS,
         BANDS, params,
         **kwargs
     )
-    return Run.global_dict
 
 
-def _random_par():
+def _random_par(state):
     """Draw a random parameter vector uniformly from the prior."""
-    h = Run.global_dict['handler']
-    return h.rng.uniform(*h.par_prior.T)
+    return state.handler.rng.uniform(*state.handler.par_prior.T)
 
 
 # ===========================================================================
@@ -101,74 +104,91 @@ def _random_par():
 
 class TestInitialize:
 
-    def test_global_dict_has_required_keys(self):
-        gd = _init()
-        assert set(gd.keys()) >= {'data', 'model', 'noise', 'handler'}
+    def test_returns_pipeline_state(self):
+        state = _init()
+        assert isinstance(state, PipelineState)
+
+    def test_state_has_required_attrs(self):
+        state = _init()
+        for attr in ('data', 'model', 'noise', 'handler'):
+            assert hasattr(state, attr)
 
     def test_model_is_photogxy(self):
-        gd = _init()
-        assert isinstance(gd['model'], PhotoGXY)
+        state = _init()
+        assert isinstance(state.model, PhotoGXY)
 
     def test_observation_stores_fluxes(self):
-        gd = _init()
-        assert isinstance(gd['data'], Observation)
-        np.testing.assert_allclose(np.sort(gd['data'].fluxes), np.sort(FLUXES))
+        state = _init()
+        assert isinstance(state.data, Observation)
+        np.testing.assert_allclose(np.sort(state.data.fluxes), np.sort(FLUXES))
 
     def test_observation_stores_errors(self):
-        gd = _init()
-        np.testing.assert_allclose(np.sort(gd['data'].errors), np.sort(ERRORS))
+        state = _init()
+        np.testing.assert_allclose(np.sort(state.data.errors), np.sort(ERRORS))
 
     def test_observation_stores_uplims(self):
-        gd = _init()
-        assert not np.any(gd['data'].uplims)
+        state = _init()
+        assert not np.any(state.data.uplims)
 
     def test_noise_is_none_by_default(self):
-        gd = _init()
-        assert gd['noise'] is None
+        state = _init()
+        assert state.noise is None
 
     def test_handler_is_model_parameters(self):
-        gd = _init()
-        assert isinstance(gd['handler'], ModelParameters)
+        state = _init()
+        assert isinstance(state.handler, ModelParameters)
 
     def test_with_noise_model(self):
-        gd = _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
-        assert gd['noise'] is not None
+        state = _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
+        assert state.noise is not None
 
     def test_with_agn(self):
-        gd = _init(do_AGN=True, extra_params=AGN_PARAMS,
-                   gxy_kwargs={'agn': {'model': 'Fritz2006'}})
-        assert 'AGN' in gd['model'].components
+        state = _init(do_AGN=True, agn_model='Fritz2006', extra_params=AGN_PARAMS)
+        assert 'AGN' in state.model.components
+        assert state.model.agn.model == 'Fritz2006'
 
     def test_initialize_agn_default_is_panchromatic(self):
-        gd = _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
-        assert 'AGN' in gd['model'].components
-        free = list(gd['handler'].par_free)
+        state = _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
+        assert 'AGN' in state.model.components
+        assert state.model.agn.model == 'Panchromatic'
+        free = list(state.handler.par_free)
         assert 'galaxy.agn.Lbol' in free
 
+    def test_initialize_agn_model_explicit_panchromatic(self):
+        state = _init(do_AGN=True, agn_model='Panchromatic',
+                      extra_params=PANCHROMATIC_PARAMS)
+        assert state.model.agn.model == 'Panchromatic'
+
     def test_with_radio(self):
-        gd = _init(do_Radio=True)
-        assert 'nebular' in gd['model'].components
+        state = _init(do_Radio=True)
+        assert 'nebular' in state.model.components
 
     def test_with_xray(self):
-        gd = _init(do_Xray=True)
-        assert 'XRB' in gd['model'].components
+        state = _init(do_Xray=True)
+        assert 'XRB' in state.model.components
 
     def test_invalid_noise_model_warns(self):
         with pytest.warns(UserWarning, match='not valid'):
-            gd = _init(noise_model='nonexistent_model', noise_params={})
-        assert gd['noise'] is None
+            state = _init(noise_model='nonexistent_model', noise_params={})
+        assert state.noise is None
 
     def test_custom_filter(self):
         wl    = np.linspace(3000, 10000, 100)
         trans = np.exp(-0.5 * ((wl - 5000) / 500) ** 2)
         params = dict(BASE_PARAMS)
         params['redshift'] = 0.5
-        Run.initialize(
+        state = Run.initialize(
             ['my_band'], np.array([5e-4]), np.array([5e-5]), np.array([False]),
             [], params,
             filter_kwargs={'my_band': {'wavelengths': wl, 'photons': trans}},
         )
-        assert Run.global_dict['data'] is not None
+        assert state.data is not None
+
+    def test_independent_states_do_not_share_model(self):
+        state1 = _init()
+        state2 = _init()
+        assert state1.model is not state2.model
+        assert state1.handler is not state2.handler
 
 
 # ===========================================================================
@@ -178,27 +198,25 @@ class TestInitialize:
 class TestParameterRegistration:
 
     def test_free_params_are_identified(self):
-        _init()
-        free = list(Run.global_dict['handler'].par_free)
+        state = _init()
+        free = list(state.handler.par_free)
         assert 'galaxy.age' in free
         assert 'galaxy.sfh.psi_max' in free
 
     def test_fixed_param_not_in_free(self):
-        _init()
-        free = list(Run.global_dict['handler'].par_free)
+        state = _init()
+        free = list(state.handler.par_free)
         assert 'galaxy.redshift' not in free
 
     def test_prior_shape_matches_free_count(self):
-        _init()
-        h = Run.global_dict['handler']
-        assert h.par_prior.shape == (len(h.par_free), 2)
+        state = _init()
+        assert state.handler.par_prior.shape == (len(state.handler.par_free), 2)
 
     def test_agn_template_keys_accepted_without_warning(self):
         import warnings
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter('always')
-            _init(do_AGN=True, extra_params=AGN_PARAMS,
-                  gxy_kwargs={'agn': {'model': 'Fritz2006'}})
+            _init(do_AGN=True, agn_model='Fritz2006', extra_params=AGN_PARAMS)
         agn_template_warnings = [
             w for w in record
             if 'agn.template' in str(w.message)
@@ -206,14 +224,14 @@ class TestParameterRegistration:
         assert len(agn_template_warnings) == 0
 
     def test_agn_fAGN_is_free(self):
-        _init(do_AGN=True, extra_params=AGN_PARAMS,
-              gxy_kwargs={'agn': {'model': 'Fritz2006'}})
-        free = list(Run.global_dict['handler'].par_free)
+        state = _init(do_AGN=True, agn_model='Fritz2006', extra_params=AGN_PARAMS)
+        free = list(state.handler.par_free)
         assert 'galaxy.agn.fAGN' in free
 
     def test_panchromatic_free_param_registered(self):
-        _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
-        free = list(Run.global_dict['handler'].par_free)
+        state = _init(do_AGN=True, agn_model='Panchromatic',
+                      extra_params=PANCHROMATIC_PARAMS)
+        free = list(state.handler.par_free)
         assert 'galaxy.agn.Lbol' in free
 
     def test_agn_old_keys_trigger_warning(self):
@@ -223,12 +241,12 @@ class TestParameterRegistration:
             Run.initialize(
                 BANDS, FLUXES, ERRORS, UPLIMS,
                 BANDS, old_key_params,
-                do_AGN=True,
+                do_AGN=True, agn_model='Fritz2006',
             )
 
     def test_noise_free_param_registered(self):
-        _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
-        free = list(Run.global_dict['handler'].par_free)
+        state = _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
+        free = list(state.handler.par_free)
         assert 'noise.f_cal' in free
 
 
@@ -262,10 +280,10 @@ def test_sfh_model_initializes_and_evaluates(sfh_model, extra):
         params.pop('sfh.psi_max', None)
         params.pop('sfh.tau_star', None)
     params.update(extra)
-    Run.initialize(BANDS, FLUXES, ERRORS, UPLIMS, BANDS, params, sfh_model=sfh_model)
-    gd = Run.global_dict
-    par = gd['handler'].par_prior.mean(axis=1)
-    ll  = Run.loglikelihood(par)
+    state = Run.initialize(BANDS, FLUXES, ERRORS, UPLIMS, BANDS, params,
+                           sfh_model=sfh_model)
+    par = state.handler.par_prior.mean(axis=1)
+    ll  = Run.loglikelihood(par, state)
     assert isinstance(float(ll), float)
 
 
@@ -276,56 +294,56 @@ def test_sfh_model_initializes_and_evaluates(sfh_model, extra):
 class TestLoglikelihood:
 
     def setup_method(self):
-        _init()
+        self.state = _init()
 
     def test_returns_float(self):
-        ll = Run.loglikelihood(_random_par())
+        ll = Run.loglikelihood(_random_par(self.state), self.state)
         assert isinstance(float(ll), float)
 
     def test_finite_or_neginf(self):
-        ll = Run.loglikelihood(_random_par())
+        ll = Run.loglikelihood(_random_par(self.state), self.state)
         assert np.isfinite(ll) or ll == -np.inf
 
     def test_finite_at_prior_midpoint(self):
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        assert np.isfinite(Run.loglikelihood(par))
+        par = self.state.handler.par_prior.mean(axis=1)
+        assert np.isfinite(Run.loglikelihood(par, self.state))
 
     def test_all_uplims(self):
         uplims_all = np.ones(len(BANDS), dtype=bool)
-        Run.initialize(BANDS, FLUXES, ERRORS, uplims_all, BANDS, BASE_PARAMS)
-        ll = Run.loglikelihood(Run.global_dict['handler'].par_prior.mean(axis=1))
+        state = Run.initialize(BANDS, FLUXES, ERRORS, uplims_all, BANDS, BASE_PARAMS)
+        ll = Run.loglikelihood(state.handler.par_prior.mean(axis=1), state)
         assert isinstance(float(ll), float)
 
     def test_mixed_uplims(self):
         uplims_mixed = np.array([False, True, False, True])
-        Run.initialize(BANDS, FLUXES, ERRORS, uplims_mixed, BANDS, BASE_PARAMS)
-        ll = Run.loglikelihood(Run.global_dict['handler'].par_prior.mean(axis=1))
+        state = Run.initialize(BANDS, FLUXES, ERRORS, uplims_mixed, BANDS, BASE_PARAMS)
+        ll = Run.loglikelihood(state.handler.par_prior.mean(axis=1), state)
         assert isinstance(float(ll), float)
 
     @pytest.mark.parametrize('method', ['simple', 'chi2', 'S12'])
     def test_uplim_methods(self, method):
         uplims_mixed = np.array([False, True, False, False])
-        Run.initialize(BANDS, FLUXES, ERRORS, uplims_mixed, BANDS, BASE_PARAMS)
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        ll  = Run.loglikelihood(par, method_uplims=method)
+        state = Run.initialize(BANDS, FLUXES, ERRORS, uplims_mixed, BANDS, BASE_PARAMS)
+        par = state.handler.par_prior.mean(axis=1)
+        ll  = Run.loglikelihood(par, state, method_uplims=method)
         assert isinstance(float(ll), float)
 
     def test_with_noise_model(self):
-        _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        assert np.isfinite(Run.loglikelihood(par))
+        state = _init(noise_model='calibration_error', noise_params=NOISE_PARAMS)
+        par = state.handler.par_prior.mean(axis=1)
+        assert np.isfinite(Run.loglikelihood(par, state))
 
     def test_agn_model(self):
-        _init(do_AGN=True, extra_params=AGN_PARAMS,
-              gxy_kwargs={'agn': {'model': 'Fritz2006'}})
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        ll  = Run.loglikelihood(par)
+        state = _init(do_AGN=True, agn_model='Fritz2006', extra_params=AGN_PARAMS)
+        par   = state.handler.par_prior.mean(axis=1)
+        ll    = Run.loglikelihood(par, state)
         assert isinstance(float(ll), float)
 
     def test_panchromatic_agn_model(self):
-        _init(do_AGN=True, extra_params=PANCHROMATIC_PARAMS)
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        ll  = Run.loglikelihood(par)
+        state = _init(do_AGN=True, agn_model='Panchromatic',
+                      extra_params=PANCHROMATIC_PARAMS)
+        par   = state.handler.par_prior.mean(axis=1)
+        ll    = Run.loglikelihood(par, state)
         assert isinstance(float(ll), float)
 
 
@@ -336,23 +354,25 @@ class TestLoglikelihood:
 class TestLogprob:
 
     def setup_method(self):
-        _init()
+        self.state = _init()
 
     def test_finite_or_neginf_inside_prior(self):
-        lp = Run.logprob(_random_par())
+        lp = Run.logprob(_random_par(self.state), self.state)
         assert np.isfinite(lp) or lp == -np.inf
 
     def test_above_prior_is_neginf(self):
-        par_out = Run.global_dict['handler'].par_prior[:, 1] + 1.0
-        assert Run.logprob(par_out) == -np.inf
+        par_out = self.state.handler.par_prior[:, 1] + 1.0
+        assert Run.logprob(par_out, self.state) == -np.inf
 
     def test_below_prior_is_neginf(self):
-        par_out = Run.global_dict['handler'].par_prior[:, 0] - 1.0
-        assert Run.logprob(par_out) == -np.inf
+        par_out = self.state.handler.par_prior[:, 0] - 1.0
+        assert Run.logprob(par_out, self.state) == -np.inf
 
     def test_midpoint_equals_loglikelihood(self):
-        par = Run.global_dict['handler'].par_prior.mean(axis=1)
-        assert Run.logprob(par) == pytest.approx(Run.loglikelihood(par))
+        par = self.state.handler.par_prior.mean(axis=1)
+        assert Run.logprob(par, self.state) == pytest.approx(
+            Run.loglikelihood(par, self.state)
+        )
 
 
 # ===========================================================================
@@ -383,3 +403,367 @@ class TestPriorTransform:
             r = transform_to_prior_unit_cube(s, prior)
             assert np.all(r >= prior[:, 0])
             assert np.all(r <= prior[:, 1])
+
+
+# ===========================================================================
+# Catalogue worker
+# ===========================================================================
+
+class TestCatalogueWorker:
+
+    def _make_shared_kw(self):
+        return dict(
+            galaxy_parameters = BASE_PARAMS,
+            sfh_model         = 'insitu',
+            ssp_lib           = 'parsec22.NT',
+            do_Radio          = False,
+            do_Xray           = False,
+            do_AGN            = False,
+            agn_model         = 'Panchromatic',
+            noise_model       = None,
+            noise_parameters  = {},
+            noise_kwargs      = {},
+            lstep             = None,
+            filters_custom    = None,
+            method_uplims     = 'chi2',
+            sampler           = 'dynesty',
+            nwalkers          = None,
+            nsamples          = None,
+            sampler_kw        = {},
+            sampling_kw       = {},
+            output_directory  = '/tmp',
+            store_method      = 'hdf5',
+            store_lightweight = True,
+            pickle_sampler    = False,
+            pickle_raw        = False,
+        )
+
+    def test_worker_builds_independent_states(self):
+        # Verify that two catalogue entries produce independent PipelineState
+        # objects (no shared model references).
+        obj1 = dict(bands=BANDS, fluxes=FLUXES,      errors=ERRORS,      uplims=UPLIMS)
+        obj2 = dict(bands=BANDS, fluxes=FLUXES * 2., errors=ERRORS * 2., uplims=UPLIMS)
+
+        state1 = PipelineState.initialize(
+            obj1['bands'], obj1['fluxes'], obj1['errors'], obj1['uplims'],
+            obj1['bands'], BASE_PARAMS,
+        )
+        state2 = PipelineState.initialize(
+            obj2['bands'], obj2['fluxes'], obj2['errors'], obj2['uplims'],
+            obj2['bands'], BASE_PARAMS,
+        )
+
+        assert state1.model is not state2.model
+        np.testing.assert_allclose(state1.data.fluxes, FLUXES)
+        np.testing.assert_allclose(state2.data.fluxes, FLUXES * 2.)
+
+    def test_worker_uplims_default_to_false(self):
+        obj = dict(bands=BANDS, fluxes=FLUXES, errors=ERRORS)  # no uplims key
+        state = PipelineState.initialize(
+            obj['bands'], obj['fluxes'], obj['errors'],
+            obj.get('uplims') if obj.get('uplims') is not None
+                else np.zeros_like(np.asarray(obj['bands']), dtype=bool),
+            obj.get('filters', obj['bands']),
+            BASE_PARAMS,
+        )
+        assert not np.any(state.data.uplims)
+
+
+# ===========================================================================
+# Model suffix generation
+# ===========================================================================
+
+class TestModelSuffixes:
+
+    def test_single_varying_key(self):
+        variants = [
+            dict(sfh_model='insitu', do_AGN=False, do_Radio=False, do_Xray=False),
+            dict(sfh_model='insitu', do_AGN=True,  do_Radio=False, do_Xray=False),
+        ]
+        sfx = _model_suffixes(variants)
+        assert sfx == ['AGNFalse', 'AGNTrue']
+
+    def test_two_varying_keys(self):
+        variants = [
+            dict(sfh_model='insitu',     do_AGN=False, do_Radio=False, do_Xray=False),
+            dict(sfh_model='insitu',     do_AGN=True,  do_Radio=False, do_Xray=False),
+            dict(sfh_model='delayedexp', do_AGN=False, do_Radio=False, do_Xray=False),
+            dict(sfh_model='delayedexp', do_AGN=True,  do_Radio=False, do_Xray=False),
+        ]
+        sfx = _model_suffixes(variants)
+        assert sfx == [
+            'SFHinsitu_AGNFalse', 'SFHinsitu_AGNTrue',
+            'SFHdelayedexp_AGNFalse', 'SFHdelayedexp_AGNTrue',
+        ]
+
+    def test_agn_model_varying(self):
+        variants = [
+            dict(sfh_model='insitu', do_AGN=True, agn_model='Fritz2006',
+                 do_Radio=False, do_Xray=False),
+            dict(sfh_model='insitu', do_AGN=True, agn_model='Panchromatic',
+                 do_Radio=False, do_Xray=False),
+        ]
+        sfx = _model_suffixes(variants)
+        assert sfx == ['AGNFritz2006', 'AGNPanchromatic']
+
+    def test_agn_model_none_is_skipped(self):
+        # agn_model is resolved to None for variants without an AGN: it must
+        # not appear in that variant's suffix, and suffixes must stay unique.
+        variants = [
+            dict(sfh_model='insitu', do_AGN=False, agn_model=None,
+                 do_Radio=False, do_Xray=False),
+            dict(sfh_model='insitu', do_AGN=True,  agn_model='Fritz2006',
+                 do_Radio=False, do_Xray=False),
+            dict(sfh_model='insitu', do_AGN=True,  agn_model='Panchromatic',
+                 do_Radio=False, do_Xray=False),
+        ]
+        sfx = _model_suffixes(variants)
+        assert sfx == ['AGNFalse', 'AGNTrue_AGNFritz2006',
+                       'AGNTrue_AGNPanchromatic']
+
+    def test_no_varying_keys_returns_empty_strings(self):
+        variants = [
+            dict(sfh_model='insitu', do_AGN=False, do_Radio=False, do_Xray=False),
+        ]
+        sfx = _model_suffixes(variants)
+        assert sfx == ['']
+
+
+# ===========================================================================
+# _expand_hyperpar
+# ===========================================================================
+
+def _make_hyperpar(**overrides):
+    """Build a minimal single-source SimpleNamespace mimicking a parameter file."""
+    ns = SimpleNamespace(
+        bands             = BANDS,
+        fluxes            = FLUXES,
+        errors            = ERRORS,
+        uplims            = UPLIMS,
+        filters           = BANDS,
+        filters_custom    = None,
+        galaxy_parameters = dict(BASE_PARAMS),
+        sfh_model         = 'insitu',
+        ssp_lib           = 'parsec22.NT',
+        do_AGN            = False,
+        agn_model         = 'Panchromatic',
+        do_Radio          = False,
+        do_Xray           = False,
+        noise_model       = None,
+        noise_parameters  = {},
+        noise_kwargs      = {},
+        lstep             = None,
+        method_uplims     = 'chi2',
+        sampler           = 'dynesty',
+        nwalkers          = None,
+        nsamples          = None,
+        sampler_kw        = {},
+        sampling_kw       = {},
+        output_directory  = '/tmp',
+        run_id            = '',
+        store_method      = 'hdf5',
+        store_lightweight = False,
+        pickle_sampler    = False,
+        pickle_raw        = False,
+    )
+    for k, v in overrides.items():
+        setattr(ns, k, v)
+    return ns
+
+
+class TestExpandHyperpar:
+
+    # ---- basic shape detection ----
+
+    def test_single_source_single_model(self):
+        jobs = _expand_hyperpar(_make_hyperpar())
+        assert len(jobs) == 1
+
+    def test_multi_source_no_models(self):
+        fluxes = np.stack([FLUXES, FLUXES * 2, FLUXES * 3])
+        errors = np.stack([ERRORS, ERRORS * 2, ERRORS * 3])
+        uplims = np.zeros((3, len(BANDS)), dtype=bool)
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims
+        ))
+        assert len(jobs) == 3
+
+    def test_single_source_multi_model(self):
+        models = [dict(do_AGN=False), dict(do_AGN=True)]
+        jobs = _expand_hyperpar(_make_hyperpar(models=models))
+        assert len(jobs) == 2
+
+    def test_multi_source_multi_model_cross_product(self):
+        N = 3
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        models = [dict(do_AGN=False), dict(do_AGN=True)]
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims, models=models
+        ))
+        assert len(jobs) == N * 2
+
+    # ---- per-source fluxes in each job ----
+
+    def test_each_job_gets_correct_source_fluxes(self):
+        fluxes = np.stack([FLUXES, FLUXES * 2])
+        errors = np.stack([ERRORS, ERRORS * 2])
+        uplims = np.zeros((2, len(BANDS)), dtype=bool)
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims
+        ))
+        np.testing.assert_allclose(jobs[0].fluxes, FLUXES)
+        np.testing.assert_allclose(jobs[1].fluxes, FLUXES * 2)
+
+    # ---- per-source galaxy_parameters ----
+
+    def test_per_source_param_is_split_correctly(self):
+        N = 2
+        redshifts = [0.5, 1.0]
+        gp = dict(BASE_PARAMS)
+        gp['redshift'] = redshifts
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims,
+            galaxy_parameters=gp,
+        ))
+        assert jobs[0].galaxy_parameters['redshift'] == pytest.approx(0.5)
+        assert jobs[1].galaxy_parameters['redshift'] == pytest.approx(1.0)
+
+    def test_per_source_param_with_single_source_raises(self):
+        gp = dict(BASE_PARAMS)
+        gp['redshift'] = [0.5, 1.0]
+        with pytest.raises(ValueError, match='only 1 source'):
+            _expand_hyperpar(_make_hyperpar(galaxy_parameters=gp))
+
+    def test_per_source_param_wrong_length_raises(self):
+        N = 3
+        gp = dict(BASE_PARAMS)
+        gp['redshift'] = [0.5, 1.0]   # length 2, not 3
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        with pytest.raises(ValueError, match='2 entries but 3 sources'):
+            _expand_hyperpar(_make_hyperpar(
+                fluxes=fluxes, errors=errors, uplims=uplims,
+                galaxy_parameters=gp,
+            ))
+
+    # ---- run_id generation ----
+
+    def test_run_id_single_source_empty(self):
+        jobs = _expand_hyperpar(_make_hyperpar(run_id=''))
+        assert jobs[0].run_id == ''
+
+    def test_run_id_single_source_named(self):
+        jobs = _expand_hyperpar(_make_hyperpar(run_id='ngc2403'))
+        assert jobs[0].run_id == 'ngc2403'
+
+    def test_run_id_multi_source_auto(self):
+        N = 3
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims, run_id=''
+        ))
+        assert [j.run_id for j in jobs] == ['obj0', 'obj1', 'obj2']
+
+    def test_run_id_multi_source_list(self):
+        N = 2
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        jobs = _expand_hyperpar(_make_hyperpar(
+            fluxes=fluxes, errors=errors, uplims=uplims,
+            run_id=['src_a', 'src_b'],
+        ))
+        assert [j.run_id for j in jobs] == ['src_a', 'src_b']
+
+    def test_run_id_with_model_suffix(self):
+        models = [dict(do_AGN=False), dict(do_AGN=True)]
+        jobs = _expand_hyperpar(_make_hyperpar(run_id='ngc2403', models=models))
+        assert jobs[0].run_id == 'ngc2403_AGNFalse'
+        assert jobs[1].run_id == 'ngc2403_AGNTrue'
+
+    # ---- model config propagation ----
+
+    def test_model_override_do_agn(self):
+        models = [dict(do_AGN=False), dict(do_AGN=True)]
+        jobs = _expand_hyperpar(_make_hyperpar(models=models))
+        assert jobs[0].do_AGN is False
+        assert jobs[1].do_AGN is True
+
+    def test_model_override_sfh_model(self):
+        models = [dict(sfh_model='insitu'), dict(sfh_model='delayedexp')]
+        jobs = _expand_hyperpar(_make_hyperpar(models=models))
+        assert jobs[0].sfh_model == 'insitu'
+        assert jobs[1].sfh_model == 'delayedexp'
+
+    def test_agn_model_top_level_propagates(self):
+        jobs = _expand_hyperpar(_make_hyperpar(do_AGN=True, agn_model='Fritz2006'))
+        assert jobs[0].agn_model == 'Fritz2006'
+
+    def test_model_override_agn_model(self):
+        models = [dict(do_AGN=True, agn_model='Fritz2006'),
+                  dict(do_AGN=True, agn_model='Panchromatic')]
+        jobs = _expand_hyperpar(_make_hyperpar(run_id='ngc2403', models=models))
+        assert jobs[0].agn_model == 'Fritz2006'
+        assert jobs[1].agn_model == 'Panchromatic'
+        assert jobs[0].run_id == 'ngc2403_AGNFritz2006'
+        assert jobs[1].run_id == 'ngc2403_AGNPanchromatic'
+
+    def test_missing_agn_model_defaults_to_panchromatic_and_warns(self):
+        hp = _make_hyperpar(do_AGN=True)
+        del hp.agn_model  # an old parameter file, written before agn_model
+        with pytest.warns(FutureWarning, match='agn_model'):
+            jobs = _expand_hyperpar(hp)
+        assert jobs[0].agn_model == 'Panchromatic'
+
+    def test_missing_agn_model_no_warning_without_agn(self):
+        import warnings
+        hp = _make_hyperpar(do_AGN=False)
+        del hp.agn_model
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter('always')
+            jobs = _expand_hyperpar(hp)
+        assert not [w for w in record if issubclass(w.category, FutureWarning)]
+        assert jobs[0].agn_model == 'Panchromatic'
+
+    def test_missing_agn_model_no_warning_if_variant_sets_it(self):
+        import warnings
+        hp = _make_hyperpar(models=[dict(do_AGN=True, agn_model='Fritz2006')])
+        del hp.agn_model
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter('always')
+            jobs = _expand_hyperpar(hp)
+        assert not [w for w in record if issubclass(w.category, FutureWarning)]
+        assert jobs[0].agn_model == 'Fritz2006'
+
+    def test_model_galaxy_parameters_patch(self):
+        extra_gp = {'sfh.psi_max': ([0., 3.], True)}
+        models = [dict(galaxy_parameters=extra_gp)]
+        jobs = _expand_hyperpar(_make_hyperpar(models=models))
+        assert 'sfh.psi_max' in jobs[0].galaxy_parameters
+
+    # ---- uplims default to False ----
+
+    def test_uplims_none_defaults_to_all_false(self):
+        jobs = _expand_hyperpar(_make_hyperpar(uplims=None))
+        assert not np.any(jobs[0].uplims)
+
+    # ---- run_id list wrong length raises ----
+
+    def test_run_id_list_wrong_length_raises(self):
+        N = 3
+        fluxes = np.stack([FLUXES] * N)
+        errors = np.stack([ERRORS] * N)
+        uplims = np.zeros((N, len(BANDS)), dtype=bool)
+        with pytest.raises(ValueError, match='run_id has 2 entries but 3 sources'):
+            _expand_hyperpar(_make_hyperpar(
+                fluxes=fluxes, errors=errors, uplims=uplims,
+                run_id=['a', 'b'],
+            ))

@@ -7,7 +7,7 @@ The parameter file can be generated in whatever position in the filesystem by ca
 
 .. code-block:: console
 
-    $ galapy-genparams [--name/-n NAME|--SFH_model/-sfh SFH_MODEL]
+    $ galapy-genparams [--name/-n NAME] [--SFH_model/-sfh SFH_MODEL] [--catalogue/-cat]
 
 Where
 
@@ -16,6 +16,10 @@ Where
   If no argument is passed the parameter file will be generated in the current directory.
 
 * the argument ``SFH_MODEL`` allows the user to choose a SFH model, if no choice is made, the value should be set by modifying the content of the generated parameter file.
+
+* the flag ``--catalogue/-cat`` generates a parameter file in catalogue mode, suitable for
+  fitting multiple sources at once and optionally comparing several physical models per source.
+  See :ref:`catalogue_param_file` for a full description of the catalogue-specific blocks.
 
 * the ``galapy-genparams`` command can be called with the argument ``--help/-h`` to show an help message.
   
@@ -367,10 +371,16 @@ The parameters to set are the following:
      .. math::
 
 	\mathcal{S}(f_p, s_p, s_{\mathcal{Z}}, n) \equiv f_p \times \frac{\mathcal{S}_p(n)}{s_p} + (1 - f_p) \times \frac{\mathcal{S}_\mathcal{Z}(n)}{s_{\mathcal{Z}}} < 1
-	
+
      where :math:`f_p` is the fractional importance we place on posterior estimation (20%, as mentioned above), :math:`\mathcal{S}_p` is the posterior stopping function,
      :math:`\mathcal{S}_\mathcal{Z}` is the evidence stopping function, :math:`s_p` is the posterior "error threshold", :math:`s_\mathcal{Z}` is the evidence error threshold,
      and :math:`n` is the total number of Monte Carlo realisations, used to generate the posterior/evidence stopping values.
+
+   * `Nautilus sampler <https://nautilus-sampler.readthedocs.io>`_ implements Neural Network-Boosted Nested Sampling
+     `(Lange, 2023) <https://ui.adsabs.harvard.edu/abs/2023MNRAS.525.3181L/abstract>`_, an efficient nested sampling algorithm that uses
+     neural network emulators to learn the shape of the likelihood and guide live-point proposals.
+     Nautilus typically requires far fewer likelihood evaluations than classical nested sampling for the same posterior accuracy,
+     making it well-suited for expensive SED-fitting runs with many free parameters.
 
    When sampling high-dimensional large volumes the degeneracy between parameters can easily generate a complex posterior topology,
    such as multiple peaks on some parameters or non-linear correlations.
@@ -413,6 +423,13 @@ The parameters to set are the following:
 		                       'update_interval' : 0.6, 'walks' : 25,
                                        'bootstrap' : 0 }
 
+   * for **nautilus**: see documentation of the `Nautilus Sampler <https://nautilus-sampler.readthedocs.io/en/stable/api/nautilus.Sampler.html>`_.
+     The default values we have set internally (see :py:mod:`galapy.sampling.Sampler`) are
+
+     .. code-block:: python
+
+	nautilus_default_sampler_kw = { 'n_live' : 1500, 'n_networks' : 4 }
+
 4. ``sampling_kw`` (default ``= {}``) additional keyword arguments to be passed to the function running the sampling with the chosen sampler.
 
    * for **emcee**: see documentation of the ``run_mcmc`` method of the `Ensamble Sampler <https://emcee.readthedocs.io/en/stable/user/sampler/>`_.
@@ -439,14 +456,42 @@ The parameters to set are the following:
                                         'n_effective' : None, 'print_progress' : True,
                                         'stop_kwargs' : { 'target_n_effective' : 10000 } }
 
-5. ``output_directory`` (default ``= ''``) choose the position in the filesystem where to store the results. The default empty string (``''``) means "store in current location",
+   * for **nautilus**: see documentation of the ``run`` method of the `Nautilus Sampler <https://nautilus-sampler.readthedocs.io/en/stable/api/nautilus.Sampler.html>`_.
+     The default values we have set internally (see :py:mod:`galapy.sampling.Sampler`) are
+
+     .. code-block:: python
+
+	nautilus_default_sampling_kw = { 'f_live' : 0.01, 'n_eff' : 8000,
+                                         'discard_exploration' : True, 'verbose' : True }
+
+5. ``loglikelihood`` (default ``= None``) replaces the log-likelihood used to score the models.
+   ``None`` selects GalaPy's built-in Gaussian likelihood, :py:func:`galapy.sampling.Run.loglikelihood`.
+   To use your own, assign a callable with signature ``(par, state, **kwargs)`` returning a scalar,
+   defined in an importable module and imported here:
+
+   .. code-block:: python
+
+      from functools import partial
+      from my_likelihoods import mstar_loglikelihood
+
+      loglikelihood = partial( mstar_loglikelihood,
+                               logmstar_obs = 10.65, logmstar_err = 0.15 )
+
+   This is an advanced feature that changes the statistical meaning of the run, and it comes with
+   requirements the custom function has to satisfy (returning ``-numpy.inf`` on rejected parameters,
+   being importable by the worker processes in parallel runs, ...).
+   It is a run-wide setting and cannot be overridden per entry of the ``models`` list.
+   See :ref:`custom_likelihood` for the full contract, a copy-pasteable template and the
+   implications for model comparison.
+
+6. ``output_directory`` (default ``= ''``) choose the position in the filesystem where to store the results. The default empty string (``''``) means "store in current location",
    results will be saved in the directory from which the ``galapy-fit`` command has been called.
 
-6. ``run_id`` (default ``= ''``) choose a common name to associate to all the output files. The empty string will trigger the usage of a *date-time* string with format
+7. ``run_id`` (default ``= ''``) choose a common name to associate to all the output files. The empty string will trigger the usage of a *date-time* string with format
    ``'YYYYMMDDhhmm'`` where ``YYYY`` = four digits for the year (we are scheptical that our tool will still be used after year 9999 A.D.), ``MM`` two digits for the month, ``DD`` two
    digits for the day, ``hh`` two digits for the hour (in 24h-format), ``mm`` two digits for the minutes.
 
-7. ``store_method`` (default ``= 'hdf5'``) two possible output formats are currently available in GalaPy:
+8. ``store_method`` (default ``= 'hdf5'``) two possible output formats are currently available in GalaPy:
 
    * ``'pickle'`` the standard Python serialisation protocol.  Results objects (see documentation of the :py:mod:`galapy.sampling.Results` module) are computed at the end of a sampling run
      then serialised and stored in non-volatile memory. The typical size of the output file can reach up to :math:`\sim 1` GB.
@@ -457,7 +502,7 @@ The parameters to set are the following:
       For almost all use-cases, the HDF5 format is a better choice than pickle as it is safer to distribute and backward/forward compatibility is guaranteed.
       Pickle should be used only for internal usage.
 
-8. ``store_lightweight`` (default ``= False``) boolean available only if the HDF5 output format is chosen.
+9. ``store_lightweight`` (default ``= False``) boolean available only if the HDF5 output format is chosen.
    
    * ``True``: store only samples coordinates, likelihood values and weights along with minimal additional information to re-build the models used in the sampling (typical size :math:`\sim 10` MB);
    * ``False``: along with the information available also stored with this option set as ``True`` option,
@@ -468,8 +513,124 @@ The parameters to set are the following:
 
       The amount of information stored by choosing ``store_method = 'pickle'`` is equivalent to the combination ``store_method = 'hdf5'`` and ``store_lightweight = False``)
 
-9. ``pickle_raw`` (default ``= False``) whether to pickle the sampler raw results, no analysis on the outputs is done, these data are not sufficient to reproduce the models used.
+10. ``pickle_raw`` (default ``= False``) whether to pickle the sampler raw results, no analysis on the outputs is done, these data are not sufficient to reproduce the models used.
    (might be useful for analyzing the run statistics).
 
-10. ``pickle_sampler`` (default ``= False``) whether to pickle the sampler at the end-of-run state. It is necessary to set this hyperparameter to ``True`` if the user wants to restart the run.
+11. ``pickle_sampler`` (default ``= False``) whether to pickle the sampler at the end-of-run state. It is necessary to set this hyperparameter to ``True`` if the user wants to restart the run.
+
+.. _catalogue_param_file:
+
+Catalogue parameter file
+........................
+
+A catalogue parameter file is generated by adding the ``--catalogue/-cat`` flag:
+
+.. code-block:: console
+
+    $ galapy-genparams --catalogue [--name/-n NAME] [--SFH_model/-sfh SFH_MODEL]
+
+The file is structured identically to the single-source parameter file described in the
+sections above.
+The blocks :ref:`define_model`, :ref:`fixed_and_free_parameters`, and
+:ref:`sampling_and_output` carry exactly the same syntax and semantics; they define the
+*shared* configuration applied to every source in the catalogue.
+Only the observational data block and two catalogue-specific additions differ.
+
+**Observational data (catalogue variant)**
+
+The ``bands`` variable remains a 1-D list of ``M`` filter-name strings, shared across
+all ``N`` sources in the catalogue.
+The flux variables change from 1-D to 2-D:
+
+.. code-block:: python
+
+   bands  = None   # 1-D list of M filter-name strings, shared across all N sources
+   fluxes = None   # 2-D array-like of shape (N, M);  fluxes in milli-Jansky
+   errors = None   # 2-D array-like of shape (N, M);  1-sigma flux errors
+   uplims = None   # 2-D bool array-like of shape (N, M), True = upper limit
+
+.. tip::
+
+   A convenient way to populate these variables is to store the catalogue in a NumPy
+   archive and load it at the top of the parameter file:
+
+   .. code-block:: python
+
+      import numpy
+      _data  = numpy.load('survey.npz')
+      bands  = list(_data['bands'])    # 1-D, length M
+      fluxes = _data['fluxes']         # shape (N, M)
+      errors = _data['errors']         # shape (N, M)
+      uplims = _data['uplims']         # shape (N, M), dtype bool
+
+**Model variants**
+
+The ``models`` list is optional.
+When provided, each element is a dictionary that may override any of the following keys
+from the shared blocks: ``sfh_model``, ``do_AGN``, ``do_Radio``, ``do_Xray``,
+``ssp_lib``, ``noise_model``, ``noise_parameters``, ``noise_kwargs``, and
+``galaxy_parameters``.
+If ``galaxy_parameters`` appears in a variant dictionary, it is merged *on top* of the
+shared ``galaxy_parameters`` block; parameters not mentioned in the variant retain their
+shared values.
+
+GalaPy launches one independent fit per ``(source, variant)`` pair (``N x K`` jobs in
+total) distributed across CPUs exactly as for a single-source multi-processing run.
+
+.. code-block:: python
+
+   # Example 1: test with and without AGN on every source:
+   models = [
+       dict(do_AGN=False),
+       dict(do_AGN=True),
+   ]
+
+.. code-block:: python
+
+   # Example 2: compare two SFH topologies.
+   # Parameters shared by both models (age, redshift, ISM, ...) go in the shared
+   # galaxy_parameters block.  SFH-specific parameters go only in the relevant
+   # variant to avoid spurious parameter warnings.
+   models = [
+       dict(sfh_model='insitu',
+            galaxy_parameters={
+                'sfh.psi_max'  : ([0., 4.], True),
+                'sfh.tau_star' : ([6., 11.], True),
+            }),
+       dict(sfh_model='delayedexp',
+            galaxy_parameters={
+                'sfh.psi_norm' : ([0., 4.], True),
+                'sfh.k_shape'  : ([0., 5.], False),
+                'sfh.tau_star' : ([6., 11.], True),
+            }),
+   ]
+
+When ``models`` is left empty or absent, a single model is applied to all sources (``K = 1``).
+
+.. note::
+
+   When ``K > 1`` model variants are specified, output filenames receive an
+   auto-generated suffix encoding the varying keys.
+   For example, with the AGN example above, results for source ``src_A`` are written
+   to files prefixed ``src_A_AGNFalse`` and ``src_A_AGNTrue``.
+
+**Source identifiers**
+
+.. code-block:: python
+
+   run_id = []   # list of N strings; auto-labelled 'obj0', 'obj1', ... when empty
+
+Each string in ``run_id`` is the filename prefix for the corresponding source's output
+files.
+When model variants are also specified, the auto-generated model suffix is appended
+after the run-id prefix, e.g. ``my_galaxy_AGNTrue``.
+
+.. warning::
+
+   For large catalogues (many sources and/or multiple model variants), the total output
+   size can grow very quickly because each job writes its own independent results file.
+   Setting ``store_lightweight = True`` in the shared :ref:`sampling_and_output` block
+   is strongly recommended in this case: it reduces each file from up to ~1 GB to ~10 MB
+   by storing only samples, log-likelihoods, weights, and the minimal information needed
+   to reconstruct the models.
 

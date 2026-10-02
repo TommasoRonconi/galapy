@@ -61,9 +61,15 @@ def generate_output_base ( out_dir = '', name = '' ) :
 
     return outbase
 
+#: Provenance marker written when the run used galapy's built-in likelihood.
+#: It is the ``module.qualified_name`` of ``galapy.sampling.Run.loglikelihood``
+#: (kept as a literal here to avoid a circular import with that module).
+_default_loglikelihood_name = 'galapy.sampling.Run.loglikelihood'
+
 def dump_results ( model, handler, data, sampler,
                    noise = None, outbase = '',
-                   method = 'hdf5', lightweight = False ) :
+                   method = 'hdf5', lightweight = False,
+                   derived = None, loglikelihood_name = None ) :
     from time import time
 
     if len(outbase) == 0 :
@@ -72,7 +78,7 @@ def dump_results ( model, handler, data, sampler,
     if not isinstance( sampler, Sampler ) :
         raise ValueError( "Argument ``sampler`` should be an instance of type Sampler" )
     sample_res, sample_logl, sample_weights = sampler.return_samples_logl_weights()
-    sample_logz, sample_logzerr = sampler.return_logz_logzerr()
+    logz, logzerr = sampler.log_evidence()
 
     if not isinstance( model, GXY ) :
         raise ValueError( "Argument ``model`` should be an instance of type GXY" )
@@ -86,6 +92,9 @@ def dump_results ( model, handler, data, sampler,
     if noise is not None :
         if not isinstance( noise, Noise ) :
             raise ValueError( "Argument ``noise`` should be an instance of type Noise" )
+
+    if loglikelihood_name is None :
+        loglikelihood_name = _default_loglikelihood_name
 
     if lightweight :
         if method in { 'hdf5', 'h5' } :
@@ -103,11 +112,12 @@ def dump_results ( model, handler, data, sampler,
                     'sample_res' : sample_res,
                     'sample_logl' : sample_logl,
                     'sample_weights' : sample_weights,
-                    'sample_logz' : sample_logz,
-                    'sample_logzerr' : sample_logzerr,
                     'data' : None if data is None else data.dump(),
                     'noise' : None if noise is None else noise.dump(),
                     'sampler_name' : sampler.which_sampler,
+                    'logz'    : logz,
+                    'logzerr' : logzerr,
+                    'loglikelihood_name' : loglikelihood_name,
                 }
             )
             return outbase
@@ -121,11 +131,13 @@ def dump_results ( model, handler, data, sampler,
     tstart = time()
     results = Results( model, handler,
                        sample_res, sample_logl,
-                       sample_weights = sample_weights,
-                       sample_logz = sample_logz,
-                       sample_logzerr = sample_logzerr,
-                       data = data, noise = noise,
-                       sampler_name = sampler.which_sampler )
+                       sample_weights   = sample_weights,
+                       data             = data, noise = noise,
+                       sampler_name     = sampler.which_sampler,
+                       log_evidence     = logz,
+                       log_evidence_err = logzerr,
+                       derived          = derived,
+                       loglikelihood_name = loglikelihood_name )
     ndur = time() - tstart
     print( f'... done in {ndur} seconds.' )
 
@@ -179,16 +191,6 @@ def load_results ( infile, method = None, lightweight = None ) :
                     if 'sample_weights' in res_dict['results']
                     else None
                 ),
-                sample_logz = (
-                    res_dict['results']['sample_logz']
-                    if 'sample_logz' in res_dict['results']
-                    else None
-                ),
-                sample_logzerr = (
-                    res_dict['results']['sample_logzerr']
-                    if 'sample_logzerr' in res_dict['results']
-                    else None
-                ),
                 data = (
                     Observation.load( res_dict['results']['data'] )
                     if 'data' in res_dict['results']
@@ -199,7 +201,11 @@ def load_results ( infile, method = None, lightweight = None ) :
                     if res_dict['results']['noise'] is not None
                     else None
                 ),
-                sampler_name = res_dict['results']['sampler_name']
+                sampler_name     = res_dict['results']['sampler_name'],
+                log_evidence     = res_dict['results'].get( 'logz',    None ),
+                log_evidence_err = res_dict['results'].get( 'logzerr', None ),
+                loglikelihood_name = res_dict['results'].get(
+                    'loglikelihood_name', None ),
             )
             ndur = time() - tstart
             print( f'... done in {ndur} seconds.' )
@@ -215,10 +221,30 @@ def load_results ( infile, method = None, lightweight = None ) :
 #############################################################################################
 
 class Results () :
+
+    # Registry of the derived quantities computed for every sample at
+    # construction time. Each entry maps a stored-attribute name to a callable
+    # ``f(model)`` returning that quantity for a model whose parameters have
+    # already been set to the sample's values. ``model.age`` is a plain
+    # attribute (set inside ``set_parameters``), so functions that need the age
+    # recover it from the model instead of receiving it as a separate argument.
+    _default_properties = {
+        'SED'   : lambda model : model.get_SED(),
+        'Mstar' : lambda model : model.sfh.Mstar( model.age ),
+        'Mdust' : lambda model : model.sfh.Mdust( model.age ),
+        'Mgas'  : lambda model : model.sfh.Mgas( model.age ),
+        'Zstar' : lambda model : model.sfh.Zstar( model.age ),
+        'Zgas'  : lambda model : model.sfh.Zgas( model.age ),
+        'SFR'   : lambda model : model.sfh( model.age ),
+        'TMC'   : lambda model : model.ism.mc.T,
+        'TDD'   : lambda model : model.ism.dd.T,
+    }
+
     def __init__ ( self, model, handler, sample_res, sample_logl,
-                   sample_weights = None, sample_logz = None, sample_logzerr = None,
-                   data = None, noise = None,
-                   sampler_name = 'dynesty' ) :
+                   sample_weights = None, data = None, noise = None,
+                   sampler_name = 'dynesty',
+                   log_evidence = None, log_evidence_err = None,
+                   derived = None, loglikelihood_name = None ) :
         """ A class for storing the results of a sampling run.
         
         Parameters
@@ -237,8 +263,6 @@ class Results () :
             (Optional) 1D array with the weight of each sample in the run. 
             Default is ``None``, in which case the array will be padded with ones
             (i.e. all samples have the same weight)
-        sample_logz :
-        sample_logzerr :
         data : galapy.sampling.Observation.Observation
             (Optional) An instance of type ``Observation`` with the fluxes 
             measurements used in the sampling run
@@ -248,6 +272,24 @@ class Results () :
         sampler_name : str
             Which sampler has been used in the sampling run (i.e. 'dynesty' or 'emcee', 
             default is 'dynesty')
+        log_evidence : float
+            (Optional) the logarithm of the evidence accumulated during the run (this
+            number is not available for runs performed with the 'emcee' sampler)
+        log_evidence_err : float
+            (Optional) the error on the logarithm of the evidence accumulated during
+            the run (this number is only available for runs performed with the 'dynesty' sampler)
+        derived : sequence of str
+            (Optional, default = ``None``) the subset of default derived
+            quantities (keys of ``_default_properties``) to compute and store.
+            ``None`` selects them all. ``'SED'`` is always computed and stored
+            regardless of this argument; listing it explicitly is allowed but
+            redundant (a warning is emitted).
+        loglikelihood_name : str
+            (Optional) ``module.qualified_name`` of the log-likelihood used in
+            the run, kept as a provenance marker. ``None`` (the default) means
+            galapy's built-in Gaussian likelihood. Two runs are comparable in
+            evidence only if this marker matches, which is what
+            :func:`galapy.analysis.model_comparison.bayes_factor` checks.
         """
         
         # Store the model architecture
@@ -274,12 +316,6 @@ class Results () :
 
         if sample_weights is None :
             sample_weights = numpy.ones_like( sample_logl )
-
-        if sample_logz is None :
-            sample_logz = numpy.ones_like( sample_logl )
-
-        if sample_logzerr is None :
-            sample_logzerr = numpy.ones_like( sample_logl )
         
         # Store the observation
         self.Ndof = 1
@@ -309,63 +345,233 @@ class Results () :
             else :
                 self._noise = noise.dump()
 
-        # Store the sampler's name and specs
+        # Store the sampler's name, specs, and evidence estimate
         self.sampler = sampler_name
-        self.ndim = len( handler.par_free )
+        self.ndim    = len( handler.par_free )
+        self.logz    = log_evidence
+        self.logzerr = log_evidence_err
+
+        # Provenance of the likelihood used in the run
+        self.loglikelihood_name = ( loglikelihood_name
+                                    if loglikelihood_name is not None
+                                    else _default_loglikelihood_name )
         
         self.size = len(sample_res)
         if self.size != len(sample_logl) or self.size != len(sample_weights):
             raise RuntimeError( 
                 'Arguments sample_res, sample_logl and sample_weights should have same length'
             )
-        self.params = []
+        self.params  = []
         self.logl    = numpy.asarray( sample_logl )
         self.samples = numpy.asarray( sample_res )
         self.weights = numpy.asarray( sample_weights )
-        self.logz    = numpy.asarray( sample_logz )
-        self.logzerr = numpy.asarray( sample_logzerr )
-        self.wnot0  = ( self.weights > 0. )
-        self.SED    = numpy.empty(shape=(self.size, 
-                                         *model.wl().shape))
-        self.Mstar  = numpy.empty(shape=(self.size,))
-        self.Mdust  = numpy.empty(shape=(self.size,))
-        self.Mgas   = numpy.empty(shape=(self.size,))
-        self.Zstar  = numpy.empty(shape=(self.size,))
-        self.Zgas   = numpy.empty(shape=(self.size,))
-        self.SFR    = numpy.empty(shape=(self.size,))
-        self.TMC    = numpy.empty(shape=(self.size,))
-        self.TDD    = numpy.empty(shape=(self.size,))
+        self.wnot0   = ( self.weights > 0. )
 
-        for i, par in enumerate(sample_res) :
-            self.params += [handler.return_nested(par)['galaxy']]
+        # Build the per-sample list of (free) nested parameter dictionaries.
+        # The user-fixed parameters are not part of ``return_nested(par)``;
+        # they are applied separately inside ``_compute_properties``.
+        for par in sample_res :
+            self.params += [ handler.return_nested( par )['galaxy'] ]
 
-            try :
-                model.set_parameters( **self.params[-1] )
-            except RuntimeError :
-                self.SED[i]   = -numpy.inf * numpy.ones_like(model.wl())
-                self.Mstar[i] = -numpy.inf
-                self.Mdust[i] = -numpy.inf
-                self.Mgas[i]  = -numpy.inf
-                self.Zstar[i] = -numpy.inf
-                self.Zgas[i]  = -numpy.inf
-                self.SFR[i]   = -numpy.inf
-                self.TMC[i]   = -numpy.inf
-                self.TDD[i]   = -numpy.inf
-                continue
-            
-            age = model.age
-            self.SED[i]   = model.get_SED()
-            self.Mstar[i] = model.sfh.Mstar(age)
-            self.Mdust[i] = model.sfh.Mdust(age)
-            self.Mgas[i]  = model.sfh.Mgas(age)
-            self.Zstar[i] = model.sfh.Zstar(age)
-            self.Zgas[i]  = model.sfh.Zgas(age)
-            self.SFR[i]   = model.sfh(age)
-            self.TMC[i]   = model.ism.mc.T
-            self.TDD[i]   = model.ism.dd.T
+        # Compute and store the selected derived quantities. ``_derived`` keeps
+        # track of which quantities are stored so that ``dump``/``load`` and
+        # ``add_property`` stay in sync. ``SED`` is always computed and stored.
+        self._derived = []
+        self._compute_properties( self._select_properties( derived ),
+                                  model = model, handler = handler )
+
+    def _select_properties ( self, derived = None ) :
+        """Build the ordered ``{name: callable}`` mapping of default quantities
+        to compute, given an optional user selection.
+
+        ``SED`` is always included (it is the primary product and the reference
+        for the physical-validity gate in ``_compute_properties``). If the user
+        lists it explicitly it is silently de-duplicated with a warning.
+
+        Parameters
+        ----------
+        derived : sequence of str, optional
+            The subset of ``_default_properties`` keys to store. ``None`` selects
+            them all.
+
+        Returns
+        -------
+        : dict
+            Mapping ``{name: callable}`` drawn from ``_default_properties``,
+            always containing ``'SED'``.
+        """
+        if derived is None :
+            return dict( self._default_properties )
+
+        names = list( derived )
+        if 'SED' in names :
+            warnings.warn( "'SED' is always computed and stored by default; "
+                           "ignoring its presence in the requested `derived` list." )
+            names = [ n for n in names if n != 'SED' ]
+
+        unknown = [ n for n in names if n not in self._default_properties ]
+        if len( unknown ) > 0 :
+            raise KeyError(
+                f"Unknown derived quantities {unknown}; valid choices are "
+                f"{list( self._default_properties.keys() )}."
+            )
+
+        # 'SED' first, then the requested ones in the user-provided order.
+        selected = { 'SED' : self._default_properties['SED'] }
+        for n in names :
+            selected[n] = self._default_properties[n]
+        return selected
+
+    def _compute_properties ( self, funcs, model = None, handler = None ) :
+        """Evaluate derived-property functions over all the stored samples.
+
+        For each sample the model parameters are set and every callable in
+        ``funcs`` is evaluated as ``f(model)``; the returned values are stored
+        as instance attributes named after the dictionary keys. The storage
+        arrays are sized from the shape of each returned value, so scalar- and
+        array-valued quantities (e.g. ``SED``) are handled uniformly.
+
+        On a ``RuntimeError`` from ``set_parameters`` the sample is filled with
+        ``-inf`` for every property. Historical behaviour is preserved: if the
+        ``SED`` of a sample is non-finite, all the *other* quantities of that
+        sample are set to ``-inf`` while the SED itself keeps its values.
+
+        Parameters
+        ----------
+        funcs : dict
+            Mapping ``{ name : callable }`` where each callable takes the model
+            (with the current sample's parameters set) and returns the derived
+            quantity for that sample.
+        model : galapy.Galaxy.GXY, optional
+            A model instance to reuse. If ``None`` a fresh one is built with
+            ``get_model``.
+        handler : galapy.Handlers.ModelParameters, optional
+            The parameter handler to reuse. If ``None`` it is rebuilt with
+            ``get_handler``.
+        """
+        if model is None :
+            model = self.get_model()
+        if handler is None :
+            handler = self.get_handler()
+
+        keys = list( funcs.keys() )
+        _sentinel = -numpy.inf
+
+        # Apply the user-fixed parameters once: return_nested() with no
+        # argument returns *all* the stored parameters (fixed included), while
+        # the per-sample dictionaries in self.params hold only the free ones.
+        # Evaluating the functions on this valid state also lets us pre-size
+        # the storage arrays, so array-valued quantities keep their shape even
+        # if every sample below fails ``set_parameters``.
+        out = None
+        try :
+            model.set_parameters( **handler.return_nested()['galaxy'] )
+            with numpy.errstate( all = 'ignore' ) :
+                probe = { k : funcs[k]( model ) for k in keys }
+            out = { k : numpy.full( ( self.size, *numpy.shape( v ) ),
+                                    _sentinel, dtype = float )
+                    for k, v in probe.items() }
+        except RuntimeError :
+            pass   # fixed configuration invalid: fall back to lazy allocation
+
+        for i, nested in enumerate( self.params ) :
+            with numpy.errstate( all = 'ignore' ) :
+                try :
+                    model.set_parameters( **nested )
+                except RuntimeError :
+                    if out is not None :
+                        for k in keys :
+                            out[k][i] = _sentinel
+                    continue
+                vals = { k : funcs[k]( model ) for k in keys }
+
+            # Allocate on the first successful sample if the probe above failed
+            # (already-failed samples keep the sentinel value from ``full``).
+            if out is None :
+                out = { k : numpy.full( ( self.size, *numpy.shape( v ) ),
+                                        _sentinel, dtype = float )
+                        for k, v in vals.items() }
+
+            for k, v in vals.items() :
+                out[k][i] = v
+
+            # Physical-validity gate: a non-finite SED invalidates all the other
+            # quantities for this sample (the SED itself keeps its values). The
+            # SED of the current batch is used when available (construction),
+            # otherwise the canonical one stored at construction is used, so
+            # quantities added later via ``add_property`` are gated identically.
+            sed_ref = out['SED'] if 'SED' in out else getattr( self, 'SED', None )
+            if sed_ref is not None and not numpy.isfinite( sed_ref[i] ).any() :
+                for k in keys :
+                    if k != 'SED' :
+                        out[k][i] = _sentinel
+
+        # No sample produced a value and the fixed configuration was invalid.
+        if out is None :
+            out = { k : numpy.full( ( self.size, ), _sentinel, dtype = float )
+                    for k in keys }
+
+        for k in keys :
+            setattr( self, k, out[k] )
+            if k not in self._derived :
+                self._derived += [ k ]
+        return
+
+    def add_property ( self, func, name = None ) :
+        """Compute and store one or more additional derived quantities.
+
+        The new quantities are evaluated over all the stored samples exactly
+        like the default ones (``SED``, ``Mstar``, ...) and become available to
+        all the statistics methods (``get_mean``, ``get_quantile``, ...). They
+        are also serialised by ``dump`` and restored by ``load``.
+
+        Parameters
+        ----------
+        func : callable or dict
+            Either a single callable ``f(model)`` or a dictionary
+            ``{ name : callable }``. Each callable receives the model with the
+            parameters of the current sample already set and returns the derived
+            value for that sample (scalar or array). The model's age is
+            available as ``model.age``.
+        name : str, optional
+            Name under which a single callable is stored. Ignored when ``func``
+            is a dictionary. When ``None`` and ``func`` is a single callable an
+            automatic name ``custom{N}`` is assigned.
+
+        Returns
+        -------
+        : list
+            The names of the quantities that have been added.
+
+        Examples
+        --------
+        >>> res.add_property( lambda model : model.sfh.Mstar( model.age ),
+        ...                   name = 'Mstar_check' )
+        ['Mstar_check']
+        >>> res.add_property( { 'Lbol' : lambda model : model.get_SED().sum() } )
+        ['Lbol']
+        """
+        if not isinstance( func, MM ) :
+            if name is not None :
+                if not isinstance( name, str ) :
+                    raise TypeError( 'Argument ``name`` should be a string.' )
+                func = { name : func }
+            else :
+                icust = 0
+                while hasattr( self, f'custom{icust:d}' ) :
+                    icust += 1
+                func = { f'custom{icust:d}' : func }
+        for k, f in func.items() :
+            if not hasattr( f, '__call__' ) :
+                raise AttributeError(
+                    'Argument ``func`` should be a callable or a dictionary of '
+                    f'{{name:callable}}; "{k}" is not callable.'
+                )
+        self._compute_properties( func )
+        return list( func.keys() )
 
     def dump ( self ) :
-        return dict(
+        ret = dict(
             # Models' architecture
             model = self._mod,
             handler = self._han,
@@ -374,24 +580,22 @@ class Results () :
             # Sampling run hyperparameters
             sampler_name = self.sampler,
             size = self.size, Ndof = self.Ndof,
+            logz    = self.logz,
+            logzerr = self.logzerr,
+            loglikelihood_name = self.loglikelihood_name,
             # Sampling run stored quantities
             logl    = self.logl,
             samples = self.samples,
             weights = self.weights,
             wnot0   = self.wnot0,
-            logz    = self.logz,
-            logzerr = self.logzerr,
-            # Derived quantities
-            SED     = self.SED,
-            Mstar   = self.Mstar,
-            Mdust   = self.Mdust,
-            Mgas    = self.Mgas,
-            Zstar   = self.Zstar,
-            Zgas    = self.Zgas,
-            SFR     = self.SFR,
-            TMC     = self.TMC,
-            TDD     = self.TDD,
+            # Names of the stored derived quantities (pipe-joined, mirroring
+            # the convention used in galapy.Handlers.ModelParameters.dump)
+            derived = '|'.join( self._derived ),
         )
+        # Derived quantities (defaults plus any added via ``add_property``)
+        for k in self._derived :
+            ret[k] = getattr( self, k )
+        return ret
 
     @classmethod
     def load ( cls, dictionary ) :
@@ -407,32 +611,36 @@ class Results () :
             sampler_name = dictionary['sampler_name'],
             sample_res     = [],
             sample_logl    = [],
-            sample_weights = [],
-            sample_logz    = [],
-            sample_logzerr = []
+            sample_weights = []
         )
         # Sampling run stored quantities
         ret.logl    = dictionary['logl']
         ret.samples = dictionary['samples']
         ret.weights = dictionary['weights']
         ret.wnot0   = dictionary['wnot0']
-        ret.logz    = dictionary['logz']
-        ret.logzerr = dictionary['logzerr']
 
         # Additional hyperparameters
         ret.Ndof    = dictionary['Ndof']
         ret.size    = dictionary['size']
+        ret.logz    = dictionary.get( 'logz',    None )
+        ret.logzerr = dictionary.get( 'logzerr', None )
 
-        # Derived quantities
-        ret.SED     = dictionary['SED']
-        ret.Mstar   = dictionary['Mstar']
-        ret.Mdust   = dictionary['Mdust']
-        ret.Mgas    = dictionary['Mgas']
-        ret.Zstar   = dictionary['Zstar']
-        ret.Zgas    = dictionary['Zgas']
-        ret.SFR     = dictionary['SFR']
-        ret.TMC     = dictionary['TMC']
-        ret.TDD     = dictionary['TDD']
+        # Files written before the introduction of this marker can only come
+        # from a run with the built-in likelihood.
+        ret.loglikelihood_name = dictionary.get( 'loglikelihood_name',
+                                                 _default_loglikelihood_name )
+
+        # Derived quantities. Files written before the introduction of the
+        # ``derived`` key always stored exactly the nine default quantities.
+        derived = dictionary.get( 'derived', None )
+        if derived is None :
+            derived = [ 'SED', 'Mstar', 'Mdust', 'Mgas',
+                        'Zstar', 'Zgas', 'SFR', 'TMC', 'TDD' ]
+        else :
+            derived = derived.split('|')
+        ret._derived = list( derived )
+        for k in derived :
+            setattr( ret, k, dictionary[k] )
 
         # Compute parameters' dictionaries
         handler = ret.get_handler()

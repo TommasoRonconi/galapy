@@ -24,7 +24,7 @@ from galapy.Cosmology import CSM
 from galapy.InterGalacticMedium import IGM
 
 from galapy.internal.utils import trap_int, find_nearest
-from galapy.internal.interp import lin_interp
+from galapy.internal.interp import log_interp
 from galapy.internal.constants import Lsun, sunL, clight, Mpc_to_cm, hP
 import galapy.internal.globs as GP_GBL
 from galapy.internal.data import DataFile
@@ -160,8 +160,8 @@ gxy_params_defaults = {
 
     # Panchromatic model
 
-    'agn.Lbol'       : ( 'Bolometric luminosity of the AGN',
-                         [+40, +48], True, 'L_\\mathrm{bol}' ),
+    'agn.Lbol'       : ( 'Bolometric luminosity of the AGN [L_sun]',
+                         [+6.5, +14.5], True, 'L_\\mathrm{bol}' ),
     'agn.theta_view' : ( 'Line-of-sight angle with respect to the AGN axis.',
                          [0.0, 0.5*numpy.pi], False, '\\theta_\\mathrm{view}' ),
     'agn.delta'      : ( 'Modification of power-law in correspondence of the big-blue bump',
@@ -406,6 +406,10 @@ class GXY ( Model ) :
                 self.redshift
             )
 
+        # Eagerly compute the emission so the object is in a fully
+        # self-consistent, queryable state right after construction.
+        self._compute_emission()
+
     def dump ( self ) :
 
         return dict(
@@ -622,7 +626,10 @@ class GXY ( Model ) :
             except AttributeError :
                 raise AttributeError( 'Passing SYN-parameters to a GXY-class built '
                                       'without an SNSYN component is not allowed.' )
-            
+
+        # Recompute the emission so the cached state stays consistent with
+        # the updated parameters.
+        self._compute_emission()
         return;
     
     def Lstellar ( self ) :
@@ -684,26 +691,31 @@ class GXY ( Model ) :
         return self.csp.L[:, itmax, self.csp._timetuple[2][0]] * Mweight
     
     def get_emission ( self, store_attenuation = False, **kwargs ) :
-        """Computes the overall emission coming from a galaxy with given parameterisation.
+        """Returns the overall emission coming from a galaxy with given parameterisation.
         The resulting shape of the SED depends on the components the galaxy object has
-        been built with. This authomatically deals with the interplay among the different 
+        been built with. This authomatically deals with the interplay among the different
         active components.
+
+        The emission is computed eagerly by ``set_parameters`` (and at
+        construction) and cached internally, so this function simply returns the
+        stored total luminosity. Passing ``**kwargs`` updates the parameters
+        first (via ``set_parameters``), which triggers a recomputation.
 
         Parameters
         ----------
         store_attenuation : bool
-            (Optional, default = ``False``) if set to ``True``, stores the total,
-            wavelength dependent, attenuation due to ISM in an internal variable (``Aavg``)
+            (Deprecated, ignored) the average attenuation is now always stored
+            in the internal variable ``Aavg`` after every ``set_parameters``.
 
         **kwargs : dictionary, optional
             arguments passed to function ``set_parameters()``
-        
+
         Returns
         -------
         : 1d-array
-            the emission on the selected wavelength grid 
+            the emission on the selected wavelength grid
             in units of solar luminosities (:math:`[L_\odot]`)
-        
+
         Note
         ----
         Even though only the overall emission is returned, the contribution of each
@@ -711,10 +723,28 @@ class GXY ( Model ) :
         """
         if len( kwargs ) > 0 :
             self.set_parameters( **kwargs )
-        
+        return self._Ltot
+
+    def _compute_emission ( self ) :
+        """Compute the full galaxy emission and cache the internal state.
+
+        Evaluates the ISM attenuation, the (un)attenuated stellar emission, the
+        ISM equilibrium temperatures and every active component, storing them in
+        ``self.components``, ``self.Aavg``, the ISM temperatures and the cached
+        total luminosity ``self._Ltot``. Called automatically by
+        ``set_parameters`` and at construction, so the object is always in a
+        fully computed, self-consistent state. Mutating sub-components directly
+        (e.g. ``gxy.ism.set_parameters(...)``) bypasses this and is discouraged.
+
+        Returns
+        -------
+        : 1d-array
+            the total emission in solar luminosities (also cached in
+            ``self._Ltot``)
+        """
         # attenuation from ISM
         attTotMC, attTot = self.ism.total_attenuation( self.wl(), self.csp.t )
-        
+
         # emission from stars (using directly the core function for performance)
         Lunatt, LattMC, Ltot = self.csp.core._kernel_emission( self.lgrid, attTotMC, attTot )
         # if self.params['age'] <= self.params['sfh']['tau_quench'] :
@@ -726,11 +756,11 @@ class GXY ( Model ) :
         self.components['stellar'] = Lunatt
         self.components['extinct'] = numpy.array(Ltot) # copy the value
 
-        if store_attenuation or self.nff is not None :
-            wn0 = Lunatt > 0.
-            self.Aavg = numpy.ones_like( self.wl() )
-            self.Aavg[wn0] = Ltot[wn0]/Lunatt[wn0]
-        
+        # average attenuation factor (linear, in [0,1]); always available
+        wn0 = Lunatt > 0.
+        self.Aavg = numpy.ones_like( self.wl() )
+        self.Aavg[wn0] = Ltot[wn0]/Lunatt[wn0]
+
         # set the resulting temperature of ISM
         EDD = Lsun * trap_int( 
             self.wl(), ( LattMC - Ltot )
@@ -773,7 +803,8 @@ class GXY ( Model ) :
         if self.snsyn is not None :
             self.components['synchrotron'] = self.snsyn.emission( self.lgrid ) * sunL
             Ltot += self.components['synchrotron']
-        
+
+        self._Ltot = Ltot
         return Ltot
 
     def get_avgAtt ( self ) :
@@ -905,13 +936,21 @@ class PhotoGXY ( GXY ) :
 
     def photoSED ( self ) :
         """Computes and returns the photometric bandpass fluxes in milliJansky.
+
+        Each bandpass integral is evaluated on the filter's own native
+        wavelength grid via a power-law (log-log) interpolator built from the
+        galaxy SED.  This removes resolution artefacts for narrow filters that
+        contain few SSP grid points and allows bands that extend beyond the SSP
+        wavelength range to be evaluated by power-law extrapolation.
         """
 
         if self.pms is None :
             raise Exception( "Photometric system has not been set. "
                              "Call function build_photometric_system() before." )
+        wl_obs = self.wl( obs = True )
+        sed    = self.get_SED()
         return numpy.asarray(
-            self.pms.get_fluxes( self.wl( obs = True ), self.get_SED() )
+            self.pms.get_fluxes( wl_obs, sed, interp = log_interp( wl_obs, sed ) )
         )
         
 

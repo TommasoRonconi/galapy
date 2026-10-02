@@ -285,16 +285,24 @@ class PMS () :
         # avoiding overlaps
         pass
     
-    def get_fluxes ( self, ll, fl ) :
+    def get_fluxes ( self, ll, fl, interp = None ) :
         """ Get a list of fluxes, one per each band in the photometric system.
-        
+
         Parameters
         ----------
         ll : array-like
-           wavelength grid 
+           wavelength grid
         fl : array-like
            fluxes defined on the wavelength grid
-        
+        interp : callable or None
+           (Optional, default ``None``) if provided, it must be callable as
+           ``interp(wavelengths)`` and returns the SED evaluated at those
+           wavelengths.  When set, the integration for each band is performed
+           on the filter's own native wavelength grid rather than the (possibly
+           coarse) SSP grid, removing resolution artefacts for narrow bands and
+           allowing evaluation outside the SSP wavelength range.
+           When ``None`` the legacy slicing behaviour is preserved.
+
         Returns
         -------
         : list
@@ -303,9 +311,13 @@ class PMS () :
         """
         fluxes = []
         for key in self.keys :
-            wl, wu = [ numpy.argmax( self.bpt[key].get_lmin() < ll ),
-                       numpy.argmin( ll < self.bpt[key].get_lmax() ) ]
-            fluxes += [self.bpt[key].get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
-    
+            if interp is None :
+                wl, wu = [ numpy.argmax( self.bpt[key].get_lmin() < ll ),
+                           numpy.argmin( ll < self.bpt[key].get_lmax() ) ]
+                fluxes += [self.bpt[key].get_bandpass_flux( ll[wl:wu], fl[wl:wu] )]
+            else :
+                band_wl = numpy.asarray( self.bpt[key].get_xaxis() )
+                fluxes += [self.bpt[key].get_bandpass_flux( band_wl, interp( band_wl ) )]
+
         return fluxes
 

@@ -11,43 +11,46 @@ from galapy.internal.utils import now_string
 
 #############################################################################################
 
-emcee_default_sampler_kw = { 'moves' : None, 'args' : None, 'kwargs' : None }
-emcee_default_sampling_kw = { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
-                              'tune' : False, 'skip_initial_state_check' : False,
-                              'thin_by' : 1, 'thin' : None, 'store' : True,
-                              'progress' : True, 'progress_kwargs' : None }
+_library_default_sampler_kw = {
+    'emcee' : { 'moves' : None, 'args' : None, 'kwargs' : None },
+    'dynesty' : { 'bound' : 'multi', 'sample' : 'rwalk',
+                  'update_interval' : 0.6, 'walks' : 50, 'bootstrap' : 0 },
+    'nautilus' : { 'n_live' : 1500, 'n_networks' : 4, },
+}
 
-#############################################################################################
-
-dynesty_default_sampler_kw = { 'bound' : 'multi', 'sample' : 'rwalk',
-                               'update_interval' : 0.6, 'walks' : 50,
-                               'bootstrap' : 0 }
-dynesty_default_sampling_kw = { 'nlive_init' : 1024, 'maxiter_init' : None,
-                                'maxcall_init' : None, 'dlogz_init' : 0.02,
-                                'nlive_batch' : 1024, 'maxiter_batch' : None,
-                                'maxcall_batch' : None,
-                                'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
-                                'maxbatch' : sys.maxsize,
-                                'n_effective' : None, 'print_progress' : True,
-                                'stop_kwargs' : { 'target_n_effective' : int(5e6) } }
+_library_default_sampling_kw = {
+    'emcee' : { 'log_prob0' : None, 'rstate0' : None, 'blobs0' : None,
+                'tune' : False, 'skip_initial_state_check' : False,
+                'thin_by' : 1, 'thin' : None, 'store' : True,
+                'progress' : True, 'progress_kwargs' : None },
+    'dynesty' : { 'nlive_init' : 1024, 'maxiter_init' : None,
+                  'maxcall_init' : None, 'dlogz_init' : 0.02,
+                  'nlive_batch' : 1024, 'maxiter_batch' : None,
+                  'maxcall_batch' : None,
+                  'maxiter' : sys.maxsize, 'maxcall' : sys.maxsize,
+                  'maxbatch' : sys.maxsize,
+                  'n_effective' : None, 'print_progress' : True,
+                  'stop_kwargs' : { 'target_n_effective' : int(5e6) } },
+    'nautilus' : { 'f_live' : 0.01, 'n_eff' : 8000,
+                   'discard_exploration' : True, 'verbose' : True },
+}
 
 #############################################################################################
 
 class Sampler () :
     
-    def __init__ ( self, loglikelihood, ndim, 
+    def __init__ ( self, loglikelihood, ndim,
                    sampler = 'dynesty',
                    prior_transform = None,
                    nwalkers = None,
                    pool = None,
-                   dynesty_sampler_kw = {}, 
-                   emcee_sampler_kw = {} ) :
+                   sampler_kw = {} ) :
         """
         """
-        
+
         self.sampler = None
         self.which_sampler = sampler
-        
+
         ######################################################################################
         # Dynamic Nested-Sampling with dynesty
         if self.which_sampler == 'dynesty' :
@@ -55,112 +58,121 @@ class Sampler () :
                 raise RuntimeError( 'You have to pass a function to `prior_transform` '
                                     'when running with the dynesty sampler.')
 
-            kw = dynesty_default_sampler_kw
-            kw.update( dynesty_sampler_kw )
+            kw = dict( _library_default_sampler_kw['dynesty'] )
+            kw.update( sampler_kw )
             from dynesty import DynamicNestedSampler
-            self.sampler = DynamicNestedSampler( 
+            self.sampler = DynamicNestedSampler(
                 loglikelihood = loglikelihood,
                 prior_transform = prior_transform,
                 ndim = ndim,
                 pool = pool,
                 **kw
             )
-            
+
         ######################################################################################
         # MCMC Ensemble sampling with emcee
-        if self.which_sampler == 'emcee' :
+        elif self.which_sampler == 'emcee' :
             if nwalkers is None :
                 raise RuntimeError( 'You have to pass an integer number of walkers to `nwalkers` '
                                     'when running with the emcee sampler.')
-            kw = emcee_default_sampler_kw
-            kw.update( emcee_sampler_kw )
+            kw = dict( _library_default_sampler_kw['emcee'] )
+            kw.update( sampler_kw )
             from emcee import EnsembleSampler
             self.sampler = EnsembleSampler( nwalkers = nwalkers,
-                                            ndim = ndim, 
-                                            log_prob_fn = loglikelihood, 
-                                            pool = pool, 
+                                            ndim = ndim,
+                                            log_prob_fn = loglikelihood,
+                                            pool = pool,
                                             **kw )
-        
+
         ######################################################################################
-        # Maybe in the future we'll add more sampling options ...    
-        if self.sampler is None :
-            raise AttributeError( f'The sampler chosen "{self.which_sampler}" is not valid.'
-                                  'Valid samplers are ["dynesty", "emcee"].' )
-            
-    def run_sampling ( self, pos = None, nsample = None, print_summary = True,
-                       dynesty_sampling_kw = {}, emcee_sampling_kw = {} ) :
-        """ Run the sampling with the chosen sampler.
+        # Neural Network-Boosted Nested Sampling with nautilus
+        elif self.which_sampler == 'nautilus' :
+            if prior_transform is None or not hasattr(prior_transform, '__call__'):
+                raise RuntimeError( 'You have to pass a function to `prior_transform` '
+                                    'when running with the nautilus sampler.')
+
+            kw = dict( _library_default_sampler_kw['nautilus'] )
+            kw.update( sampler_kw )
+            from nautilus import Sampler as NautilusSampler
+            self.sampler = NautilusSampler(
+                prior = prior_transform,
+                likelihood = loglikelihood,
+                n_dim = ndim,
+                pool = pool,
+                **kw
+            )
+
+        ######################################################################################
+        else :
+            raise AttributeError( f'The sampler chosen "{self.which_sampler}" is not valid. '
+                                  'Valid samplers are ["dynesty", "emcee", "nautilus"].' )
         
+    def run_sampling ( self, pos = None, nsample = None, print_summary = True,
+                       sampling_kw = {} ) :
+        """ Run the sampling with the chosen sampler.
+
         Parameters
         ----------
         pos : iterable
         nsample : int
-        
+        print_summary : bool
+        sampling_kw : dict
+
         Returns
         -------
         : None
         """
         from time import time
-        
+
         if self.which_sampler == 'dynesty' :
-            kw = dynesty_default_sampling_kw
-            kw.update( dynesty_sampling_kw )
+            kw = dict( _library_default_sampling_kw['dynesty'] )
+            kw.update( sampling_kw )
             tstart = time()
             self.sampler.run_nested( **kw )
             ndur = time() - tstart
             print( f'\nDone dynesty (dynamic) in {ndur} seconds' )
             # Print summary of the results:
             if print_summary : self.sampler.results.summary()
-            
-        if self.which_sampler == 'emcee' :
+
+        elif self.which_sampler == 'emcee' :
             if pos is None :
                 raise RuntimeError( '`pos = None` but you should provide an initial position '
                                     'for the walkers when running with emcee.')
             if nsample is None :
                 raise RuntimeError( '`nsample = None` but you should provide a number '
                                     'of samples to draw when running with emcee.')
-            kw = emcee_default_sampling_kw
-            kw.update( emcee_sampling_kw )
+            kw = dict( _library_default_sampling_kw['emcee'] )
+            kw.update( sampling_kw )
             tstart = time()
             self.emcee_state = self.sampler.run_mcmc( pos, nsample, **kw )
             ndur = time() - tstart
             print( f'\nDone emcee in {ndur} seconds' )
-            
+
+        elif self.which_sampler == 'nautilus' :
+            kw = dict( _library_default_sampling_kw['nautilus'] )
+            kw.update( sampling_kw )
+            tstart = time()
+            self.sampler.run( **kw )
+            ndur = time() - tstart
+            print( f'\nDone nautilus in {ndur} seconds' )
+
         return;
 
     def return_samples_logl_weights ( self ) :
 
-        outtuple = None
         if self.which_sampler == 'dynesty' :
             weights = numpy.exp( self.sampler.results.logwt -
                                  self.sampler.results.logz[-1] )
-            outtuple = ( self.sampler.results.samples,
-                         self.sampler.results.logl,
-                         weights )
-        if self.which_sampler == 'emcee' :
-            outtuple = ( self.sampler.flatchain,
-                         self.sampler.flatlnprobability,
-                         numpy.ones_like( self.sampler.flatlnprobability ) )
-        if outtuple is None :
-            raise RuntimeError(
-                "Function must be called after sampling run"
-            )
-        
-        return outtuple
-
-    def return_logz_logzerr ( self ) :
-        
-        if self.which_sampler == 'dynesty' and hasattr( self.sampler.results, 'logz' ):
-            logz = self.sampler.results.logz
-            logzerr = getattr( self.sampler.results, 'logzerr', None )
-            return logz, logzerr
-        else :
-            warnings.warn(
-                'something went wrong and the log-evidence is not available',
-                category=RuntimeWarning
-            )
-            return None, None
-        return None, None
+            return ( self.sampler.results.samples,
+                     self.sampler.results.logl,
+                     weights )
+        elif self.which_sampler == 'emcee' :
+            return ( self.sampler.flatchain,
+                     self.sampler.flatlnprobability,
+                     numpy.ones_like( self.sampler.flatlnprobability ) )
+        elif self.which_sampler == 'nautilus' :
+            points, log_w, log_l = self.sampler.posterior()
+            return ( points, log_l, numpy.exp( log_w ) )
 
     def save_results ( self, outbase = '',
                        pickle_sampler = False,
@@ -200,7 +212,7 @@ class Sampler () :
                 with open( '_'.join( [ outbase, 'dynesty_sampler.pickle' ] ), 'wb' ) as f :
                     pickle.dump( self.sampler, f )
 
-        if self.which_sampler == 'emcee' :
+        elif self.which_sampler == 'emcee' :
             if pickle_raw :
                 # Pickling sampler-state:
                 with open( '_'.join( [ outbase, 'emcee_state.pickle' ] ), 'wb' ) as f :
@@ -218,8 +230,35 @@ class Sampler () :
                 with open( '_'.join( [ outbase, 'emcee_sampler.pickle' ] ), 'wb' ) as f :
                     pickle.dump( self.sampler, f )
 
+        elif self.which_sampler == 'nautilus' :
+            if pickle_raw :
+                points, log_w, log_l = self.sampler.posterior()
+                with open( '_'.join( [ outbase, 'nautilus_posterior.pickle' ] ), 'wb' ) as f :
+                    pickle.dump( { 'points' : points, 'log_w' : log_w, 'log_l' : log_l }, f )
+            if pickle_sampler :
+                with open( '_'.join( [ outbase, 'nautilus_sampler.pickle' ] ), 'wb' ) as f :
+                    pickle.dump( self.sampler, f )
+
         print( f'Sampler results stored in files with prefix: {outbase}' )
 
         return;
+
+    def log_evidence ( self ) :
+        """ Returns the log-evidence (and its uncertainty) estimated by the sampler.
+
+        Returns
+        -------
+        logz : float or None
+            Natural log of the Bayesian evidence. None for emcee.
+        logzerr : float or None
+            Uncertainty on logz. None for emcee and nautilus.
+        """
+        if self.which_sampler == 'dynesty' :
+            return ( float( self.sampler.results.logz[-1] ),
+                     float( self.sampler.results.logzerr[-1] ) )
+        elif self.which_sampler == 'nautilus' :
+            return ( float( self.sampler.log_z ), None )
+        else :
+            return ( None, None )
 
 #############################################################################################

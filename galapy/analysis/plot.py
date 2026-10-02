@@ -34,7 +34,7 @@ clr = plt.rcParams['axes.prop_cycle'].by_key()['color']
 # Internal imports
 
 import galapy as gp
-from galapy.internal.utils import filter_strings, shorten_string
+from galapy.internal.utils import filter_strings, shorten_string, quantile_weighted
 from galapy.sampling.Results import Results
 from galapy.analysis.funcs import get_parameters_summary_strings, get_parameters_label_strings
 
@@ -109,6 +109,17 @@ _specs_default = {
         'contour_colors' : ['gray'],
         'line_args' : [{'lw':2, 'color':'gray'}],
     },
+}
+
+_derived_quantity_meta = {
+    'Mstar' : { 'label' : r'M_\star',          'log' : True  },
+    'Mdust' : { 'label' : r'M_\mathrm{dust}',  'log' : True  },
+    'Mgas'  : { 'label' : r'M_\mathrm{gas}',   'log' : True  },
+    'Zstar' : { 'label' : r'Z_\star',           'log' : False },
+    'Zgas'  : { 'label' : r'Z_\mathrm{gas}',   'log' : False },
+    'SFR'   : { 'label' : r'\psi',              'log' : True  },
+    'TMC'   : { 'label' : r'T_\mathrm{MC}',    'log' : False },
+    'TDD'   : { 'label' : r'T_\mathrm{DD}',    'log' : False },
 }
 
 def show_default_dict ( name = None ) :
@@ -804,7 +815,224 @@ def corner_res ( res, handler = None, which_params = None, getdist_settings = No
 
     ############################################################################
     # done and dusted.
-    
+
+    return fig, axes
+
+
+def corner_derived ( res, which_keys = None, log_scale = None,
+                     labels = None,
+                     getdist_settings = None,
+                     param_limits = 'auto', plot_titles = True, mark = 'bestfit',
+                     titles_kw = {}, triangle_kw = {}, marker_kw = {} ) :
+    """ Triangle plot of derived physical quantities from a sampling run.
+
+    Mirrors ``corner_res`` but operates on the derived quantities stored in the
+    ``Results`` instance (``Mstar``, ``Mdust``, ``Mgas``, ``Zstar``, ``Zgas``,
+    ``SFR``, ``TMC``, ``TDD``) rather than the free sampling parameters.
+    Scalar quantities added via ``Results.add_property`` are eligible too and
+    are drawn with default cosmetics (linear axis, the quantity's name as
+    label) unless they are listed in ``log_scale`` / ``labels``.  Samples for
+    which any selected quantity is non-finite are silently excluded.
+
+    Parameters
+    ----------
+    res : Results instance
+        A ``Results`` instance from a sampling run.
+    which_keys : sequence of str, optional
+        Names of the derived quantities to include.  Defaults to all scalar
+        (one-value-per-sample) derived quantities stored in ``res``, including
+        any added via ``add_property``.  Array-valued quantities (e.g. the SED)
+        are not eligible for a triangle plot and are always excluded.
+    log_scale : sequence of str, optional
+        Keys to plot on a log10 axis.  Defaults to the per-quantity setting in
+        ``_derived_quantity_meta`` for the built-ins (masses and SFR are log by
+        default); custom quantities default to a linear axis.
+    labels : dict, optional
+        Mapping ``{ key : latex_label }`` overriding the axis label of the
+        listed keys.  Give the raw LaTeX symbol without the surrounding ``$``
+        (e.g. ``{ 'Lbol' : r'L_\\mathrm{bol}' }``), matching the convention of
+        ``_derived_quantity_meta``.  This is the way to give a custom quantity a
+        proper symbol instead of its escaped name; it also overrides the
+        built-in label of any default quantity.  The ``log10`` wrapping (when
+        the key is log-scaled) is still applied on top.  Purely cosmetic and
+        per-call — nothing is persisted on the ``Results`` object.
+    getdist_settings : dict, optional
+    param_limits : str, sequence or dict, optional
+        'auto' (default), a list of (lo, hi) pairs, or a dict keyed by quantity name.
+    plot_titles : bool, optional
+        Show median and 68%% credible interval above each diagonal panel (default True).
+    mark : str, optional
+        'bestfit' (default), 'mean', or 'median'.
+    titles_kw, triangle_kw, marker_kw : dict, optional
+
+    Returns
+    -------
+    fig : matplotlib.pyplot.Figure
+    axes : numpy.ndarray of matplotlib.axes.Axes
+    """
+    from getdist import plots, MCSamples
+    plt.switch_backend( _mpl_backend )
+
+    default_getdist_settings = dict( _specs_default['getdist_settings'] )
+    default_titles_kw        = dict( _specs_default['titles_kw'] )
+    default_marker_kw        = dict( _specs_default['marker_kw'] )
+    default_triangle_kw      = dict( _specs_default['triangle_kw'] )
+
+    if not isinstance( res, Results ) :
+        raise AttributeError(
+            'Attribute "res" should be an instance of type ``Results``'
+        )
+
+    # select keys present in the Results instance. The quantities that can
+    # appear in a triangle plot are the *scalar-per-sample* derived quantities
+    # tracked in ``res._derived`` (one value per posterior sample). This
+    # includes user-defined quantities added via ``add_property``, which carry
+    # no entry in ``_derived_quantity_meta`` but are plotted with sensible
+    # default cosmetics (see below). Array-valued quantities — the SED, or any
+    # array-valued custom quantity — are excluded.
+    available = [ k for k in res._derived
+                  if hasattr( res, k ) and numpy.ndim( getattr( res, k ) ) == 1 ]
+    if which_keys is None :
+        which_keys = available
+    else :
+        which_keys = [ k for k in which_keys if k in available ]
+        if len( which_keys ) == 0 :
+            raise ValueError(
+                'None of the requested keys are available in this Results instance.'
+            )
+
+    # log-scale flags. Built-in quantities have a default in
+    # ``_derived_quantity_meta``; custom quantities default to linear unless the
+    # caller lists them explicitly in ``log_scale``.
+    if log_scale is None :
+        use_log = { k : _derived_quantity_meta.get( k, {} ).get( 'log', False )
+                    for k in which_keys }
+    else :
+        use_log = { k : ( k in log_scale ) for k in which_keys }
+
+    # mask out non-finite sentinel samples and zeros for log-scaled quantities
+    good = numpy.ones( res.size, dtype = bool )
+    for k in which_keys :
+        vals = getattr( res, k )
+        good &= numpy.isfinite( vals )
+        if use_log[k] :
+            good &= ( vals > 0 )
+    if not good.any() :
+        raise RuntimeError(
+            'No finite samples found for the selected derived quantities.'
+        )
+
+    weights = res.weights[good]
+    logl    = res.logl[good]
+
+    # samples matrix — log10-transform where requested
+    mat = numpy.column_stack( [
+        numpy.log10( getattr( res, k )[good] ) if use_log[k]
+        else getattr( res, k )[good]
+        for k in which_keys
+    ] )
+
+    # axis labels. Resolution order per key: an explicit override in the
+    # ``labels`` argument wins; otherwise built-in quantities use their LaTeX
+    # label from ``_derived_quantity_meta``; otherwise the key falls back to its
+    # own name, rendered upright with underscores escaped so they are not parsed
+    # as subscripts. The ``log10`` wrapping is applied on top when log-scaled.
+    axis_labels = []
+    for k in which_keys :
+        if labels is not None and k in labels :
+            lab = labels[k]
+        else :
+            meta = _derived_quantity_meta.get( k, None )
+            lab = ( meta['label'] if meta is not None
+                    else r'\mathrm{' + k.replace( '_', r'\_' ) + '}' )
+        if use_log[k] :
+            lab = r'\log_{10}\!\left(' + lab + r'\right)'
+        axis_labels.append( lab )
+
+    # marker position
+    markers = {}
+    if mark is not None :
+        if mark == 'bestfit' :
+            idx = logl.argmax()
+            markers = { k : float( mat[idx, i] ) for i, k in enumerate( which_keys ) }
+        elif mark == 'mean' :
+            markers = {
+                k : float( numpy.average( mat[:, i], weights = weights ) )
+                for i, k in enumerate( which_keys )
+            }
+        elif mark == 'median' :
+            markers = {
+                k : float( quantile_weighted( mat[:, i], 0.5, weights = weights ) )
+                for i, k in enumerate( which_keys )
+            }
+        else :
+            warnings.warn( "Argument ``mark`` should be one among 'bestfit', 'median', 'mean'." )
+
+    # update kw dicts
+    if getdist_settings is not None :
+        default_getdist_settings.update( getdist_settings )
+    default_triangle_kw.update( triangle_kw )
+    default_titles_kw.update( titles_kw )
+    default_marker_kw.update( marker_kw )
+
+    # display limits
+    if isinstance( param_limits, (list, tuple) ) :
+        display_limits = dict( zip( which_keys, param_limits ) )
+    elif isinstance( param_limits, MM ) :
+        display_limits = dict( param_limits )
+    else :
+        display_limits = {}   # 'auto' or unrecognised → let getdist decide
+
+    # sampler type hint for getdist
+    sampler = None
+    if res.sampler == 'dynesty' :
+        sampler = 'nested'
+    elif res.sampler == 'emcee' :
+        sampler = 'mcmc'
+
+    mcsamples = MCSamples(
+        samples  = mat,
+        loglikes = -logl,
+        weights  = weights,
+        names    = which_keys,
+        labels   = axis_labels,
+        sampler  = sampler,
+        settings = default_getdist_settings,
+    )
+
+    g = plots.get_subplot_plotter()
+    g.settings.axis_tick_max_labels  = 3
+    g.settings.num_plot_contours     = len( default_getdist_settings['contours'] )
+    g.triangle_plot(
+        [mcsamples], params = which_keys,
+        filled       = True, title_limit = 0,
+        param_limits = display_limits,
+        markers      = markers,
+        marker_args  = default_marker_kw,
+        **default_triangle_kw
+    )
+
+    fig, axes = g.fig, g.subplots
+
+    # replicate marker styling on diagonal panels
+    if len( markers ) > 0 :
+        for i in range( len( axes ) ) :
+            axes[i, i].get_lines()[1].set( **default_marker_kw )
+
+    if plot_titles :
+        digits = default_titles_kw.get( 'digits', 2 )
+        for i, ( k, lab ) in enumerate( zip( which_keys, axis_labels ) ) :
+            q16, q50, q84 = quantile_weighted(
+                mat[:, i], (0.16, 0.5, 0.84), weights = weights
+            )
+            lo = q50 - q16
+            hi = q84 - q50
+            title = ( f'$ {lab} = '
+                      f'{q50:.{digits}f}^{{+{hi:.{digits}f}}}_{{-{lo:.{digits}f}}} $' )
+            axes[i, i].set_title( title, fontsize = g.settings.axes_fontsize )
+
+    format_axes_ticks( fig, labelsize = g.settings.axes_fontsize )
+
     return fig, axes
 
 ######################################################################################

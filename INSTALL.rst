@@ -16,6 +16,15 @@ From the Python Package Index (PyPI)
 ------------------------------------
 
 GalaPy is available on PyPI for Linux and MacOS.
+
+.. tip::
+
+   Before installing, ensure pip is up to date. This is required to pick up
+   binary wheels on Linux (including WSL) and avoids falling back to a slower
+   source build::
+
+      $ pip install --upgrade pip
+
 With an internet connection, install the library by calling
 
 .. code-block:: console
@@ -102,23 +111,25 @@ Pre-requisites
 
 A table with the dependencies of the library follows. We also provide a short description of the package and the relevant link for download. 
 
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `NumPy <https://pypi.org/project/numpy/>`_           | Fundamental package for array computing in Python                                  |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `SciPy <https://pypi.org/project/scipy/>`_           | Fundamental algorithms for scientific computing in Python                          |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `emcee <https://pypi.org/project/emcee/>`_           | The Python ensemble sampling toolkit for MCMC                                      |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `dynesty <https://pypi.org/project/dynesty/>`_       | A dynamic nested sampling package for computing Bayesian posteriors and evidences. |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `setuptools <https://pypi.org/project/setuptools/>`_ | Easily download, build, install, upgrade, and uninstall Python packages            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `matplotlib <https://pypi.org/project/matplotlib/>`_ | Python plotting package                                                            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `requests <https://pypi.org/project/requests/>`_     | Python HTTP for Humans.                                                            |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
-| `pytest <https://pypi.org/project/pytest/>`_         | simple powerful testing with Python                                                |
-+------------------------------------------------------+------------------------------------------------------------------------------------+
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `NumPy <https://pypi.org/project/numpy/>`_               | Fundamental package for array computing in Python                                  |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `SciPy <https://pypi.org/project/scipy/>`_               | Fundamental algorithms for scientific computing in Python                          |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `emcee <https://pypi.org/project/emcee/>`_               | The Python ensemble sampling toolkit for MCMC                                      |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `dynesty <https://pypi.org/project/dynesty/>`_           | A dynamic nested sampling package for computing Bayesian posteriors and evidences. |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `nautilus <https://pypi.org/project/nautilus-sampler/>`_ | Neural Network-Boosted Nested Sampling for Bayesian inference.                     |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `setuptools <https://pypi.org/project/setuptools/>`_     | Easily download, build, install, upgrade, and uninstall Python packages            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `matplotlib <https://pypi.org/project/matplotlib/>`_     | Python plotting package                                                            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `requests <https://pypi.org/project/requests/>`_         | Python HTTP for Humans.                                                            |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
+| `pytest <https://pypi.org/project/pytest/>`_             | simple powerful testing with Python                                                |
++----------------------------------------------------------+------------------------------------------------------------------------------------+
 
 Windows Users
 -------------
@@ -138,6 +149,16 @@ These apps provide users with a Linux shell (e.g. BASH) running on a Linux sub-s
 
 Once the above actions have been performed, from the newly installed Linux shell it is possible to set up a work environment
 by installing :code:`python3` and :code:`pip` with the user's preferred method.
+
+.. important::
+
+   After installing pip, upgrade it before proceeding::
+
+      $ pip install --upgrade pip
+
+   Older pip versions (< 19.3) cannot resolve binary wheels for Linux and will
+   attempt to compile GalaPy from source, which requires a C++ toolchain and
+   is likely to fail on a fresh WSL environment.
 
 With this minimal set-up is now possible to follow the instructions presented previously in this guide to get a working installation of GalaPy.
 

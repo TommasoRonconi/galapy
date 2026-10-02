@@ -17,23 +17,29 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-latest ]
-        # os: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install pybind11 pytest
+    - name: Cache galapy database
+      uses: actions/cache@v6
+      with:
+        path: ~/.galapy/galapy_database
+        key: galapy-database-${{ runner.os }}-v1
     - name: Install library
       run: |
         python -m pip install .
         galapy-download-database
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Test with pytest
       run: |
         pytest tests/*.py
