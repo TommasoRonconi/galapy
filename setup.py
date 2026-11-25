@@ -184,20 +184,8 @@ def main():
                    'galapy-download-database = galapy.internal.data:_entrypoint_download_database',
                ]
            },
-           install_requires = [
-               'pybind11',
-               'numpy',
-               'scipy',
-               'tqdm',
-               'emcee',
-               'dynesty',
-               'nautilus-sampler',
-               'matplotlib>=3.6',
-               'getdist',
-               'requests',
-               'h5py',
-               'pytest'
-           ]
+           # Runtime dependencies are declared in pyproject.toml ([project]
+           # dependencies), which takes precedence over setup.py.
     )
 
 if __name__ == "__main__":

@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cibuildwheel 4.x, and `h5py`, a runtime dependency, has no `cp315` wheels
   yet, so installing galapy on 3.15 would mean compiling `h5py` against a
   system HDF5 anyway.
+- Packaging: removed the `install_requires` list from `setup.py`. setuptools
+  ignored it, because `pyproject.toml` declares the runtime dependencies
+  statically, so it had no effect: the published metadata never required
+  `pytest` or `pybind11` at runtime. It is dropped so that it can no longer
+  drift out of step with `pyproject.toml`.
 
 ## [0.6.2] - 2026-08-07
 
