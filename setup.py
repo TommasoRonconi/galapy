@@ -158,8 +158,11 @@ def main():
     #############################################################################
     # Call setup
     
-    setup( name        = "galapy-fit",
-           version     = get_version( os.path.join('galapy', '__init__.py') ),
+    # Project metadata (name, dependencies, console scripts, ...) is declared in
+    # pyproject.toml, which takes precedence over setup.py. Only the fields
+    # listed there as ``dynamic`` (version, description) and the build of the
+    # C++ extensions are provided here.
+    setup( version     = get_version( os.path.join('galapy', '__init__.py') ),
            description = "GalaPy - Spectral modelling tool for galaxies in Python",
            package_dir = {
                'galapy' : 'galapy',
@@ -177,15 +180,6 @@ def main():
                         'galapy.io' ],
            ext_modules = return_extensions(),
            include_package_data = True,
-           entry_points = {
-               'console_scripts' : [
-                   'galapy-fit = galapy.sampling.Run:_run',
-                   'galapy-genparams = galapy.sampling.Run:_generate_parameter_file',
-                   'galapy-download-database = galapy.internal.data:_entrypoint_download_database',
-               ]
-           },
-           # Runtime dependencies are declared in pyproject.toml ([project]
-           # dependencies), which takes precedence over setup.py.
     )
 
 if __name__ == "__main__":
