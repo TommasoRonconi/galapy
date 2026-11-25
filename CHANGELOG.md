@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Python 3.8 support: `requires-python` is now `>=3.9`, and no `cp38` wheels
+  are built any more. Python 3.8 is end-of-life since October 2024; pip on
+  3.8 keeps resolving to v0.6.2, whose `cp38` wheels stay on PyPI.
+
 ### Internal
 - CI: the GitHub Actions used by both workflows are updated to the majors that
   run natively on Node 24 — `actions/checkout` and `actions/upload-artifact`
@@ -27,10 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   environment variable is dropped along with them: it was the workaround
   keeping those actions running, and the runners force Node 24 by default
   since 2 June 2026, so it no longer does anything.
-- CI: the test matrix now spans Python 3.8 to 3.14, up from 3.8 to 3.11, so
+- CI: the test matrix now spans Python 3.9 to 3.14, up from 3.8 to 3.11, so
   that the interpreters the wheels are built for are also the ones the tests
   run on. Windows is no longer listed as a commented-out option: WSL is the
   supported route on that platform, and it is covered by the manylinux wheels.
+- CI: the wheel build skips `cp38-*`. cibuildwheel stays pinned to v3.4.1 for
+  now, which also keeps CPython 3.15 out: support for it starts with
+  cibuildwheel 4.x, and `h5py`, a runtime dependency, has no `cp315` wheels
+  yet, so installing galapy on 3.15 would mean compiling `h5py` against a
+  system HDF5 anyway.
 
 ## [0.6.2] - 2026-08-07
 

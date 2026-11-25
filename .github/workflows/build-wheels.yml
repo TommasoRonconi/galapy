@@ -21,18 +21,21 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Build wheels
-        # Pinned to the 3.x series on purpose: it is the last one able to build
-        # CPython 3.8 wheels (4.x dropped them), and requires-python is >=3.8
-        # until v0.7.0. Revisit together with that version bump.
+        # Still pinned to the 3.x series, now only so that no CPython 3.15
+        # wheels are built yet: 3.15 support starts with 4.x, and h5py (a
+        # runtime dependency) ships no cp315 wheels so far. Python 3.8 is
+        # dropped (requires-python >=3.9) and skipped below, so moving to 4.x
+        # -- which no longer builds cp38 -- is the only step left for 3.15.
         uses: pypa/cibuildwheel@v3.4.1
         env:
           # Disable building
           #  - on musllinux
           #  - on 32-bit archs
           #  - PyPy wheels on all platforms
+          #  - CPython 3.8 (requires-python is >=3.9)
           # (CPython 3.6 and 3.7 need no skip: cibuildwheel 3.x cannot build
           #  them at all.)
-          CIBW_SKIP: "*-musllinux* *-win32 *-manylinux_i686 pp*"
+          CIBW_SKIP: "*-musllinux* *-win32 *-manylinux_i686 pp* cp38-*"
           # Build for both Intel and Apple Silicon from the single macOS runner
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           # manylinux_2_28 (glibc >= 2.28) covers Debian 10+, Ubuntu 18.10+,

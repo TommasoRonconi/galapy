@@ -40,7 +40,7 @@ dependencies = [
     'requests',
     'h5py'
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.urls]
 Source = "https://github.com/TommasoRonconi/galapy"
